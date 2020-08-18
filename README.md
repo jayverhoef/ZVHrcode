@@ -4,7 +4,7 @@
 
 [![Last-changedate](https://img.shields.io/badge/last%20change-2020--8--18-yellowgreen.svg)](/commits/master)
 
-# ZVHrdata 
+# ZVHrcode 
 ## R code in support of the book, "Spatial Linear Models for Environmental Data." 
 
 #### Dale. L. Zimmerman<sup>a</sup> and Jay M. Ver Hoef<sup>b</sup> 
