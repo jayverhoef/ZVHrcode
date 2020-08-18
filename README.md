@@ -20,7 +20,7 @@ As a scientific work, and in keeping with common scientific practicies, we kindl
 Executive Summary
 -----------------
 
-R scripts that are used in the book for analyses to create text, tables, and figures.  Our goal is to make all of the data and analyses in the book reproducible.  The data are found at [source package from the latest release](https://github.com/jayverhoef/ZVHdata), along with instructions for installation.
+R scripts that are used in the book for analyses to create text, tables, and figures.  Our goal is to make all of the data and analyses in the book reproducible.  The data are found in an [R package on Github](https://github.com/jayverhoef/ZVHdata), along with instructions for installation, which is necessary to run most of these script.  To run the scripts, simply download the scripts and run them on your computer after installing the data package.  The scripts are organized by subsections within the book chapters. 
 
 -------------
 ##### Disclaimer
