@@ -58,6 +58,7 @@ file_name = 'so4-outlier-sites'
 library(sp)
 # find which NN scatterplots have standardized z-values greater than 3
 spatialOutliers = storeResults[d.z > 3,]
+colnames(spatialOutliers) = c('Orig_indx','NN_indx','Orig_val','NN_val')
 data(USboundary)
 states = c("Virginia", "West Virginia", "North Carolina", "Pennsylvania", "Tennessee", "Maryland", "Kentucky", "New York", "Ohio", "Indiana")
 # make a plot using arrows from originating site to NN with standardized z-value
@@ -135,8 +136,8 @@ d.z = (d - mean(d))/sqrt(var(d))
 pdf(paste0(file_name,'.pdf'))
   old.par = par(mar = c(5,5,1,1))
   plot(storeResults[,2:3], pch = 1, 
-    xlab = 'SO4 (kg/ha) at Originating Site',
-    ylab = 'SO4 (kg/ha) at Mean of Neighbors',
+    xlab = 'Seal Trend at Originating Site',
+    ylab = 'Seal Trend at Mean of Neighbors',
     cex.lab = 2, cex.axis = 1.5)
   lines(c(min(storeResults[,2]),max(storeResults[,2])),
     c(min(storeResults[,2]),max(storeResults[,2])),
