@@ -1,8 +1,70 @@
-library(ZVHdata)
+sec_path = 'Rcode/Chapter3/Section 3.7/'
+setwd(paste0(SLEDbook_path,sec_path))
+
+################################################################################
+#-------------------------------------------------------------------------------
+#                            sim-MoranGeary
+#-------------------------------------------------------------------------------
+################################################################################
+# nearest neighbor (NN) scatterplot
+file_name = 'sim-MoranGeary'
 library(spdep)
+Site <- c(1:9)
+set.seed(1007)
+Response <- 1+Site+rnorm(9)
+pdf(paste0(file_name,'.pdf'))
+  old.par = par(mar = c(5,5,1,1))
+  plot(Site, Response, xlim=c(0,10), ylim=c(0,10), xlab="Site", ylab="Response",
+    pch = 19, cex = 2, cex.lab = 2, cex.axis = 1.5)
+  par(old.par)
+dev.off()
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
+
+#creat neighborhood list by hand
+Nlist_sim = list(as.integer(2), as.integer(c(1,3)), as.integer(c(2,4)), 
+  as.integer(c(3,5)), as.integer(c(4,6)), as.integer(c(5,7)), 
+  as.integer(c(6,8)), as.integer(c(7,9)), as.integer(c(8)))
+class(Nlist_sim) = 'nb'
+attr(Nlist_sim,'type') = 'rook'
+attr(Nlist_sim,'sym') = TRUE
+str(Nlist)
+# Moran's I
+moran(Response, 
+  nb2listw(Nlist_sim, style = 'B'), 
+  length(Nlist_sim),
+  Szero(nb2listw(Nlist_sim, style = 'B')))
+# Normality test for Moran's I  
+moran.test(Response, 
+  nb2listw(Nlist_sim, style = 'B'),
+  randomisation=FALSE)# Randomization test for Moran's I
+moran.test(Response, 
+  nb2listw(Nlist_sim, style = 'B'),
+  randomisation=TRUE)
+# Geary's C
+geary(Response, 
+  nb2listw(Nlist_sim, style = 'B'), 
+  length(Nlist_sim), length(Nlist_sim) - 1,
+  Szero(nb2listw(Nlist_sim, style = 'B')))
+# Normality test for Geary's C
+geary.test(Response, 
+  nb2listw(Nlist_sim, style = 'B'),
+  randomisation=FALSE)
+# Randomization test for Geary's C  
+geary.test(Response, 
+  nb2listw(Nlist_sim, style = 'B'),
+  randomisation=TRUE)
+
+
+
+library(ZVHdata)
 library(xtable)
 data(sealPolys)
-
 # ------------------------------------------------------------------------------
 #     Code from Introduction, a Reminder about the Structure of the Data
 #-------------------------------------------------------------------------------
