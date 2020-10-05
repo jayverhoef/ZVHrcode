@@ -42,7 +42,8 @@ moran(Response,
 # Normality test for Moran's I  
 moran.test(Response, 
   nb2listw(Nlist_sim, style = 'B'),
-  randomisation=FALSE)# Randomization test for Moran's I
+  randomisation=FALSE)
+# Randomization test for Moran's I
 moran.test(Response, 
   nb2listw(Nlist_sim, style = 'B'),
   randomisation=TRUE)

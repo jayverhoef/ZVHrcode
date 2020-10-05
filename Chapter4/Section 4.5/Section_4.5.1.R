@@ -1,0 +1,37 @@
+sec_path = 'Rcode/Chapter4/Section 4.5/'
+setwd(paste0(SLEDbook_path,sec_path))
+
+library(ZVHdata)
+library(xtable)
+
+################################################################################
+#-------------------------------------------------------------------------------
+#              Seal Trends Coefficients Table
+#-------------------------------------------------------------------------------
+################################################################################
+
+# load data for graphics and analysis
+data(sealPolys)
+DF = sealPolys@data
+str(DF)
+DF = DF[!is.na(DF$Estimate),]
+table(DF$stockid)
+out = summary(lm(Estimate ~ -1 + I(as.factor(stockid)), data = DF))
+out
+out = out$coefficients[,1:2]
+
+rownames(out) = c('$\\alpha_1$', '$\\alpha_2$', '$\\alpha_3$', 
+  '$\\alpha_4$', '$\\alpha_5$')
+# create table to paste into latex
+  print(
+    xtable(out, 
+      align = c('l',rep('l', times = length(out[1,]))),
+      digits = c(0, 3, 3),
+    ),
+    size = 'footnotesize',
+    include.rownames = TRUE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+  )
+

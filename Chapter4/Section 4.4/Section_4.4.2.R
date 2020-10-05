@@ -6,7 +6,8 @@ file_name = "rowscolumns"
 xpts <- c(1,2,2,2,5,5,7,9,9)
 ypts <- c(8,2,5,11,1,9,9,1,5)
 pdf(paste0(file_name,'.pdf'))
-  plot(xpts,ypts,pch=16,bty="n",xaxt="n",yaxt="n",xlab="",ylab="")
+  plot(xpts, ypts, pch=16, bty="n", xaxt="n", yaxt="n", xlab="", ylab="",
+    cex = 1.5)
   segments(1,0,1,12)
   segments(2,0,2,12)
   segments(5,0,5,12)
