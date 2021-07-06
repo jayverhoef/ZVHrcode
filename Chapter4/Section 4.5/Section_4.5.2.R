@@ -4,6 +4,7 @@ setwd(paste0(SLEDbook_path,sec_path))
 library(ZVHdata)
 library(xtable)
 library(spdep)
+library(car)
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -50,7 +51,7 @@ colnames(outDF) = c('Source', 'df', 'Sum of squares', 'Mean square',
     sanitize.colnames.function = identity,
     only.contents = TRUE,
     include.colnames = TRUE,
-    hline.after = c(-1, 0, nrow(outDF) - 1, nrow(outDF))
+    hline.after = c(-1, 0, nrow(outDF) - 1)
   )
 
 #-------------------------------------------------------------------------------
@@ -86,33 +87,24 @@ geary.test(zr,
 #-------------------------------------------------------------------------------
 # check out the R^2 and coefficient values for sum-to-zero constraints on rows
 # and columns
+# use sum-to-zero constraints on all factors
+options(contrasts = c("contr.sum", "contr.poly"))
+summary(lm(z ~  i + j + tarp + water + water*tarp, data = caribouDF))
+# make an SAS type III ANOVA table 
 summary(lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF))
-# make an ANOVA table where each factor is adjusted for all others first
-# set row effect as last
-out = summary(aov(terms(z ~  j + water + tarp + water*tarp + i, 
-  keep.order = TRUE), data = caribouDF))
-out
-outDF = as.data.frame(out[[1]])[5,]
-# set column effect as last
-out = summary(aov(terms(z ~  i + water + tarp + water*tarp + 
-  j, keep.order = TRUE), data = caribouDF))
-out
-outDF = rbind(outDF, as.data.frame(out[[1]])[5,])
-# set water, tarp and tarp:water last, plus Error
-out = summary(aov(terms(z ~  i + j + water + tarp + 
-  water*tarp, keep.order = TRUE), data = caribouDF))
-out
-outDF = rbind(outDF, as.data.frame(out[[1]])[3:6,])
-# add row of corrected Totals
-outDF = rbind(outDF, c(sum(outDF[,1]), 
-  var(caribouDF$z)*(length(caribouDF$z) - 1), NA, NA, NA))
-# multiply Sum sq and Mean Sq by 1000 for readability of table
-outDF[,2:3] = 1000*outDF[,2:3]
-# add row names manually
-outDF = cbind(c('Row', 'Column', 'Water', 'Tarp', 'Water $\\times$ Tarp', 
-  'Error', 'Corrected Total'), outDF)
-colnames(outDF) = c('Source', 'df', 'Sum of squares', 'Mean square', 
-  'F', '$P$-value')
+model = lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF)
+out = Anova(model, type = 'III')
+out = out[2:7,]
+out[,1] = 1000*out[,1]
+out = cbind(out, out[,1]/out[,2])
+out = rbind(out,
+  c(1000*var(caribouDF$z)*sum(out[,2]), sum(out[,2]), NA, NA, NA))
+outDF = data.frame(
+  Source = c('Row','Column','Water','Tarp','Water $\\times$ Tarp','Error','Corrected Total'),
+  df = out[,2], SS = out[,1], MS = out[,5], Fval = out[,3], 
+  Pval = out[,4])
+colnames(outDF) = c('Source','df','Sum of squares','Mean square','F','$P$-value')
+outDF
 
 # create table to paste into latex
   print(
@@ -126,27 +118,63 @@ colnames(outDF) = c('Source', 'df', 'Sum of squares', 'Mean square',
     sanitize.colnames.function = identity,
     only.contents = TRUE,
     include.colnames = TRUE,
-    hline.after = c(-1, 0, nrow(outDF) - 1, nrow(outDF))
+    hline.after = c(-1, 0, nrow(outDF) - 1)
   )
 
-# Drop the interaction term, and use sum-to-zero constraints on all factors
-# other than tarp so intercept is at an "average" value, then get
-# mean levels of tarp
-contrasts(caribouDF$i) = contr.sum(6)
-contrasts(caribouDF$j) = contr.sum(5)
-contrasts(caribouDF$water) = contr.sum(2)
-summary(lm(z ~  i + j + water + tarp, data = caribouDF))
-# Notice that now column effects are significant
-summary(aov(z ~  i + j + water + tarp, data = caribouDF))
 # get tarp effects
 # clear tarp
-summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1]
-# no tarp
 summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] +
   summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[12,1]
-# shade tarp
+# no tarp
 summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] +
   summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[13,1]
+# shade tarp
+summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] -
+  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[12,1] -
+  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[13,1]
+
+#drop nonsignificant interaction term
+summary(lm(z ~  i + j + water + tarp, data = caribouDF))
+model = lm(z ~  i + j + water + tarp, data = caribouDF)
+out = Anova(model, type = 'III')
+out = out[2:6,]
+out[,1] = 1000*out[,1]
+out = cbind(out, out[,1]/out[,2])
+out = rbind(out,
+  c(1000*var(caribouDF$z)*sum(out[,2]), sum(out[,2]), NA, NA, NA))
+outDF = data.frame(
+  Source = c('Row','Column','Water','Tarp','Error','Corrected Total'),
+  df = out[,2], SS = out[,1], MS = out[,5], Fval = out[,3], 
+  Pval = out[,4])
+colnames(outDF) = c('Source','df','Sum of squares','Mean square','F','$P$-value')
+outDF
+
+# create table to paste into latex
+  print(
+    xtable(outDF, 
+      align = c('l',rep('l', times = length(outDF[1,]))),
+      digits = c(0, 0, 0, 2, 2, 2, 3),
+    ),
+    size = 'footnotesize',
+    include.rownames = FALSE,
+    sanitize.text.function = identity,
+    sanitize.colnames.function = identity,
+    only.contents = TRUE,
+    include.colnames = TRUE,
+    hline.after = c(-1, 0, nrow(outDF) - 1)
+  )
+
+# get tarp effects
+# clear tarp
+summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] +
+  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[12,1]
+# no tarp
+summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] +
+  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[13,1]
+# shade tarp
+summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] -
+  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[12,1] -
+  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[13,1]
 
 #-------------------------------------------------------------------------------
 # Moran's I and Geary's c on residuals

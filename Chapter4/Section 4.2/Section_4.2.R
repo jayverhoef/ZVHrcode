@@ -66,14 +66,17 @@ pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
     freq=FALSE, cex.lab = 2, cex.axis = 1.5, cex.main = 2,
     main="Relative frequency histogram of OLS estimator of mu")
   curve(normmuhat, from=-3, to=3, add=TRUE)
+  mtext('A', adj = -.08, padj = -.3, cex = 3)
   hist(hold[,2], breaks=24, xlab="", freq=FALSE, 
     cex.lab = 2, cex.axis = 1.5, cex.main = 2,
     main="Relative frequency histogram of residual sum of squares")
   curve(chisighat2,from=0,to=20,add=TRUE)
+  mtext('B', adj = -.08, padj = -.3, cex = 3)
   hist(hold[,3], breaks=96, xlab="", xlim=c(-10,10), ylim=c(0,0.35),
     freq=FALSE, cex.lab = 2, cex.axis = 1.5, cex.main = 2,
     main="Relative frequency histogram of t test statistic")
   curve(tdist, from=-10, to=10, add=TRUE)
+  mtext('C', adj = -.08, padj = -.3, cex = 3)
   par(old.par)
 dev.off()
 system(paste0('pdfcrop ','\'',SLEDbook_path,

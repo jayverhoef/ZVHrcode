@@ -26,7 +26,7 @@ rownames(out) = c('$\\alpha_1$', '$\\alpha_2$', '$\\alpha_3$',
   print(
     xtable(out, 
       align = c('l',rep('l', times = length(out[1,]))),
-      digits = c(0, 3, 3),
+      digits = c(0, 4, 4),
     ),
     size = 'footnotesize',
     include.rownames = TRUE,
