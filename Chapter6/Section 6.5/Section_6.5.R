@@ -13,7 +13,7 @@ file_name = "Semivariograms"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 8.5)
 
-###### Covariogram1 (Figure 6.1) ###### 
+###### Semivariograms (Figure 6.6) ###### 
 
 layout(matrix(1:4, ncol = 2, byrow = TRUE))
 
