@@ -4,7 +4,7 @@
 #-------------------------------------------------------------------------------
 ################################################################################
 
-# function to create uniform distances on a line for Table 8.2
+# function to create uniform distances
 create_grid = function(type, n){
 	if(type == 'infill') out = (1:n)/(n+1)
 	if(type == 'outfill') out = (1:n)/51
