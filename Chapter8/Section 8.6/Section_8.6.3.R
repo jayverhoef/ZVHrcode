@@ -99,7 +99,7 @@ m2LL = function(theta, y, X, distmat, spatial_model, MLmeth)
 }
 
 #minus two times the profiled loglikelihood
-m2LLprof = function(theta, y, X, distmat, spatial_model, MLmeth)
+m2LLprof = function(theta, extrap = NULL, y, X, distmat, spatial_model, MLmeth)
 {
 	# range parameter
 	range = exp(theta[1])
@@ -107,7 +107,7 @@ m2LLprof = function(theta, y, X, distmat, spatial_model, MLmeth)
 	propnug = exp(theta[2])/(1 + exp(theta[2]))
 	n = dim(X)[1]
 	p = dim(X)[2]
-	cormat = (1 - propnug)*spatial_model(distmat/range)
+	cormat = (1 - propnug)*spatial_model(distmat/range, extrap)
 	diag(cormat) = 1
 	cormatinv = solve(cormat)
 	cormatinvX = cormatinv %*% X
@@ -164,7 +164,8 @@ M2LL_parms = function(optM2LLout, y, X, distmat, spatial_model, MLmeth)
 	list(var_est = var_est, beta_est = bhat)
 }
 
-LOO_crossvalidation = function(optM2LLout, M2LLprof = TRUE, y, X, distmat, spatial_model)
+LOO_crossvalidation = function(optM2LLout, M2LLprof = TRUE, y, X, distmat, 
+	spatial_model)
 {
 	if(M2LLprof == TRUE) {
 		# range parameter
@@ -548,7 +549,8 @@ file_name = "SO4_LOOCV"
 pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
 	old.par = par(mar = c(5,5,1,1))
 	plot(0:5, LOOCV_indep, ylim = c(0.19, 0.56), type = 'l', lwd = 3, 
-		xlab = 'Order of Polynomial', ylab = 'RMSPE using LOOCV', cex.axis = 1.5, cex.lab = 2)
+		xlab = 'Order of Polynomial', ylab = 'RMSPE using LOOCV', cex.axis = 1.5, 
+		cex.lab = 2)
 	points(0:5, LOOCV_indep, pch = 19, cex = 3)
 	lines(0:5, LOOCV_spatial_MLE, lty = 2, lwd = 3)
 	points(0:5, LOOCV_spatial_MLE, pch = 1, cex = 3)
@@ -937,6 +939,107 @@ system(paste0('rm ','\'',SLEDbook_path,
 #-------------------------------------------------------------------------------
 ################################################################################
 
+# create distance matrix
+distmat = as.matrix(dist(DF[,c('easting','northing')]))
+# get response variable
+y = DF$y
+
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+xx = (1:40)/40 - 1/40/2
+yy = xx
+xx = (xx - 0.5)*0.5 + optM2LLprof$par[1]
+yy = (yy - 0.5)*0.5 + optM2LLprof$par[2]
+z = matrix(NA, nrow = 40, ncol = 40)
+for(i in 1:40) {
+	for(j in 1:40) {
+		z[i,j] = m2LLprof(c(xx[i],yy[j]), extrap = 1, y = y, X = X0, 
+			distmat = distmat, spatial_model = Matern_spatial_model, MLmeth = 'REMLE')
+	}
+}
+
+# check for multimodality, and that we are at the minimum
+nbrks = 20
+brks = quantile(z, probs = (0:nbrks)/nbrks)
+cramp = viridis(nbrks)
+image(xx, yy, z, breaks = brks, col = cramp, main = 'Constant Mean Model', 
+	cex.main = 2, xlab = 'log(range)', ylab = 'logit(proportion)',
+	cex.axis = 1.5, cex.lab = 2)
+points(optM2LLprof$par[1], optM2LLprof$par[2], pch = 19, cex = 2, col = 'white')
+
+extrap_set = c(0.2, 0.5, 0.7, 1, 1.5, 2.5, 4, 8)
+hold_m2LL = hold_logrange = hold_logitprop = NULL
+for(extrap in extrap_set) {
+	# inital covariance values for profiled restricted likelihood
+	theta = c(0.5, logit(.01/.6))
+	# minimization
+	optM2LLprof = optim(theta, m2LLprof, extrap = extrap, y = y, X = X0, 
+		distmat = distmat, spatial_model = Matern_spatial_model, MLmeth = 'REMLE')
+	# minimized value of the minus 2 times profiled restricted loglikelihood
+	hold_m2LL = c(hold_m2LL, optM2LLprof$value)
+	# REMLE for the range parameter on log scale
+	hold_logrange = c(hold_logrange, optM2LLprof$par[1])
+	# REMLE for the nugget to total sill ratio on logit scale
+	hold_logitprop = c(hold_logitprop, optM2LLprof$par[2])
+}
+
+# inital covariance values for profiled restricted likelihood
+theta = c(0, logit(.1/.6))
+# minimization
+optM2LLprof = optim(theta, m2LLprof, extrap = 1, y = y, X = X0, 
+	distmat = distmat, spatial_model = Matern_spatial_model, MLmeth = 'REMLE')
+# minimized value of the minus 2 times profiled restricted loglikelihood
+optM2LLprof$value
+# REMLE for the range parameter on log scale
+optM2LLprof$par[1]
+# REMLE for the nugget to total sill ratio on logit scale
+optM2LLprof$par[2]
+
+file_name = "Matern_SO4"
+
+pdf(paste0(file_name,'.pdf'), width = 15, height = 7.5)
+
+	layout(matrix(c(1,2,3,4,4,4), ncol = 2))
+
+	par(mar = c(0,6,1,1))
+	plot(1:8, hold_m2LL, type = 'l', lwd = 3, xaxt = 'n', xlab = '', yaxt = 'n',
+		ylim = c(297,309), ylab = '-2*loglikelihood', cex.axis = 1.5, cex.lab = 2.3)
+	points(1:8, hold_m2LL, pch = 19, cex = 3)
+	lines(c(1,8), c(hold_m2LL[4]+ 3.84,hold_m2LL[4]+ 3.84), lty = 2, lwd = 3)
+	axis(2, at = c(298, 303, 308), cex.axis = 2)
+	par(mar = c(0,6,0,1))
+	plot(1:8, hold_logrange, type = 'l', lwd = 3, xaxt = 'n', xlab = '', 
+		yaxt = 'n', ylim = c(-2,5), ylab = 'log(range)', cex.axis = 1.5, 
+		cex.lab = 2.3)
+	points(1:8, hold_logrange, pch = 19, cex = 3)
+	axis(2, at = c(-1, 1, 3), cex.axis = 2)
+	par(mar = c(6,6,0,1))
+	plot(1:8, hold_logitprop, type = 'l', lwd = 3, xaxt = 'n', yaxt = 'n',
+		ylim = c(-5,0), ylab = 'logit(proportion)', cex.axis = 1.5, cex.lab = 2.3,
+		xlab = 'Smoothness Parameter')
+	points(1:8, hold_logitprop, pch = 19, cex = 3)
+	axis(2, at = c(-5, -3, -1), cex.axis = 2)
+	axis(1, at = 1:8, labels = extrap_set, cex.axis = 2)
+
+	nbrks = 20
+	brks = quantile(z, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	par(mar = c(6,6,1,1))
+	image(xx, yy, z, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(range)', ylab = 'logit(proportion)',
+		cex.axis = 2, cex.lab = 2.3)
+	points(optM2LLprof$par[1], optM2LLprof$par[2], pch = 19, cex = 2, col = 'white')
+
+	par(old.par)
+	
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -945,7 +1048,6 @@ system(paste0('rm ','\'',SLEDbook_path,
 ################################################################################
 
 data(USboundary)
-str(USboundary)
 USboundary@bbox[1,2] - USboundary@bbox[1,1]
 USboundary@bbox[2,2] - USboundary@bbox[2,1]
 # spacing
