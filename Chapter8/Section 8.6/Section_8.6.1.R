@@ -14,6 +14,7 @@ library(viridis)
 library(classInt)
 library(colorspace)
 library(spdep)
+library(Matrix)
 
 # load data for graphics and analysis
 data(sealPolys)
@@ -89,6 +90,11 @@ distMat4 = distMat*Nmat4
 rownames(distMat4) = attr(Nlist,'polyid')
 colnames(distMat4) = attr(Nlist,'polyid')
 
+# some useful transformations
+logit = function(x) {log(x/(1 - x))}
+expit = function(x) {exp(x)/(1 + exp(x))}
+
+
 #-------------------------------------------------------------------------------
 #
 #           makeCovMat
@@ -108,11 +114,11 @@ colnames(distMat4) = attr(Nlist,'polyid')
 #' @param logical value on whether Nmat should be row-standardized
 #' @param rhobound a vector of two elements containing bounds for rho.  This should be determined from the eigenvalues of Nmat prior to running function
 #'
-#' @return two times the negative log-likelihood
+#' @return A covariance matrix
 #'
 #' @author Jay Ver Hoef jverhoef
-#' @rdname m2LL
-#' @export m2LL 
+#' @rdname makeCovMat
+#' @export makeCovMat 
 
 makeCovMat = function(theta, indComp = TRUE, Nmat = NULL, 
   distMat = NULL, indSamp, model = 'CAR', rowStand = TRUE, 
@@ -226,25 +232,140 @@ X0 = as.matrix(model.matrix(Estimate ~ 1, data = DF))
 X1 = as.matrix(model.matrix(Estimate ~ I(as.factor(stockid)), data = DF))
 y = DF$Estimate[!is.na(DF$Estimate)]
 
-theta = c(2, 0)
+################################################################################
+#-------------------------------------------------------------------------------
+#                  CAR and SAR Likelihoods
+#-------------------------------------------------------------------------------
+################################################################################
 
-ntheta = 2
+#reproduce parts of Figure 5 in Ver Hoef et al. 2018
+#investigate CAR versus SAR, and Row-standardized versus unstandardized
+evals = eigen(Nmat1)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_C1U = optOut$objective
 
-if(ntheta == 1) {
-	# undebug(m2LL)
-	# undebug(makeCovMat)
-  optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-		Nmat = Nmat4, indComp = FALSE, indSamp = indSamp)
-  theta = optOut$minimum
-  m2LLargmin = optOut$objective
-  } else {
-	# undebug(m2LL)
-	# undebug(makeCovMat)
-  optOut = optim(rep(0, times = ntheta), m2LL, X = X1, y = y, 
-		indSamp = indSamp, Nmat = Nmat4, indComp = FALSE)
-  theta = optOut$par
-  m2LLargmin = optOut$value
-}
+evals = eigen(Nmat2)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_C2U = optOut$objective
+
+evals = eigen(Nmat4)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_C4U = optOut$objective
+
+
+evals = eigen(Nmat1)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_S1U = optOut$objective
+
+
+evals = eigen(Nmat2)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_S2U = optOut$objective
+
+evals = eigen(Nmat4)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_S4U = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+m2LLargmin_C1R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+m2LLargmin_C2R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+m2LLargmin_C4R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+m2LLargmin_S1R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$par
+m2LLargmin_S2R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$par
+m2LLargmin_S4R = optOut$objective
+
+pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
+	m2LLargmin = c(m2LLargmin_C1U, m2LLargmin_C2U, m2LLargmin_C4U, m2LLargmin_S1U,
+		m2LLargmin_S2U, m2LLargmin_S4U, m2LLargmin_C1R, m2LLargmin_C2R,
+		m2LLargmin_C4R, m2LLargmin_S1R,  m2LLargmin_S2R,  m2LLargmin_S4R)
+	labs = c('C1U', 'C2U', 'C4U', 'S1U', 'S2U', 'S4U', 	
+		'C1R', 'C2R', 'C4R', 'S1R', 'S2R', 'S4R')
+	par(mar = c(5,5,1,1))
+	plot(1:12, -m2LLargmin, pch = 19, cex = 3, ylab = '2(log-likelihood)', 
+		cex.axis = 1.5, cex.lab = 2, xaxt = 'n', xlab = '')
+	axis(1, at = 1:12, labels = labs, las = 2, cex.axis = 1.5)
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+################################################################################
+#-------------------------------------------------------------------------------
+#          Profile Likelihood for Autocorrelation Parameter
+#-------------------------------------------------------------------------------
+################################################################################
+
+#use C4R model
+# evaluate likelihood for various rho values while optimizing over all others
 X = X1
 WMi = makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, indComp = FALSE)
 WMi.oo = WMi[indSamp,indSamp] 
@@ -262,9 +383,10 @@ n = length(y)
 p = length(X[1,])
 sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
 bHat_se = sqrt(sigma*diag(covb))
-bHat_se
-bHat/bHat_se
-
+cbind(bHat,
+	bHat_se,
+	bHat/bHat_se)
+optOut$value
 
 optOut = optim(rep(0, times = 3), m2LL, X = X1, y = y, 
 	indSamp = indSamp, Nmat = Nmat4, distMat = distMat4, indComp = FALSE,
@@ -291,3 +413,20 @@ p = length(X[1,])
 sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
 bHat_se = sqrt(sigma*diag(covb))
 bHat_se
+
+
+if(ntheta == 1) {
+	# undebug(m2LL)
+	# undebug(makeCovMat)
+  optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+		Nmat = Nmat4, indComp = FALSE, indSamp = indSamp)
+  theta = optOut$minimum
+  m2LLargmin = optOut$objective
+  } else {
+	# undebug(m2LL)
+	# undebug(makeCovMat)
+  optOut = optim(c(2,0), m2LL, X = X1, y = y, 
+		indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
+  theta = optOut$par
+  m2LLargmin = optOut$value
+}
