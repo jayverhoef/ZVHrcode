@@ -615,3 +615,21 @@ sqrt(t(cont) %*% (sigma*covb) %*% cont)
 # Prob of t-value given null hypothesis of equality
 2*(1-pt(abs((t(cont) %*% bHat)/sqrt(t(cont) %*% (sigma*covb) %*% cont)), 
 	df = n - p))
+
+
+################################################################################
+#-------------------------------------------------------------------------------
+#                  Prediction
+#-------------------------------------------------------------------------------
+################################################################################
+
+Xall = as.matrix(model.matrix( ~ I(as.factor(stockid)), data = DF))
+Vpred = solve(WMi)[indSamp,!indSamp]
+preds <- matrix(NA, nrow = sum(!indSamp), ncol = 2)
+preds[,1] <- apply(as.vector(Vi.oo %*% y) * Vpred, 2, sum) +
+	Xall[!indSamp,] %*% bHat - t(Vpred) %*% ((Vi.oo %*% X1) %*% bHat)	
+preds[,2] <- sqrt(rep(sill, times = np) - 
+	apply(ViVpred * Vpred, 2, sum) +
+	apply((covb %*% t(Xp)) * t(Xp), 2, sum) -
+	2*apply((covb %*% t(Xp)) * (t(X) %*% ViVpred), 2, sum) +
+	apply(((covb %*% t(ViX)) %*% Vpred) * (t(X) %*% ViVpred), 2, sum))
