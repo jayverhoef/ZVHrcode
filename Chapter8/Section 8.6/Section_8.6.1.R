@@ -497,10 +497,26 @@ for(i in thetatry)
 	LL2_C4R = c(LL2_C4R, 
 		-m2LL(i, X = X1, y = y, indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, 
 			MLmeth = 'MLE'))
-plot(rhovals, LL2_C4R, type = 'l', lwd = 3)
-LB = -m2LLargmin_C4R - qchisq(0.95, df = 1)
-lines(c(rhovals[1], rhovals[81]), c(LB, LB),
-	lty = 2, lwd = 3)
+
+file_name = 'seal_rhoprofile'
+pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
+
+	plot(rhovals, LL2_C4R, type = 'l', lwd = 3, ylab = '2 x loglikelihood',
+		xlab = 'rho values')
+	LB = -m2LLargmin_C4R - qchisq(0.95, df = 1)
+	lines(c(rhovals[1], rhovals[81]), c(LB, LB),
+		lty = 2, lwd = 3)
+	
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
 # use profile likelihood to get confidence interval on autocorrelation parameter	
 
 minrhoindx = min(which(LL2_C4R > -m2LLargmin_C4R - qchisq(0.95, df = 1)))
@@ -624,12 +640,56 @@ sqrt(t(cont) %*% (sigma*covb) %*% cont)
 ################################################################################
 
 Xall = as.matrix(model.matrix( ~ I(as.factor(stockid)), data = DF))
-Vpred = solve(WMi)[indSamp,!indSamp]
+Xp = Xall[!indSamp,]
+Vall = solve(WMi)
+Vpred = Vall[indSamp,!indSamp]
+ViVpred = Vi.oo %*% Vpred
+ViX = Vi.oo %*% X1
 preds <- matrix(NA, nrow = sum(!indSamp), ncol = 2)
 preds[,1] <- apply(as.vector(Vi.oo %*% y) * Vpred, 2, sum) +
-	Xall[!indSamp,] %*% bHat - t(Vpred) %*% ((Vi.oo %*% X1) %*% bHat)	
-preds[,2] <- sqrt(rep(sill, times = np) - 
+	Xp %*% bHat - t(Vpred) %*% ((Vi.oo %*% X1) %*% bHat)	
+preds[,2] <- sqrt(diag(Vall[!indSamp, !indSamp]) - 
 	apply(ViVpred * Vpred, 2, sum) +
 	apply((covb %*% t(Xp)) * t(Xp), 2, sum) -
-	2*apply((covb %*% t(Xp)) * (t(X) %*% ViVpred), 2, sum) +
+	2*apply((covb %*% t(Xp)) * (t(X1) %*% ViVpred), 2, sum) +
 	apply(((covb %*% t(ViX)) %*% Vpred) * (t(X) %*% ViVpred), 2, sum))
+
+plot(sealPolys)
+Pts = coordinates(sealPolys)
+Pts = Pts[!indSamp,]
+points(Pts, pch = 19, col = 'red')
+
+file_name = 'seal_preds'
+pdf(paste0(file_name,'.pdf'), width = 17, height = 8.5)
+
+	layout(matrix(c(1,2), nrow = 1))
+	source('addBreakColorLegend.R')
+	cip = classIntervals(preds[,1], n = 6, style = 'fisher')
+	palp = viridis(6)
+	cip_colors = findColours(cip, palp)
+	old.par = par(mar = c(0,0,5,0))
+	plot(sealPolys)
+	points(Pts, pch = 19, col = cip_colors, cex = 2)
+	addBreakColorLegend(xleft = 1330000, ybottom = 986649, xright = 1390000, ytop = 1201343,
+		breaks = cip$brks, colors = palp, cex = 2, printFormat = "4.3")
+	text(920000, 1190000, 'A', cex = 6)
+
+	cip = classIntervals(preds[,2], n = 6, style = 'fisher')
+	palp = cividis(6)
+	cip_colors = findColours(cip, palp)
+	old.par = par(mar = c(0,0,5,0))
+	plot(sealPolys)
+	points(Pts, pch = 19, col = cip_colors, cex = 2)
+	addBreakColorLegend(xleft = 1330000, ybottom = 986649, xright = 1390000, ytop = 1201343,
+		breaks = cip$brks, colors = palp, cex = 2, printFormat = "4.3")
+	text(920000, 1190000, 'B', cex = 6)
+	
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
