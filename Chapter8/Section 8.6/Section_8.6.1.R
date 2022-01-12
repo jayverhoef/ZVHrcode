@@ -15,6 +15,7 @@ library(classInt)
 library(colorspace)
 library(spdep)
 library(Matrix)
+library(xtable)
 
 # load data for graphics and analysis
 data(sealPolys)
@@ -157,7 +158,7 @@ makeCovMat = function(theta, indComp = TRUE, Nmat = NULL,
   if(indComp & !any(c(!is.null(Nmat), !is.null(distMat)))) {
     V = diag(nN)
   }
-  V
+  list(V = V, theta = theta)
 }
 
 #-------------------------------------------------------------------------------
@@ -196,9 +197,10 @@ m2LL = function(theta, X, y, indComp = TRUE, Nmat = NULL,
   ntheta = 0
   nn = length(y)
   nN = length(indSamp)
-	V = makeCovMat(theta = theta, indComp = indComp, Nmat = Nmat, distMat = distMat, 
+	Vlist = makeCovMat(theta = theta, indComp = indComp, Nmat = Nmat, distMat = distMat, 
 		indSamp = indSamp, model = model, rowStand = rowStand, rhoBound = rhoBound)
-  WMi = V
+  WMi = Vlist$V
+  theta = Vlist$theta
   WMi.oo = WMi[indSamp,indSamp] 
   WMi.uu = WMi[!indSamp,!indSamp]
   WMi.uo = WMi[!indSamp,indSamp]
@@ -222,8 +224,9 @@ m2LL = function(theta, X, y, indComp = TRUE, Nmat = NULL,
     (n - p)*(log(2*pi) + 1 - log((n - p)))
 	} else {return('MLmeth argument must be either MLE or REMLE')}
  
+	m2LL = as.numeric(m2LL)
 	attr(m2LL,'covParms') = theta
-	as.numeric(m2LL)
+	m2LL
 }
 
 DF = sealPolys@data
@@ -338,6 +341,7 @@ optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
 theta = optOut$par
 m2LLargmin_S4R = optOut$objective
 
+file_name = 'seal_2LL'
 pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
 	m2LLargmin = c(m2LLargmin_C1U, m2LLargmin_C2U, m2LLargmin_C4U, m2LLargmin_S1U,
 		m2LLargmin_S2U, m2LLargmin_S4U, m2LLargmin_C1R, m2LLargmin_C2R,
@@ -358,16 +362,175 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
 
+# Because the fixed effects do not change, we can also use REMLE
+
+evals = eigen(Nmat1)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_C1U = optOut$objective
+
+evals = eigen(Nmat2)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_C2U = optOut$objective
+
+evals = eigen(Nmat4)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_C4U = optOut$objective
+
+
+evals = eigen(Nmat1)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_S1U = optOut$objective
+
+
+evals = eigen(Nmat2)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_S2U = optOut$objective
+
+evals = eigen(Nmat4)$values
+minevals = min(evals)
+maxevals = max(evals)
+LB = 1/minevals
+UB = 1/maxevals
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
+	rhoBound = c(LB,UB))
+theta = optOut$minimum
+m2LLargmin_REML_S4U = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$minimum
+m2LLargmin_REML_C1R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$minimum
+m2LLargmin_REML_C2R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$minimum
+m2LLargmin_REML_C4R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$minimum
+m2LLargmin_REML_S1R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$par
+m2LLargmin_REML_S2R = optOut$objective
+
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$par
+m2LLargmin_REML_S4R = optOut$objective
+
+file_name = 'seal_2LL_REMLE'
+pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
+	m2LLargmin_REML = c(m2LLargmin_REML_C1U, m2LLargmin_REML_C2U, m2LLargmin_REML_C4U, m2LLargmin_REML_S1U,
+		m2LLargmin_REML_S2U, m2LLargmin_REML_S4U, m2LLargmin_REML_C1R, m2LLargmin_REML_C2R,
+		m2LLargmin_REML_C4R, m2LLargmin_REML_S1R,  m2LLargmin_REML_S2R,  m2LLargmin_REML_S4R)
+	labs = c('C1U', 'C2U', 'C4U', 'S1U', 'S2U', 'S4U', 	
+		'C1R', 'C2R', 'C4R', 'S1R', 'S2R', 'S4R')
+	par(mar = c(5,5,1,1))
+	plot(1:12, -m2LLargmin_REML, pch = 19, cex = 3, ylab = '2(log-likelihood)', 
+		cex.axis = 1.5, cex.lab = 2, xaxt = 'n', xlab = '')
+	axis(1, at = 1:12, labels = labs, las = 2, cex.axis = 1.5)
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+
 ################################################################################
 #-------------------------------------------------------------------------------
 #          Profile Likelihood for Autocorrelation Parameter
 #-------------------------------------------------------------------------------
 ################################################################################
 
-#use C4R model
-# evaluate likelihood for various rho values while optimizing over all others
+thetatry = (-10:70)/20
+rhovals = -1 + 2*expit(thetatry)
+LL2_C4R = NULL
+for(i in thetatry)
+	LL2_C4R = c(LL2_C4R, 
+		-m2LL(i, X = X1, y = y, indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, 
+			MLmeth = 'MLE'))
+plot(rhovals, LL2_C4R, type = 'l', lwd = 3)
+LB = -m2LLargmin_C4R - qchisq(0.95, df = 1)
+lines(c(rhovals[1], rhovals[81]), c(LB, LB),
+	lty = 2, lwd = 3)
+# use profile likelihood to get confidence interval on autocorrelation parameter	
+
+minrhoindx = min(which(LL2_C4R > -m2LLargmin_C4R - qchisq(0.95, df = 1)))
+maxrhoindx = max(which(LL2_C4R > -m2LLargmin_C4R - qchisq(0.95, df = 1)))
+
+# linear interpolation for lower bound if confidence interval
+mean(rhovals[minrhoindx],rhovals[minrhoindx-1])
+mean(rhovals[maxrhoindx],rhovals[maxrhoindx+1])
+
+################################################################################
+#-------------------------------------------------------------------------------
+#                  Estimating Fixed Effects
+#-------------------------------------------------------------------------------
+################################################################################
+
+#use independence model
+lm_summ_out = summary(lm(Estimate ~ I(as.factor(stockid)), data = DF))
+FixEff_LM = as.data.frame(lm_summ_out$coefficients)
+rownames(FixEff_LM) = 1:5
+FixEff_LM = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
+	FixEff_LM)
+
+#use C4R MLE model
 X = X1
-WMi = makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, indComp = FALSE)
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+
+WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
+	indComp = FALSE)$V)
 WMi.oo = WMi[indSamp,indSamp] 
 WMi.uu = WMi[!indSamp,!indSamp]
 WMi.uo = WMi[!indSamp,indSamp]
@@ -383,20 +546,24 @@ n = length(y)
 p = length(X[1,])
 sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
 bHat_se = sqrt(sigma*diag(covb))
-cbind(bHat,
+Pval = 2*(1-pt(abs(bHat/bHat_se), df = n - p))
+FixEff_MLE = cbind(bHat,
 	bHat_se,
-	bHat/bHat_se)
-optOut$value
+	bHat/bHat_se,
+	Pval)
+rownames(FixEff_MLE) = 1:5
+FixEff_MLE = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
+	FixEff_MLE)
+colnames(FixEff_MLE) = colnames(FixEff_LM)
 
-optOut = optim(rep(0, times = 3), m2LL, X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, distMat = distMat4, indComp = FALSE,
-	MLmeth = 'MLE')
-theta = optOut$par
-m2LLargmin = optOut$value
-
+#use C4R REMLE model
 X = X1
-WMi = makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, distMat = distMat4,
-	indComp = FALSE)
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
+theta = optOut$minimum
+
+WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
+	indComp = FALSE)$V)
 WMi.oo = WMi[indSamp,indSamp] 
 WMi.uu = WMi[!indSamp,!indSamp]
 WMi.uo = WMi[!indSamp,indSamp]
@@ -412,21 +579,39 @@ n = length(y)
 p = length(X[1,])
 sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
 bHat_se = sqrt(sigma*diag(covb))
-bHat_se
+Pval = 2*(1-pt(abs(bHat/bHat_se), df = n - p))
+FixEff_REMLE = cbind(bHat,
+	bHat_se,
+	bHat/bHat_se,
+	Pval)
+rownames(FixEff_REMLE) = 1:5
+FixEff_REMLE = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
+	FixEff_REMLE)
+colnames(FixEff_REMLE) = colnames(FixEff_LM)
 
+FixEff = rbind(FixEff_LM, FixEff_MLE, FixEff_REMLE)
+print(
+    xtable(FixEff, 
+      align = c('l',rep('l', times = length(FixEff[1,]))),
+      digits = c(0,0,rep(3, times = 3),5),
+      caption = 'Fitted fixed effects',
+      label = 'tab:SealsFixEff'
+    ),
+    size = 'footnotesize',
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
 
-if(ntheta == 1) {
-	# undebug(m2LL)
-	# undebug(makeCovMat)
-  optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-		Nmat = Nmat4, indComp = FALSE, indSamp = indSamp)
-  theta = optOut$minimum
-  m2LLargmin = optOut$objective
-  } else {
-	# undebug(m2LL)
-	# undebug(makeCovMat)
-  optOut = optim(c(2,0), m2LL, X = X1, y = y, 
-		indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
-  theta = optOut$par
-  m2LLargmin = optOut$value
-}
+# Compare Stock 9 to Stock 11 using REML estimates
+cont = matrix(c(0,-1, 0, 1, 0), ncol = 1)
+t(cont) %*% bHat
+# standard error
+sqrt(t(cont) %*% (sigma*covb) %*% cont)
+# t-value 
+(t(cont) %*% bHat)/sqrt(t(cont) %*% (sigma*covb) %*% cont)
+# Prob of t-value given null hypothesis of equality
+2*(1-pt(abs((t(cont) %*% bHat)/sqrt(t(cont) %*% (sigma*covb) %*% cont)), 
+	df = n - p))
