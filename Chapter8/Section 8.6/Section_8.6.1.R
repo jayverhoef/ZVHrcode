@@ -147,7 +147,7 @@ makeCovMat = function(theta, indComp = TRUE, Nmat = NULL,
     if(rowStand) rs = apply(V,1,sum)
     if(model == 'CAR')  V = diag(rs) - rho*V
     if(model == 'SAR') V = (diag(nN) - rho*(1/rs)*V) %*%
-      (diag(nN) - rho*t((1/rs)*V))
+      (diag(nN) - rho*Matrix:::t((1/rs)*V))
   }
   if(indComp & any(c(!is.null(Nmat), !is.null(distMat)))) {
     itheta = itheta + 1
@@ -205,8 +205,8 @@ m2LL = function(theta, X, y, indComp = TRUE, Nmat = NULL,
   WMi.uu = WMi[!indSamp,!indSamp]
   WMi.uo = WMi[!indSamp,indSamp]
   WMi.ou = WMi[indSamp,!indSamp]
-  Vi.oo = WMi.oo - WMi.ou %*% solve(WMi.uu, WMi.uo)
-  XVi = t(X) %*% Vi.oo
+  Vi.oo = WMi.oo - WMi.ou %*% Matrix:::solve(WMi.uu, WMi.uo)
+  XVi = t(X) %*% as.matrix(Vi.oo)
   covbi = XVi %*% X
   covb = solve(covbi)
   bHat = covb %*% XVi %*% y
@@ -215,11 +215,11 @@ m2LL = function(theta, X, y, indComp = TRUE, Nmat = NULL,
   p = length(X[1,])
   if(MLmeth == 'MLE') {
   m2LL = n*log(t(r) %*% Vi.oo %*% r) - 
-    as.numeric(determinant(Vi.oo, logarithm = TRUE)$modulus) +
+    as.numeric(Matrix:::determinant(Vi.oo, logarithm = TRUE)$modulus) +
     n*(log(2*pi) + 1 - log(n))
 	} else if(MLmeth == 'REMLE') {
   m2LL = (n-p)*log(t(r) %*% Vi.oo %*% r) - 
-    as.numeric(determinant(Vi.oo, logarithm = TRUE)$modulus) +
+    as.numeric(Matrix:::determinant(Vi.oo, logarithm = TRUE)$modulus) +
     as.numeric(determinant(XVi %*% X, logarithm = TRUE)$modulus) +
     (n - p)*(log(2*pi) + 1 - log((n - p)))
 	} else {return('MLmeth argument must be either MLE or REMLE')}
@@ -248,6 +248,7 @@ minevals = min(evals)
 maxevals = max(evals)
 LB = 1/minevals
 UB = 1/maxevals
+#undebug(m2LL)
 optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
 	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE',
 	rhoBound = c(LB,UB))
@@ -282,6 +283,7 @@ minevals = min(evals)
 maxevals = max(evals)
 LB = 1/minevals
 UB = 1/maxevals
+#undebug(makeCovMat)
 optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
 	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
 	rhoBound = c(LB,UB))
@@ -639,9 +641,35 @@ sqrt(t(cont) %*% (sigma*covb) %*% cont)
 #-------------------------------------------------------------------------------
 ################################################################################
 
+X = X1
+optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
+	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
+theta = optOut$minimum
+theta
+-1 + expit(theta)*2
+      
+WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
+	indComp = FALSE)$V)
+WMi.oo = WMi[indSamp,indSamp] 
+WMi.uu = WMi[!indSamp,!indSamp]
+WMi.uo = WMi[!indSamp,indSamp]
+WMi.ou = WMi[indSamp,!indSamp]
+Vi.oo = WMi.oo - WMi.ou %*% solve(WMi.uu, WMi.uo)
+XVi = t(X) %*% Vi.oo
+covbi = XVi %*% X
+covb = solve(covbi)
+bHat = covb %*% XVi %*% y
+bHat
+r = as.matrix(y - X %*% bHat)
+n = length(y)
+p = length(X[1,])
+sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
+Vi.oo = Vi.oo/sigma
+covb = sigma*covb
+
 Xall = as.matrix(model.matrix( ~ I(as.factor(stockid)), data = DF))
 Xp = Xall[!indSamp,]
-Vall = solve(WMi)
+Vall = sigma*solve(WMi)
 Vpred = Vall[indSamp,!indSamp]
 ViVpred = Vi.oo %*% Vpred
 ViX = Vi.oo %*% X1
@@ -653,6 +681,12 @@ preds[,2] <- sqrt(diag(Vall[!indSamp, !indSamp]) -
 	apply((covb %*% t(Xp)) * t(Xp), 2, sum) -
 	2*apply((covb %*% t(Xp)) * (t(X1) %*% ViVpred), 2, sum) +
 	apply(((covb %*% t(ViX)) %*% Vpred) * (t(X) %*% ViVpred), 2, sum))
+# program it from Schabenberger/Gotway, pg. 243
+pse  = sqrt(diag(Vall[!indSamp, !indSamp] - t(Vpred) %*% ViVpred + 
+	(Xp - t(Vpred) %*% ViX) %*% solve(t(X1) %*% ViX) %*%
+	t(Xp - t(Vpred) %*% ViX)))
+cbind(preds[,2],pse)
+
 
 plot(sealPolys)
 Pts = coordinates(sealPolys)

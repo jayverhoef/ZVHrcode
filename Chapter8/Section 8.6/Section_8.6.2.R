@@ -14,6 +14,8 @@ library(viridis)
 library(classInt)
 library(colorspace)
 library(spdep)
+library(spmodel)
+
 
 # load data for graphics and analysis
 data(caribouDF)
@@ -22,17 +24,185 @@ data(caribouDF)
 #                    Create Neighborhood Matrices
 #-------------------------------------------------------------------------------
 
-nTot = length(sealPolys)
-nObs = sum(!is.na(sealPolys$Estimate))
-nMiss = nTot - nObs
+nTot = length(caribouDF)
 
 # get Euclidean distance between centroids of plots
 Distmat = as.matrix(dist(caribouDF[,c('x','y')]))
 # create first-order neighbor matrix (rook's move) from distances
 Nmat1 = (Distmat < 1.01)*1
 diag(Nmat1) = 0
+# create second-order neighbor matrix (neighbors of neighbors) from first-order
 Nmat2 = (Nmat1 %*% Nmat1 > 0 | Nmat1 > 0)*1
 diag(Nmat2) = 0
+# create various diagonals for M matrices
+M1 = apply(Nmat1, 1, sum)  # row sums
+M1i = 1/apply(Nmat1, 1, sum)  # reciprocals of row sums
+M11 = rep(1, times = length(M1))  # all ones
+
+# manually compute row standardization
+Nmat1st = Nmat1*M1i
+
+#-------------------------------------------------------------------------------
+#                     Compare independence model to
+#                exponential, spherical (geostat models) to
+#                    CAR and SAR (autoregressive models)
+#          for full covariate model (2 main effects and interaction)
+#-------------------------------------------------------------------------------
+
+# independence model
+lm_all = lm(z ~ water*tarp, data = caribouDF)
+summary(lm_all)
+
+# CAR simple weighting, M all 1's           ***OK***
+car_all = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1, M = M11,
+	spcov_type = 'car', estmethod = 'ml', row_st = FALSE)
+summary(car_all)
+
+# CAR simple weighting, leave M unspecified       ***OK, same as above***
+car_all_1 = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1, 
+	spcov_type = 'car', estmethod = 'ml', row_st = FALSE)
+summary(car_all_1)
+  
+# CAR manual row-standardization, M = inverse sum of rows before standardizing          
+car_all_RSm = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1st, M = M1i, 
+	spcov_type = 'car', estmethod = 'ml', row_st = FALSE)
+summary(car_all_RSm)
+
+# CAR automatic row-standardization, M unspecified          
+car_all_RSa = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1,
+	spcov_type = 'car', estmethod = 'ml', row_st = TRUE)
+summary(car_all_RSa)
+
+# SAR simple weighting, leave M unspecified       ***OK, same as above***
+sar_all_1 = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1, 
+	spcov_type = 'sar', estmethod = 'ml', row_st = FALSE)
+summary(sar_all_1)
+
+# SAR manual row-standardization, leave M unspecified     
+sar_all_RSm = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1st, 
+	spcov_type = 'sar', estmethod = 'ml', row_st = FALSE)
+summary(sar_all_RSm)
+
+# SAR automatic row-standardization, leave M unspecified  ***OK, same as above***  
+sar_all_RSa = spautor(z ~ water*tarp, data = caribouDF, W = Nmat1, 
+	spcov_type = 'sar', estmethod = 'ml', row_st = TRUE)
+summary(sar_all_RSa)
+
+# spherical geostatistical model 
+geo_all_sph = splm(z ~ water*tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical',
+	control = list(reltol = 1e-6), estmethod = 'ml')
+summary(geo_all_sph)
+
+# exponential geostatistical model 
+geo_all_exp = splm(z ~ water*tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'exponential',
+	control = list(reltol = 1e-6), estmethod = 'ml')
+summary(geo_all_exp)
+
+#-------------------------------------------------------------------------------
+#                     Model selection on covariates
+#-------------------------------------------------------------------------------
+
+lm_mains = lm(z ~ water + tarp, data = caribouDF)
+
+car_mains = spautor(z ~ water + tarp, data = caribouDF, W = Nmat1, 'car',
+  estmethod = 'ml')
+
+geo_mains = splm(z ~ water + tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical',
+	control = list(reltol = 1e-6), estmethod = 'ml')
+
+lm_tarp = lm(z ~ tarp, data = caribouDF)
+
+car_tarp = spautor(z ~ tarp, data = caribouDF, W = Nmat1, 'car',
+  estmethod = 'ml')
+
+geo_tarp = splm(z ~ tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical',
+	control = list(reltol = 1e-6), estmethod = 'ml')
+
+lm_mean = lm(z ~ 1, data = caribouDF)
+
+car_mean = spautor(z ~ 1, data = caribouDF, W = Nmat1, 'car',
+  estmethod = 'ml')
+
+geo_mean = splm(z ~ 1, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical',
+	control = list(reltol = 1e-6), estmethod = 'ml')
+
+#-------------------------------------------------------------------------------
+#                    Testing anova() function
+#-------------------------------------------------------------------------------
+
+#behavior for single objects
+anova(lm_all)
+anova(car_tarp)
+summary(car_tarp)
+
+#behavior for 2 objects
+anova(lm_all, lm_mains)
+
+anova(car_all, car_mains)
+car_all$optim$value
+car_mains$optim$value
+
+anova(geo_all, geo_mains)
+geo_all$optim$value
+geo_mains$optim$value
+
+#behavior for multiple objects
+anova(lm_all, lm_mains, lm_tarp, lm_mean)
+#effect of order
+anova(lm_all, lm_mean, lm_tarp, lm_mains)
+
+anova(car_all, car_mains, car_tarp)
+anova(geo_all, geo_mains, geo_tarp)
+
+#effect of defaults
+geo_all_def = splm(z ~ water*tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical')
+geo_mains_def = splm(z ~ water + tarp, data = caribouDF,
+	xcoord = 'x', ycoord = 'y', spcov_type = 'spherical')
+anova(geo_all_def, geo_mains_def)
+geo_all_def$optim$value
+geo_mains_def$optim$value
+
+# contrasts for geo model
+colnames(model.matrix(geo_tarp))
+tidy(anova(geo_tarp, L = list(c(0, 1, -1))))
+#by hand
+L = matrix(c(0, 1, -1),ncol = 1)
+t(L) %*% geo_tarp$coefficients$fixed
+sqrt(t(L) %*% geo_tarp$vcov$fixed %*% L)
+tval = abs(as.numeric(t(L) %*% geo_tarp$coefficients$fixed/
+	sqrt(t(L) %*% geo_tarp$vcov$fixed %*% L)))
+tval
+Fval = tval^2
+Fval
+# use t-distribution
+2*(1 - pt(2.80963, 24))
+# use standard normal
+2*(1 - pnorm(2.80963))
+
+
+# contrasts for car model
+colnames(model.matrix(car_tarp))
+tidy(anova(car_tarp, L = list(c(0, 1, -1))))
+#by hand
+L = matrix(c(0, 1, -1),ncol = 1)
+t(L) %*% car_tarp$coefficients$fixed
+sqrt(t(L) %*% car_tarp$vcov$fixed %*% L)
+tval = abs(as.numeric(t(L) %*% car_tarp$coefficients$fixed/
+	sqrt(t(L) %*% car_tarp$vcov$fixed %*% L)))
+tval
+Fval = tval^2
+Fval
+# use t-distribution
+2*(1 - pt(2.80963, 24))
+# use standard normal
+2*(1 - pnorm(2.80963))
+
 
 #-------------------------------------------------------------------------------
 #

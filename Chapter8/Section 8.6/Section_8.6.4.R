@@ -14,6 +14,8 @@ library(viridis)
 library(classInt)
 library(colorspace)
 library(gstat)
+library(spmodel)
+
 # load data for graphics and analysis
 data(MOSSobs)
 data(MOSSpreds)
@@ -23,6 +25,7 @@ DF = data.frame(MOSSobs@data, easting = MOSSobs@coords[,1]/1e+3,
 DF$year = as.factor(DF$year)
 DF$field_dup = as.factor(DF$field_dup)
 DF$Zn = log(DF$Zn)
+DF$Pb = log(DF$Pb)
 DF$dist2road = log(DF$dist2road)
 
 
@@ -95,7 +98,7 @@ m2LL = function(theta, y, X, distmat1, distmat2, indx1, indx2,
 	diag(cormat2) = psill + nugget
 	cormat[indx1,indx1] = cormat1
 	cormat[indx2,indx2] = cormat2
-  cormat = cormat + sigrep*(Z1 %*% t(Z1)) + siglab*(Z2 %*% t(Z2))
+	cormat = cormat + sigrep*(Z1 %*% t(Z1)) + siglab*(Z2 %*% t(Z2))
 	cormatinv = solve(cormat)
 	cormatinvX = cormatinv %*% X
 	cormatinvY = cormatinv %*% y
@@ -111,6 +114,7 @@ m2LL = function(theta, y, X, distmat1, distmat2, indx1, indx2,
 M2LL_parms = function(optM2LLout, y, X, distmat1, distmat2, indx1, indx2,
 	spatial_model, Z1, Z2, MLmeth = 'REMLE')
 {
+	theta = optM2LLout$par
 	# range parameter
 	range = exp(theta[1])
 	# variance due to nugget
@@ -130,40 +134,40 @@ M2LL_parms = function(optM2LLout, y, X, distmat1, distmat2, indx1, indx2,
 	diag(cormat2) = psill + nugget
 	cormat[indx1,indx1] = cormat1
 	cormat[indx2,indx2] = cormat2
-  cormat = cormat + sigrep*(Z1 %*% t(Z1)) + siglab*(Z2 %*% t(Z2))
+	cormat = cormat + sigrep*(Z1 %*% t(Z1)) + siglab*(Z2 %*% t(Z2))
 	cormatinv = solve(cormat)
 	cormatinvX = cormatinv %*% X
 	cormatinvY = cormatinv %*% y
 	bhat = solve(t(X) %*% cormatinvX, t(X) %*% cormatinvY)
-	r = y - X %*% bhat
-	if(MLmeth == 'MLE') var_est = t(r) %*% (cormatinv %*% r)/(n)
-	if(MLmeth == 'REMLE') var_est = t(r) %*% (cormatinv %*% r)/(n - p)
-	list(var_est = var_est, beta_est = bhat, 
-		beta_var = solve(t(X) %*% cormatinvX), resid = r)
+	covb = solve(t(X) %*% cormatinvX)
+	list(var_est = nugget + psill + sigrep + siglab, beta_est = bhat, 
+		covb = covb)
 }
 
-LOO_crossvalidation = function(optM2LLout, M2LLprof = TRUE, y, X, distmat, 
-	spatial_model)
+LOO_crossvalidation = function(optM2LLout, y, X, distmat1, distmat2, 
+	indx1, indx2, spatial_model, Z1, Z2)
 {
-	if(M2LLprof == TRUE) {
-		# range parameter
-		range = exp(optM2LLout$par[1])
-		# proportion of variance due to nugget
-		propnug = exp(optM2LLout$par[2])/(1 + exp(optM2LLout$par[2]))
-		n = dim(X)[1]
-		p = dim(X)[2]
-		V = (1 - propnug)*spatial_model(distmat/range)
-		diag(V) = 1
-	}
-	if(M2LLprof == FALSE) {
-		range = exp(optM2LLout$par[1])
-		nugget = exp(optM2LLout$par[2])
-		psill = exp(optM2LLout$par[3])
-		n = dim(X)[1]
-		p = dim(X)[2]
-		V = psill*spatial_model(distmat/range)
-		diag(V) = psill + nugget
-	}
+  theta = optM2LLout$par
+  # range parameter
+  range = exp(theta[1])
+  # variance due to nugget
+  nugget = exp(theta[2])
+  # variance due to partial sill (spatially structured)
+  psill = exp(theta[3])
+  # variance due to field duplication
+  sigrep = exp(theta[4])
+  # variance due to laboratory replication
+  siglab = exp(theta[5])
+  n = dim(X)[1]
+  p = dim(X)[2]
+  cormat = matrix(0, nrow = n, ncol = n)
+  cormat1 = psill*spatial_model(distmat1/range)
+  diag(cormat1) = psill + nugget
+  cormat2 = psill*spatial_model(distmat2/range)
+  diag(cormat2) = psill + nugget
+  cormat[indx1,indx1] = cormat1
+  cormat[indx2,indx2] = cormat2
+  V = cormat + sigrep*(Z1 %*% t(Z1)) + siglab*(Z2 %*% t(Z2))
   z <- y
   Vi <- solve(V)
   cdd.out <- matrix(-999.9, nrow = n, ncol = 3)
@@ -191,8 +195,8 @@ LOO_crossvalidation = function(optM2LLout, M2LLprof = TRUE, y, X, distmat,
 
 }
 
-X = model.matrix(Zn ~ year + dist2road + sideroad + sideroad*dist2road + 
-	year*dist2road + year*sideroad + year*sideroad*dist2road, data = DF)
+X = model.matrix(Pb ~ year + dist2road + sideroad + sideroad:dist2road + 
+	year:dist2road + year:sideroad + year:sideroad:dist2road, data = DF)
 
 Z1 = model.matrix( ~ -1 + sample, data = DF)
 Z2 = model.matrix( ~ -1 + I(as.factor(paste(sample,field_dup))), data = DF)
@@ -205,31 +209,31 @@ distmat2006 = as.matrix(dist(DF[indx2,c('easting','northing')]))
 # asign the spatial model
 spatial_model = exponential_spatial_model
 # get response variable
-y = DF$Zn
+y = DF$Pb
 
 # inital covariance values for likelihood
-lmout = lm(Zn ~ year + dist2road + sideroad, data = DF)
+lmout = lm(Pb ~ year + dist2road + sideroad, data = DF)
 lmresid = resid(lmout)
 DFres = data.frame(resid = lmresid, x = DF$easting, y = DF$northing)
 library(gstat)
 vgm_resid_dir <- variogram(resid ~ 1,  
-	loc=~x+y, data = DFres[indx1,], cutoff = 10, width = 10/10)
+	loc=~x+y, data = DFres[indx1,], cutoff = 14, width = 10/10)
 plot(vgm_resid_dir$dist, vgm_resid_dir$gamma, xlab = 'Distance (km)',
     ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5, type = 'l',
-    xlim = c(0,10), ylim = c(0,.25))
+    xlim = c(0,15), ylim = c(0,.4))
 points(vgm_resid_dir$dist, vgm_resid_dir$gamma, pch = 19, cex = 3)
 vgm_resid_dir <- variogram(resid ~ 1,  
-	loc=~x+y, data = DFres[indx2,], cutoff = 10, width = 10/10)
+	loc=~x+y, data = DFres[indx2,], cutoff = 14, width = 10/10)
 lines(vgm_resid_dir$dist, vgm_resid_dir$gamma, lty = 2)
 points(vgm_resid_dir$dist, vgm_resid_dir$gamma, pch = 1, cex = 3)
 
 #initial values based on empirical semivariogram
-thetai = c(log(1), log(.15), log(.01), log(.01), log(.01))  
+thetai = c(log(10), log(.03), log(.1), log(.03), log(.03))  
 # minimization
 optM2LL = optim(thetai, m2LL, y = y, X = X, distmat1 = distmat2001, 
 	distmat2 = distmat2006, indx1 = indx1, indx2 = indx2,
 	spatial_model = spherical_spatial_model, Z1 = Z1, Z2 = Z2,
-	MLmeth = 'MLE')
+	MLmeth = 'REMLE')
 # minimized value of the minus 2 times profiled loglikelihood
 optM2LL$value
 exp(optM2LL$par)
@@ -241,14 +245,170 @@ plot((0:70)/2,
 points(0, exp(optM2LL$par[2]) + exp(optM2LL$par[4]) + exp(optM2LL$par[5]) + 
 	exp(optM2LL$par[3]), pch = 19, cex = 2)
 
+#undebug(splm)
+#undebug(spmodel:::cov_estimate_gloglik_splm)
+PbOut = splm(Pb ~ year + dist2road + sideroad + sideroad:dist2road + 
+	year:dist2road + year:sideroad + year:sideroad:dist2road, data = DF,
+	xcoord = 'easting', ycoord = 'northing', spcov_type = 'spherical',
+	partition_factor = ~ year,
+#	spcov_initial = spcov_initial('spherical', range = 4, known = c('range')),
+	random = ~ -1 + sample + I(as.factor(paste(sample,field_dup))),
+	control = list(reltol = 1e-12), estmethod = 'reml')
+summary(PbOut)
+PbOut$optim$value
+
+min(DF$dist2road)
+
+
+PbOut = splmm(Pb ~ year + dist2road + sideroad + sideroad*dist2road + 
+	year*dist2road + year*sideroad + year*sideroad*dist2road, data = DF,
+	spcov_type = 'none')
+summary(PbOut)
+
+summary(lm(Pb ~ year + dist2road + sideroad + sideroad*dist2road + 
+	year*dist2road + year*sideroad + year*sideroad*dist2road, data = DF,
+	spcov_type = 'none'))
+
+lm(Pb ~ dist2road, data = DF[DF$year == '2001' & DF$sideroad == 'N',])
+lm(Pb ~ dist2road, data = DF[DF$year == '2001' & DF$sideroad == 'S',])
+lm(Pb ~ dist2road, data = DF[DF$year == '2006' & DF$sideroad == 'N',])
+lm(Pb ~ dist2road, data = DF[DF$year == '2006' & DF$sideroad == 'S',])
+
 est_parms = M2LL_parms(optM2LL, y = y, X = X, distmat1 = distmat2001, 
 	distmat2 = distmat2006, indx1 = indx1, indx2 = indx2,
-	spatial_model = exponential_spatial_model, Z1 = Z1, Z2 = Z2,
+	spatial_model = spherical_spatial_model, Z1 = Z1, Z2 = Z2,
 	MLmeth = 'MLE')
+est_parms$beta_est
 
 data.frame(est = est_parms$beta_est, 
-	se = sqrt(diag(est_parms$beta_var)),
-	t = est_parms$beta_est/sqrt(diag(est_parms$beta_var)))
+	se = sqrt(diag(est_parms$covb)),
+	t = est_parms$beta_est/sqrt(diag(est_parms$covb)))
+
+PbOut = splmm(Pb ~ year + dist2road + sideroad + sideroad:dist2road + 
+	year:dist2road + year:sideroad + year:sideroad:dist2road, data = DF1,
+	xcoord = 'easting', ycoord = 'northing',  spcov_type = 'spherical',
+	partition_factor = ~ year,
+#	spcov_initial = spcov_initial('spherical', range = 0.5, known = c('extra')),
+	random = ~ -1 + sample + I(as.factor(paste(sample,field_dup))),
+	control = list(reltol = 1e-12), estmethod = 'reml')
+summary(PbOut)
+PbOut$optim$value
+# there will be 4 fitted submodels.  The 3-way interaction specified a different
+# slope for each year/side-of-road combination, while the year*sideroad interaction
+# provides for 4 intercept.  Let's compute the 4 intercepts and slope:
+int_2001N = PbOut$coefficient$fixed[c('(Intercept)')]
+int_2001S = sum(PbOut$coefficient$fixed[c('(Intercept)','sideroadS')])
+int_2006N = sum(PbOut$coefficient$fixed[c('(Intercept)','year2006')])
+int_2006S = sum(PbOut$coefficient$fixed[c('(Intercept)','year2006',
+	'sideroadS', 'year2006:sideroadS')])
+slp_2001N = PbOut$coefficient$fixed[c('dist2road')]
+slp_2001S = sum(PbOut$coefficient$fixed[c('dist2road','dist2road:sideroadS')])
+slp_2006N = sum(PbOut$coefficient$fixed[c('dist2road','year2006:dist2road')])
+slp_2006S = sum(PbOut$coefficient$fixed[c('dist2road','dist2road:sideroadS',
+	'year2006:dist2road','year2006:dist2road:sideroadS')])
+MOSS_data = DF
+#X11()
+old.par = par(mar = c(5,5,1,1))
+  plot(
+    c(-(MOSS_data[MOSS_data$year == 2001 & 
+        MOSS_data$sideroad == 'N','dist2road']),
+      (MOSS_data[MOSS_data$year == 2001 & 
+        MOSS_data$sideroad == 'S','dist2road'])),
+    c((MOSS_data[MOSS_data$year == 2001 & MOSS_data$sideroad == 'N','Pb']),
+      (MOSS_data[MOSS_data$year == 2001 & MOSS_data$sideroad == 'S','Pb'])),
+    xlab = 'Log Distance From Road Towards South', 
+    ylab = 'Log Zinc Concentration', 
+    pch = 19, cex = 1.2, cex.lab = 2, cex.axis = 1.5, ylim = c(-1,9)
+  )
+  points(
+    c(-(MOSS_data[MOSS_data$year == 2006 & 
+        MOSS_data$sideroad == 'N','dist2road']),
+      (MOSS_data[MOSS_data$year == 2006 & 
+        MOSS_data$sideroad == 'S','dist2road'])),
+    c((MOSS_data[MOSS_data$year == 2006 & MOSS_data$sideroad == 'N','Pb']),
+      (MOSS_data[MOSS_data$year == 2006 & MOSS_data$sideroad == 'S','Pb'])),
+    pch = 3, cex = 2, lwd = 1.2
+  )
+  lines(c(0,-11),c(int_2001N, int_2001N + slp_2001N*(11)), lwd = 3, col = 'red')
+  lines(c(0,-11),c(int_2006N, int_2006N + slp_2006N*(11)), lwd = 3, col = 'blue')
+  lines(c(0,11),c(int_2001S, int_2001S + slp_2001S*(11)), lwd = 3, col = 'red')
+  lines(c(0,11),c(int_2006S, int_2006S + slp_2006S*(11)), lwd = 3, col = 'blue')
+  
+  legend(6, 8.1, legend = c('2001', '2006'),
+    pch = c(19, 3), cex = 2.5, lty = c(1,1), col = c('red','blue'))
+par(old.par)
+	
+DF2006 = DF[DF$year == '2006',]
+Pb06 = splmm(Pb ~ dist2road + sideroad + sideroad:dist2road, data = DF2006,
+	spcov_type = 'spherical', xcoord = 'easting', ycoord = 'northing',
+	random = ~ -1 + sample + I(as.factor(paste(sample,field_dup))),
+	control = list(reltol = 1e-12), estmethod = 'reml')
+summary(Pb06)
+int_2006N = Pb06$coefficient$fixed[c('(Intercept)')]
+int_2006S = sum(Pb06$coefficient$fixed[c('(Intercept)','sideroadS')])
+slp_2006N = Pb06$coefficient$fixed[c('dist2road')]
+slp_2006S = sum(Pb06$coefficient$fixed[c('dist2road','dist2road:sideroadS')])
+
+lm06 = lm(Pb ~ dist2road + sideroad + sideroad:dist2road, data = DF2006)
+summary(lm06)
+sumLm06 = summary(lm06)
+int_2006N = sumLm06$coefficients[c('(Intercept)'), 'Estimate']
+int_2006S = sum(sumLm06$coefficient[c('(Intercept)','sideroadS'), 'Estimate'])
+slp_2006N = sumLm06$coefficient[c('dist2road'), 'Estimate']
+slp_2006S = sum(sumLm06$coefficient[c('dist2road','dist2road:sideroadS'), 'Estimate'])
+X11()
+  plot(
+    c(-(DF2006[DF2006$sideroad == 'N','dist2road']),
+      (DF2006[DF2006$sideroad == 'S','dist2road'])),
+    c((DF2006[DF2006$sideroad == 'N','Pb']),
+      (DF2006[DF2006$sideroad == 'S','Pb'])),
+    xlab = 'Log Distance From Road Towards South', 
+    ylab = 'Log Lead Concentration', 
+    pch = 19, cex = 1.2, cex.lab = 2, cex.axis = 1.5, ylim = c(-1,9)
+  )
+  lines(c(0,-11),c(int_2006N, int_2006N + slp_2006N*(11)), lwd = 3, col = 'red')
+  lines(c(0,11),c(int_2006S, int_2006S + slp_2006S*(11)), lwd = 3, col = 'red')
+
+lm06 = lm(Pb ~ dist2road, data = DF2006[DF2006$sideroad == 'N',])
+summary(lm06)
+sumLm06 = summary(lm06)
+int_2006N = sumLm06$coefficients[c('(Intercept)'), 'Estimate']
+slp_2006N = sumLm06$coefficient[c('dist2road'), 'Estimate']
+Pb06 = splmm(Pb ~ dist2road, data = DF2006[DF2006$sideroad == 'N',],
+	spcov_type = 'spherical', xcoord = 'easting', ycoord = 'northing',
+#	random = ~ -1 + sample + I(as.factor(paste(sample,field_dup))),
+	control = list(reltol = 1e-12), estmethod = 'reml')
+int_2006N = Pb06$coefficient$fixed[c('(Intercept)')]
+slp_2006N = Pb06$coefficient$fixed[c('dist2road')]
+summary(Pb06)
+X11()
+  plot(
+    c((DF2006[DF2006$sideroad == 'N','dist2road'])),
+    c((DF2006[DF2006$sideroad == 'N','Pb'])),
+    xlab = 'Log Distance From Road Towards South', 
+    ylab = 'Log Lead Concentration', 
+    pch = 19, cex = 1.2, cex.lab = 2, cex.axis = 1.5, ylim = c(-1,9)
+  )
+  lines(c(0,11),c(int_2006N, int_2006N + slp_2006N*(11)), lwd = 3, col = 'red')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 X = model.matrix(Zn ~ year + dist2road + sideroad, data = DF)
 thetai = c(log(10), log(.2), log(.01), log(.01), log(.01))  
@@ -268,220 +428,10 @@ est_parms1 = M2LL_parms(optM2LL1, y = y, X = X, distmat1 = distmat2001,
 	spatial_model = exponential_spatial_model, Z1 = Z1, Z2 = Z2,
 	MLmeth = 'MLE')
 data.frame(est = est_parms1$beta_est, 
-	se = sqrt(diag(est_parms1$beta_var)),
-	t = est_parms1$beta_est/sqrt(diag(est_parms1$beta_var)))
+	se = sqrt(diag(est_parms1$covb)),
+	t = est_parms1$beta_est/sqrt(diag(est_parms1$covb)))
 
 
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#      Fit models using MLE and compare profiled to unprofiled likelihoods
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-# create fixed effects design matrices for up to 5th order polynomial
-X0 = model.matrix(y ~ 1, data = DF)
-X1 = model.matrix(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DF)
-X2 = model.matrix(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF)
-X3 = model.matrix(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DF)
-X4 = model.matrix(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DF)
-X5 = model.matrix(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DF)
-
-# create distance matrix
-distmat = as.matrix(dist(DF[,c('easting','northing')]))
-# asign the spatial model
-spatial_model = exponential_spatial_model
-# get response variable
-y = DF$y
-
-# inital covariance values for profiled likelihood
-theta = c(0, logit(.2/.6))
-# minimization
-optM2LLprof = optim(theta, m2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-# minimized value of the minus 2 times profiled loglikelihood
-optM2LLprof$value
-# MLE for the range parameter
-exp(optM2LLprof$par[1])
-# MLE for the nugget to total sill ratio
-expit(optM2LLprof$par[2])
-# MLE for covariance parameters and fixed parameters
-M2LLprof_parms(optM2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-	
-# inital covariance values for regular likelihood
-theta = c(0, log(.2), log(.4))
-# minimization
-optM2LL = optim(theta, m2LL, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-# minimized value of the minus 2 times loglikelihood
-optM2LL$value
-# MLE for the range parameter
-exp(optM2LL$par[1])
-# MLE for the nugget parameter
-exp(optM2LL$par[2])
-# MLE for the partial sill parameter
-exp(optM2LL$par[3])
-# MLE for sill
-exp(optM2LL$par[2]) + exp(optM2LL$par[3])
-# MLE for the nugget to total sill ratio
-exp(optM2LL$par[2])/(exp(optM2LL$par[2]) + exp(optM2LL$par[3]))
-# MLE for covariance parameters and fixed parameters
-M2LL_parms(optM2LL, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-
-#use R package spmodel
-library(spmodel)
-# create a covariance parameter object
-cov_params_val = cov_params('exponential', de = .4, ie = .2, range = 1)
-# create an initial value object from covariance parameters
-cov_initial_vals = cov_initial(cov_params_val)
-# use MLE to fit the model
-slmmout = slmm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF, 
-	xcoord = easting, ycoord = northing, cov_type = "exponential",
-	cov_initial = cov_initial_vals, estmethod = "ml")
-# show the output
-summary(slmmout)
-# check the minimized -2 loglikelihood
--2*logLik(slmmout)
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#     Fit models using REMLE and compare profiled to unprofiled likelihoods
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-# inital covariance values for profiled restricted likelihood
-theta = c(0, logit(.2/.6))
-# minimization
-optM2LLprof = optim(theta, m2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-# minimized value of the minus 2 times profiled restricted loglikelihood
-optM2LLprof$value
-# REMLE for the range parameter
-exp(optM2LLprof$par[1])
-# REMLE for the nugget to total sill ratio
-expit(optM2LLprof$par[2])
-# REMLE for covariance parameters and fixed parameters
-M2LLprof_parms(optM2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-	
-# inital covariance values for restricted likelihood
-theta = c(0, log(.2), log(.4))
-# minimization
-optM2LL = optim(theta, m2LL, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-# minimized value of the minus 2 times restricted loglikelihood
-optM2LL$value
-# REMLE for the range parameter
-exp(optM2LL$par[1])
-# REMLE for the nugget
-exp(optM2LL$par[2])
-# REMLE for the partial sill
-exp(optM2LL$par[3])
-# REMLE for the total sill
-exp(optM2LL$par[2]) + exp(optM2LL$par[3])
-# REMLE for the nugget to total sill ratio
-exp(optM2LL$par[2])/(exp(optM2LL$par[2]) + exp(optM2LL$par[3]))
-# REMLE for covariance parameters and fixed parameters
-M2LL_parms(optM2LL, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-
-#use spmodel
-# create a covariance parameter object
-cov_params_val = cov_params('exponential', de = .4, ie = .2, range = 1)
-# create an initial value object from covariance parameters
-cov_initial_vals = cov_initial(cov_params_val)
-# use REMLE to fit the model
-slmmout = slmm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF, 
-	xcoord = easting, ycoord = northing, cov_type = "exponential",
-	cov_initial = cov_initial_vals, estmethod = "reml")
-# show the output
-summary(slmmout)
-# check the minimized -2 loglikelihood
--2*logLik(slmmout)
-
-
-################################################################################
-#-------------------------------------------------------------------------------
-#                                  AIC
-#-------------------------------------------------------------------------------
-################################################################################
-
-# Independence Models for up to 5th Order Polynomial
-fit_0 = lm(y ~ 1, data = DF)
-fit_1 = lm(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DF)
-fit_2 = lm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF)
-fit_3 = lm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DF)
-fit_4 = lm(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DF)
-fit_5 = lm(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DF)
-
-# use profiling and fit all 6 models with both MLE and REMLE
-optM2LLprof_X0_MLE = optim(theta, m2LLprof, y = y, X = X0, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X1_MLE = optim(theta, m2LLprof, y = y, X = X1, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X2_MLE = optim(theta, m2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X3_MLE = optim(theta, m2LLprof, y = y, X = X3, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X4_MLE = optim(theta, m2LLprof, y = y, X = X4, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X5_MLE = optim(theta, m2LLprof, y = y, X = X5, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'MLE')
-optM2LLprof_X0_REMLE = optim(theta, m2LLprof, y = y, X = X0, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-optM2LLprof_X1_REMLE = optim(theta, m2LLprof, y = y, X = X1, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-optM2LLprof_X2_REMLE = optim(theta, m2LLprof, y = y, X = X2, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-optM2LLprof_X3_REMLE = optim(theta, m2LLprof, y = y, X = X3, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-optM2LLprof_X4_REMLE = optim(theta, m2LLprof, y = y, X = X4, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-optM2LLprof_X5_REMLE = optim(theta, m2LLprof, y = y, X = X5, distmat = distmat, 
-	spatial_model = exponential_spatial_model, MLmeth = 'REMLE')
-
-# compare all 6 MLE models using AIC
-AIC_spatial = c(
-	optM2LLprof_X0_MLE$value + 2,
-	optM2LLprof_X1_MLE$value + 2*dim(X1)[2],
-	optM2LLprof_X2_MLE$value + 2*dim(X2)[2],
-	optM2LLprof_X3_MLE$value + 2*dim(X3)[2],
-	optM2LLprof_X4_MLE$value + 2*dim(X4)[2],
-	optM2LLprof_X5_MLE$value + 2*dim(X5)[2]
-)
-# and compare to independence models
-AIC_indep = c(
-	AIC(fit_0),
-	AIC(fit_1),
-	AIC(fit_2),
-	AIC(fit_3),
-	AIC(fit_4),
-	AIC(fit_5)
-)
-# plot them
-file_name = "SO4_AIC"
-
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
-	old.par = par(mar = c(5,5,1,1))
-	plot(0:5, AIC_indep, ylim = c(250, 500), type = 'l', lwd = 3, 
-		xlab = 'Order of Polynomial', ylab = 'AIC', cex.axis = 1.5, cex.lab = 2)
-	points(0:5, AIC_indep, pch = 19, cex = 3)
-	lines(0:5, AIC_spatial,lty = 2, lwd = 3)
-	points(0:5, AIC_spatial, pch = 1, cex = 3)
-	legend(2.5, 500, legend = c('Indep Models','Spatial Models'), lty = c(1,2), 
-		lwd = 2, pch = c(19,1), cex = 2)
-	par(old.par)
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-		sec_path,file_name,'-crop.pdf','\''))
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -489,106 +439,29 @@ system(paste0('rm ','\'',SLEDbook_path,
 #-------------------------------------------------------------------------------
 ################################################################################
 
+
 # compare all of the models using LOO crossvalidation
-LOOCV_X0_MLE = LOO_crossvalidation(optM2LLprof_X0_MLE, M2LLprof = TRUE, y = y, 
-	X = X0, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X0_MLE[,2])
-mean((LOOCV_X0_MLE[,2] - y)^2)
-LOOCV_X1_MLE = LOO_crossvalidation(optM2LLprof_X1_MLE, M2LLprof = TRUE, y = y, 
-	X = X1, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X1_MLE[,2])
-mean((LOOCV_X1_MLE[,2] - y)^2)
-LOOCV_X2_MLE = LOO_crossvalidation(optM2LLprof_X2_MLE, M2LLprof = TRUE, y = y, 
-	X = X2, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X2_MLE[,2])
-mean((LOOCV_X2_MLE[,2] - y)^2)
-LOOCV_X3_MLE = LOO_crossvalidation(optM2LLprof_X3_MLE, M2LLprof = TRUE, y = y, 
-	X = X3, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X3_MLE[,2])
-mean((LOOCV_X3_MLE[,2] - y)^2)
-LOOCV_X4_MLE = LOO_crossvalidation(optM2LLprof_X4_MLE, M2LLprof = TRUE, y = y, 
-	X = X4, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X4_MLE[,2])
-mean((LOOCV_X4_MLE[,2] - y)^2)
-LOOCV_X5_MLE = LOO_crossvalidation(optM2LLprof_X5_MLE, M2LLprof = TRUE, y = y,
-	X = X5, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X5_MLE[,2])
-mean((LOOCV_X5_MLE[,2] - y)^2)
+#undebug(LOO_crossvalidation)
+LOOCVout = LOO_crossvalidation(optM2LL, y = y, X = X, distmat1 = distmat2001, 
+	distmat2 = distmat2006, indx1 = indx1, indx2 = indx2,
+	spatial_model = spherical_spatial_model, Z1 = Z1, Z2 = Z2)
+plot(y,LOOCVout[,2])
+mean((LOOCVout[,2] - y)^2)
+std_LOO_resids = abs(LOOCVout[,2] - y)/sqrt(var(LOOCVout[,2] - y))
+plot(std_LOO_resids)
+plot(DF$easting, DF$northing)
+points(DF[which(std_LOO_resids > 3), c('easting','northing')],
+	pch = 19, col = 'red')
+DF1 = DF[which(std_LOO_resids > 3),]
 
-LOOCV_X0_REMLE = LOO_crossvalidation(optM2LLprof_X0_REMLE, M2LLprof = TRUE, 
-	y = y, X = X0, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X0_REMLE[,2])
-mean((LOOCV_X0_REMLE[,2] - y)^2)
-LOOCV_X1_REMLE = LOO_crossvalidation(optM2LLprof_X1_REMLE, M2LLprof = TRUE, 
-	y = y, X = X1, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X1_REMLE[,2])
-mean((LOOCV_X1_REMLE[,2] - y)^2)
-LOOCV_X2_REMLE = LOO_crossvalidation(optM2LLprof_X2_REMLE, M2LLprof = TRUE, 
-	y = y, X = X2, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X2_REMLE[,2])
-mean((LOOCV_X2_REMLE[,2] - y)^2)
-LOOCV_X3_REMLE = LOO_crossvalidation(optM2LLprof_X3_REMLE, M2LLprof = TRUE, 
-	y = y, X = X3, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X3_REMLE[,2])
-mean((LOOCV_X3_REMLE[,2] - y)^2)
-LOOCV_X4_REMLE = LOO_crossvalidation(optM2LLprof_X4_REMLE, M2LLprof = TRUE, 
-	y = y, X = X4, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X4_REMLE[,2])
-mean((LOOCV_X4_REMLE[,2] - y)^2)
-LOOCV_X5_REMLE = LOO_crossvalidation(optM2LLprof_X5_REMLE, M2LLprof = TRUE, 
-	y = y, X = X5, distmat = distmat, spatial_model = exponential_spatial_model)
-plot(y,LOOCV_X5_REMLE[,2])
-mean((LOOCV_X5_REMLE[,2] - y)^2)
-
-LOOCV_X0_IND = LOO_crossvalidation_usingLM(y ~ 1, DF)
-plot(y,LOOCV_X0_IND[,2])
-mean((LOOCV_X0_IND[,2] - y)^2)
-LOOCV_X1_IND = LOO_crossvalidation_usingLM(y ~ poly(easting, northing, 
-	degree = 1, raw = TRUE), DF)
-plot(y,LOOCV_X1_IND[,2])
-mean((LOOCV_X1_IND[,2] - y)^2)
-LOOCV_X2_IND = LOO_crossvalidation_usingLM(y ~ poly(easting, northing, 
-	degree = 2, raw = TRUE), DF)
-plot(y,LOOCV_X2_IND[,2])
-mean((LOOCV_X2_IND[,2] - y)^2)
-LOOCV_X3_IND = LOO_crossvalidation_usingLM(y ~ poly(easting, northing, 
-	degree = 3, raw = TRUE), DF)
-plot(y,LOOCV_X3_IND[,2])
-mean((LOOCV_X3_IND[,2] - y)^2)
-LOOCV_X4_IND = LOO_crossvalidation_usingLM(y ~ poly(easting, northing, 
-	degree = 4, raw = TRUE), DF)
-plot(y,LOOCV_X4_IND[,2])
-mean((LOOCV_X4_IND[,2] - y)^2)
-LOOCV_X5_IND = LOO_crossvalidation_usingLM(y ~ poly(easting, northing, 
-	degree = 5, raw = TRUE), DF)
-plot(y,LOOCV_X5_IND[,2])
-mean((LOOCV_X5_IND[,2] - y)^2)
-
-LOOCV_spatial_MLE = c(
-	mean((LOOCV_X0_MLE[,2] - y)^2),
-	mean((LOOCV_X1_MLE[,2] - y)^2),
-	mean((LOOCV_X2_MLE[,2] - y)^2),
-	mean((LOOCV_X3_MLE[,2] - y)^2),
-	mean((LOOCV_X4_MLE[,2] - y)^2),
-	mean((LOOCV_X5_MLE[,2] - y)^2)
-)
-LOOCV_spatial_REMLE = c(
-	mean((LOOCV_X0_REMLE[,2] - y)^2),
-	mean((LOOCV_X1_REMLE[,2] - y)^2),
-	mean((LOOCV_X2_REMLE[,2] - y)^2),
-	mean((LOOCV_X3_REMLE[,2] - y)^2),
-	mean((LOOCV_X4_REMLE[,2] - y)^2),
-	mean((LOOCV_X5_REMLE[,2] - y)^2)
-)
-LOOCV_indep = c(
-	mean((LOOCV_X0_IND[,2] - y)^2),
-	mean((LOOCV_X1_IND[,2] - y)^2),
-	mean((LOOCV_X2_IND[,2] - y)^2),
-	mean((LOOCV_X3_IND[,2] - y)^2),
-	mean((LOOCV_X4_IND[,2] - y)^2),
-	mean((LOOCV_X5_IND[,2] - y)^2)
-)
-
+PbOut = splm(Pb ~ year + dist2road + sideroad + sideroad:dist2road + 
+	year:dist2road + year:sideroad + year:sideroad:dist2road, data = DF,
+	xcoord = 'easting', ycoord = 'northing',  spcov_type = 'spherical',
+	partition_factor = ~ year,
+	random = ~ -1 + sample + I(as.factor(paste(sample,field_dup))),
+	control = list(reltol = 1e-12), estmethod = 'reml')
+loocv_out = loocv(PbOut, cv_fitted = TRUE)
+plot(y, loocv_out$cv_fitted)
 file_name = "SO4_LOOCV"
 
 # plot them

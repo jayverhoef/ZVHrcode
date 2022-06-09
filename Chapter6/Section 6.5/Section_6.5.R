@@ -18,7 +18,8 @@ pdf(paste0(file_name,'.pdf'), width = 11, height = 8.5)
 layout(matrix(1:4, ncol = 2, byrow = TRUE))
 
 #-------------------------------------------------------------------------------
-## No-correlation #-------------------------------------------------------------------------------
+## No-correlation 
+#-------------------------------------------------------------------------------
 
 old.par = par(mar = c(5,5,4,1))
 plot(variogramLine(vgm(psill = 0, "Nug",  0, nugget = 1), covariance = FALSE, maxdist = 4), 
