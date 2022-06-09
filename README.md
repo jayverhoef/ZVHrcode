@@ -2,7 +2,7 @@
 
 [![minimal R version](https://img.shields.io/badge/R%3E%3D-3.6.3-6666ff.svg)](https://cran.r-project.org/) 
 
-[![Last-changedate](https://img.shields.io/badge/last%20change-2020--8--18-yellowgreen.svg)](/commits/master)
+[![Last-changedate](https://img.shields.io/badge/last%20change-2022--06--08-yellowgreen.svg)](/commits/master)
 
 # ZVHrcode 
 ## R code in support of the book, "Spatial Linear Models for Environmental Data." 
