@@ -1,0 +1,12 @@
+#github cloud commits
+cd '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode'
+git add .
+git commit -a -m 'Chapter 8'
+git push origin master
+git pull origin master
+
+
+#original setup
+git config --global jay.verhoef@gmail.com
+git remote add origin https://github.com/jayverhoef/ZVHrcode.git
+git clone https://github.com/jayverhoef/ZVHrcode.git
