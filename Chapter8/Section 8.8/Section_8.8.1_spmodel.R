@@ -80,23 +80,19 @@ num = unlist(num)
 Nmat = Neighmat(Nlist, num, length(num))
 Nmat1 = pmax(Nmat,t(Nmat))
 Nmat2 = (((Nmat1 %*% Nmat1 > 0)*1 + Nmat1) > 0)*1 - diag(dim(Nmat1)[1])
-Nmat4 = (Nmat2 %*% Nmat2 > 0 | Nmat2 > 0)*1
-Nmat4 = (((Nmat2 %*% Nmat2 > 0)*1 + Nmat2) > 0)*1 - diag(dim(Nmat2)[1])
+Nmat3 = (((Nmat2 %*% Nmat1 > 0)*1 + Nmat2) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat4 = (((Nmat3 %*% Nmat1 > 0)*1 + Nmat3) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat5 = (((Nmat4 %*% Nmat1 > 0)*1 + Nmat4) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat6 = (((Nmat5 %*% Nmat1 > 0)*1 + Nmat5) > 0)*1 - diag(dim(Nmat1)[1])
 
 AllPolyCentroids = data.frame(x = coordinates(sealPolys)[,1], 
     y = coordinates(sealPolys)[,2], 
     stockid = as.factor(as.character(sealPolys@data$stockid)),
     polyid = as.factor(as.character(sealPolys@data$polyid)))
+polycentroids = st_coordinates(st_centroid(seals_sf$geometry))
+rownames(polycentroids) = rownames(seals_sf)
 distMat = as.matrix(dist(AllPolyCentroids[,c('x','y')]))/1000
-distMat1 = distMat*Nmat
-rownames(distMat1) = attr(Nlist,'polyid')
-colnames(distMat1) = attr(Nlist,'polyid')
-distMat2 = distMat*Nmat2
-rownames(distMat2) = attr(Nlist,'polyid')
-colnames(distMat2) = attr(Nlist,'polyid')
-distMat4 = distMat*Nmat4
-rownames(distMat4) = attr(Nlist,'polyid')
-colnames(distMat4) = attr(Nlist,'polyid')
+distMat = as.matrix(dist(polycentroids))/1000
 
 # some useful transformations
 logit = function(x) {log(x/(1 - x))}
@@ -219,7 +215,7 @@ for(i in 1:2) {
 		}
 	}
 }
-
+# fix AIC results
 store_results[1:12,7] = store_results[1:12,6] + 6
 store_results[13:24,7] = store_results[13:24,6] + 14
 store_results[1:12,1] = store_results[1:12,1] + 1
@@ -243,11 +239,11 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 	cex_mtext = 3.2
 	cex_all = 1.8
 	par(mar = c(5,5,4,1))
-	plot(store_jitter[,c(1,6)], xlim = c(1, max(store_jitter[,1])),
+	plot(store_jitter[,c(1,6)], xlim = c(.9, max(store_jitter[,1]) + .1),
 		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
-			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6])),
+			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
 		type = 'n', xlab = '', xaxt = 'n',
-		ylab = '-2*log-likelihood', cex.lab = 2, cex.axis = 1.5)
+		ylab = expression("-2"*italic(L)(bold(theta)~";"~bold(y))), cex.lab = 2, cex.axis = 1.5)
 	points(1, -2*logLik(lmout_m), pch = 19, cex = cex_all)
 	points(5, -2*logLik(lmout_X), pch = 19, cex = cex_all)
 	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
@@ -263,17 +259,17 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 	points(store_jitter[ind,1],store_jitter[ind,6], col = sar_col, 
 		pch = 19, cex = cex_all)
 	axis(1, at = 1:8, labels = labs, las = 1, cex.axis = 1.5)
-	legend(4.8,-349, legend = 
+	legend(4.3,-338, legend = 
 		c('Independence','CAR unstandardized','CAR row-standard',
 			'SAR unstandardized','SAR row-standard'),
 		pch = c(19, 19, 15, 19, 15), col = c('black',car_col, car_col,
-			sar_col, sar_col), cex = 1.15)
+			sar_col, sar_col), cex = 1.3)
 	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
 
 	par(mar = c(5,5,4,1))
 	plot(store_jitter[,c(1,6)], xlim = c(1, max(store_jitter[,1])),
-		ylim = c(min(AIC(lmout_m), AIC(lmout_X), store_jitter[,7]),
-			max(AIC(lmout_m), AIC(lmout_X), store_jitter[,7])),
+		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
+			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
 		type = 'n', xlab = '', xaxt = 'n',
 		ylab = 'AIC', cex.lab = 2, cex.axis = 1.5)
 	points(1, AIC(lmout_m), pch = 19, cex = cex_all)
@@ -565,11 +561,13 @@ Cormat_rs = diag(1/sqrt(diag(Sigma_rs))) %*% Sigma_rs %*%
 	diag(1/sqrt(diag(Sigma_rs)))
 cN1 = Cormat_rs[Nmat1 == 1]
 cN2 = Cormat_rs[Nmat2 - Nmat1 == 1]
-Nmat3 = (Nmat1 %*% Nmat1 %*% Nmat1 > 0 | Nmat1 > 0)*1
-  diag(Nmat3) = 0
 cN3 = Cormat_rs[Nmat3 - Nmat2 == 1]
 cN4 = Cormat_rs[Nmat4 - Nmat3 == 1]
-corNei = rbind(cbind(cN1,1), cbind(cN2,2), cbind(cN3,3), cbind(cN4,4)) 
+cN5 = Cormat_rs[Nmat5 - Nmat4 == 1]
+cN6 = Cormat_rs[Nmat6 - Nmat5 == 1]
+
+corNei = rbind(cbind(cN1,1), cbind(cN2,2), cbind(cN3,3), cbind(cN4,4),
+	cbind(cN5,5), cbind(cN6,6)) 
 corNei = data.frame(cor = corNei[,1], ordNei = corNei[,2])
 vioplot(cor ~ ordNei, data = corNei)
 
@@ -629,40 +627,83 @@ system(paste0('rm ','\'',SLEDbook_path,
 
 ################################################################################
 #-------------------------------------------------------------------------------
+#                         Other Models
+#-------------------------------------------------------------------------------
+################################################################################
+
+# model that allows islands
+# let spmodel determine neighbors by those that share any border
+spautor_3parms = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+summary(spautor_3parms)
+-2*logLik(spautor_3parms)
+-2*logLik(spautor_3parms) + 2*5 + 2*3
+
+# try a geostatistical model based on centroids
+splm_ml = splm(Estimate ~ stockname, data = seals_sf, 
+	spcov_type = "circular",
+	xcoord = polycentroids$X, ycoord = polycentroids$Y,
+	estmethod = 'ml')
+summary(splm_ml)
+-2*logLik(splm_ml)
+-2*logLik(splm_ml) + 2*5 + 2*3
+
+# try the Tieseldorf weights
+Tdorfsum = apply(Nmat4,1,sum)
+W_Tdorf = (1/sqrt(Tdorfsum))*Nmat4
+K_Tdorf_vec = 1/sqrt(Tdorfsum)
+1/max(eigen(W_Tdorf)$values)
+1/min(eigen(W_Tdorf)$values)
+
+spautor_Tdorf = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car',
+	W = W_Tdorf, M = K_Tdorf_vec, row_st = FALSE)
+summary(spautor_Tdorf)
+-2*logLik(spautor_Tdorf)
+-2*logLik(spautor_Tdorf) + 2*5 + 2*2
+
+################################################################################
+#-------------------------------------------------------------------------------
 #          ANOVA on Fixed Effects
 #-------------------------------------------------------------------------------
 ################################################################################
 
-spfit_m = spautor(Estimate ~ 1, data = seals_sf, estmethod = 'ml', 
-	control = list(reltol = 1e-7), spcov_type = 'car',
-	row_st = TRUE)
-
-spfit_X = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'ml', 
-	control = list(reltol = 1e-7), spcov_type = 'car',
-	row_st = TRUE)
-summary(spfit_X)
+smry_spautor_3parms = summary(spautor_3parms)
+smry_spautor_3parms
+smry_spautor_3parms$coefficients$fixed
 
 # asymptotic marginal test
-anova(spfit_X)
+anova(spautor_3parms)
 
 # check it manually
 # intercept
 L = matrix(c(1,0,0,0,0), nrow = 1)
 L
-t(L %*% coef(spfit_X)) %*% solve(L %*% spfit_X$vcov$fixed %*% t(L)) %*% 
-	(L %*% coef(spfit_X))
+Chi2 = t(L %*% coef(spautor_3parms)) %*% 
+	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
+	(L %*% coef(spautor_3parms))
+Chi2
+1 - pchisq(Chi2,df = 1)
 #stock
 L = cbind(rep(0, times = 4),  diag(4))
 L
-t(L %*% coef(spfit_X)) %*% solve(L %*% spfit_X$vcov$fixed %*% t(L)) %*% 
-	(L %*% coef(spfit_X))
+Chi2 = t(L %*% coef(spautor_3parms)) %*% 
+	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
+	(L %*% coef(spautor_3parms))
+Chi2
+1 - pchisq(Chi2,df = 4)
 
 # likelihood ratio test
-anova(spfit_m, spfit_X)
+spautor_3parms_meanonly = spautor(Estimate ~ 1, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+summary(spautor_3parms_meanonly)
+-2*logLik(spautor_3parms_meanonly)
+anova(spautor_3parms_meanonly, spautor_3parms)
 # check it manually
-2*logLik(spfit_X) - 2*logLik(spfit_m)
-1-pchisq(2*logLik(spfit_X) - 2*logLik(spfit_m), 
-	df = length(coef(spfit_X)) - length(coef(spfit_m)) )
+chi2 = 2*logLik(spautor_3parms) - 2*logLik(spautor_3parms_meanonly)
+chi2
+1-pchisq(chi2, df = 4)
+
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -670,18 +711,15 @@ anova(spfit_m, spfit_X)
 #-------------------------------------------------------------------------------
 ################################################################################
 
-spfit_X_noint = spautor(Estimate ~ -1 + stockname, data = seals_sf, 
-	estmethod = 'ml', 
-	control = list(reltol = 1e-7), spcov_type = 'car',
-	row_st = TRUE)
-summary(spfit_X_noint)
+
+summary(spautor_3parms)
 library(xtable)
-FE_table = summary(spfit_X_noint)$coefficient$fixed
+FE_table = summary(spautor_3parms)$coefficient$fixed
 FE_table
 print(
     xtable(FE_table, 
       align = c('l',rep('l', times = length(FE_table[1,]))),
-      digits = c(0,rep(3, times = 3),5),
+      digits = c(0,4,4,3,5),
       caption = 'Fitted fixed effects',
       label = 'tab:SealsFixEff'
     ),
@@ -693,20 +731,31 @@ print(
     include.colnames = FALSE
 )
 
+ell = c(1,1,0,0,0)
+# Dixon/Cape Decision estimate
+DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
+DCest
+# Dixon/Cape Decision standard error
+DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
+DCse
+# Dixon/Cape Decision confidence interval
+DCest - qnorm(.975)*DCse
+DCest + qnorm(.975)*DCse
+
 # Estimate the difference between the mean of the southern
 # three stocks minus the mean of the northern two stocks 
 
-# weights to be applied to estimated coefficients to estimate the difference
-diffest = matrix(c(.333, .333, -0.5, -0.5, .334), ncol = 1)
-# estimated difference
-t(diffest) %*% coef(spfit_X_noint)
-# standard error of the difference
-sqrt(t(diffest) %*% spfit_X_noint$vcov$fixed %*% diffest)
-# 95% confidence interval on the difference
-t(diffest) %*% coef(spfit_X_noint) - 1.96*sqrt(t(diffest) %*% 
-	spfit_X_noint$vcov$fixed %*% diffest)
-t(diffest) %*% coef(spfit_X_noint) + 1.96*sqrt(t(diffest) %*% 
-	spfit_X_noint$vcov$fixed %*% diffest)
+ell = c(0,1/3,-1/2,-1/2,1/3)
+# Dixon/Cape Decision estimate
+DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
+DCest
+# Dixon/Cape Decision standard error
+DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
+DCse
+# Dixon/Cape Decision confidence interval
+DCest - qnorm(.975)*DCse
+DCest + qnorm(.975)*DCse
+
 
 
 ################################################################################
@@ -715,19 +764,16 @@ t(diffest) %*% coef(spfit_X_noint) + 1.96*sqrt(t(diffest) %*%
 #-------------------------------------------------------------------------------
 ################################################################################
 
-spfit_m = spautor(Estimate ~ 1, data = seals_sf, estmethod = 'ml', 
-	control = list(reltol = 1e-7), spcov_type = 'car',
-	row_st = TRUE)
-summary(spfit_m)
 
-spfit_X = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'ml', 
-	control = list(reltol = 1e-7), spcov_type = 'car',
-	row_st = TRUE)
-summary(spfit_X)
-
-lmfit_X = splm(Estimate ~ stockname, data = seals_sf, estmethod = 'ml', 
+lmfit_X = splm(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
 	control = list(reltol = 1e-7), spcov_type = 'none')
 summary(lmfit_X)
+spfit_m = spautor(Estimate ~ 1, data = seals_sf, 
+	estmethod = 'reml', spcov_type = 'car', row_st = TRUE)
+summary(spfit_m)
+spfit_X = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'reml', spcov_type = 'car', row_st = TRUE)
+summary(spfit_m)
 
 seals_pred = seals_sf
 seals_pred[,'Estimate_se'] = NA
@@ -820,9 +866,18 @@ system(paste0('rm ','\'',SLEDbook_path,
 
 
 
+spfit_X_norowst = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'reml', spcov_type = 'car', row_st = FALSE)
+spfit_X_Nmat1 = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'reml', W = Nmat1, spcov_type = 'car', row_st = TRUE)
+spfit_X_Nmat4 = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'reml', W = Nmat4, spcov_type = 'car', row_st = TRUE)
+loocv(spfit_X)
+loocv(spfit_X_norowst)
+loocv(spfit_X_Nmat1)
+loocv(spfit_X_Nmat4)
 loocv(lmfit_X)
 loocv(spfit_m)
-loocv(spfit_X)
 
 
 
@@ -921,6 +976,8 @@ file_name = 'seal_maps'
 	addBreakColorLegend(xleft = 1310000, ybottom = 986649, xright = 1340000, ytop = 1201343,
 			breaks = brks_smoo_m_se, colors = palp, cex = 1.5, printFormat = "4.3")
 	text(930000, 1180000, 'F', cex = 4)
+
+layout(1)
 
 dev.off()
 

@@ -1,16 +1,17 @@
 \relax 
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Log-likelihood and AIC. }}{2}\protected@file@percent }
+\newlabel{eq:blockMats}{{R.1}{1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Log-likelihood and AIC for a variety of spatial-weights models. A. Minus two times the log-likelihood at the ML estimate. B. AIC for the same models as given to the left. }}{2}\protected@file@percent }
 \newlabel{Fig:Seals_m2LLAIC}{{1}{2}}
-\newlabel{eq:seals_splm}{{R.1}{3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Restricted log-likelihood surface. }}{3}\protected@file@percent }
-\newlabel{Fig:Seals_logLik}{{2}{3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces adfafd. }}{6}\protected@file@percent }
-\newlabel{Fig:seals_nonstationary}{{3}{6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Root-mean-squared prediction error (RMSPE) and 90\% prediction intervals coveraga (PIC90) using leave-one-out cross-validation (LOOCV) and 3-fold cross-validation for up to 5th order polynomial surfaces using the clean wet sulfate deposition data. The spatial models were fit with an exponential autocovariate model using both MLE and REMLE. A. LOOCV RMSPE B. LOOCV PIC90 C. 3-fold RMSPE, and D. 3-fold PIC90. }}{9}\protected@file@percent }
-\newlabel{Fig:SO4_crossval}{{4}{9}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance metrics for various covariance functions used with a constant mean model fit with REMLE for the clean wet sulfate data. }}{10}\protected@file@percent }
-\newlabel{tab:ModelSelAutocov}{{1}{10}}
+\newlabel{eq:seals_splm}{{R.2}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Restricted log-likelihood. A. The restricted log-likelihood surface for $\rho $ and $\sigma ^{2}$. More yellow colors are higher values, and bluer colors are lower values. The solid black circle is the maximum of the surface, yeilding the MLE. B. Profile likelihood confidence interval for $\sigma ^{2}$. The curve is 2 times the restricted log-likelihood optimized for all parameters except $\sigma ^{2}$, which is held constant at the value given by the x-axis. The solid black circle is the MLE, $\hat  {\sigma }^{2}$, and the dashed line is $\hat  {\sigma }^{2} - \chi ^{2}(1-\alpha ,1)$ for $\alpha = 0.05$. The horizontal black line forms the 95\% confidence interval. C. Profile likelihood confidence interval for $\rho $ in the same way as described above. }}{4}\protected@file@percent }
+\newlabel{Fig:Seals_logLik}{{2}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Nonstationarity in spatial-weights models. A. Marginal variance as a function of number of neighbors for a row-standardized CAR model. B. Marginal variance as a function of number of neighbors a binary weights CAR model. C. Violin plots of autocorrelation as a function of neighbor order for row-standardized cAR model. D. Scatterplot of all pairwise correlations as a function of centroid distance for row-standardized CAR model. }}{7}\protected@file@percent }
+\newlabel{Fig:seals_nonstationary}{{3}{7}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Coefficient table of fixed effects estimated by ML using a row-standardized CAR model with islands, as given by the \texttt  {spmodel} package in \texttt  {R}. The first column is the estimated coefficients of $\tilde  {\tilde  {\bm  {\beta }}}$, the second column is the estimated standard error, the third column is a computed z-value where column 1 is divided by column two, and the fourth column is the estimated probability of obtaining the z-value if the null hypothesis that the effect was zero was true. }}{8}\protected@file@percent }
+\newlabel{tab:stockFE}{{1}{8}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Histograms of raw data and predictions. A. Darker shaded histogram is laid over the histogram of the raw data in a lighter shade. B. Histograms of predictions for three different models. The darkest shade is a stock effect model assuming independent errors. The middle shade has autocorrelated errors, but a single mean effect. The lightest shade has stock effects in the model, along with autocorrelated errors. }}{13}\protected@file@percent }
+\newlabel{Fig:seals_predhisto}{{4}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Prediction maps (left column) and prediction standard errors (right column) for a variety of models. A-B Model includes stock effect, and a row-standardized CAR model with islands (no neighbors, resulting in an extra parameter). C-D LOOCV, rather than raw values, for the same model, E-F LOOCV and predictions for the same covariance model as above but with a common mean model as the single fixed effect. }}{15}\protected@file@percent }
+\newlabel{Fig:seal_maps}{{5}{15}}
 \bibstyle{/mnt/ExtraDrive1/Work/shTex/asa}
 \bibdata{DaleChap883.bib}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Prediction maps (left column) and prediction standard errors (right column) for a variety of models. A-B Fourth-order polynomial assuming independent errors, C-D constant mean spherical model, E-F constant mean exponential model, G-H Third-order polynomial spherical model, I-J constant mean Gaussian model. }}{12}\protected@file@percent }
-\newlabel{Fig:SO4_predMaps}{{5}{12}}
