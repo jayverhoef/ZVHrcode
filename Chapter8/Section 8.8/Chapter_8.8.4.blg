@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: Chapter_8.8.4.aux
+The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
+Database file #1: DaleChap884.bib
+You've used 3 entries,
+            2777 wiz_defined-function locations,
+            649 strings with 5408 characters,
+and the built_in function-call counts, 1480 in all, are:
+= -- 133
+> -- 76
+< -- 2
++ -- 27
+- -- 24
+* -- 146
+:= -- 261
+add.period$ -- 5
+call.type$ -- 3
+change.case$ -- 21
+chr.to.int$ -- 3
+cite$ -- 3
+duplicate$ -- 62
+empty$ -- 102
+format.name$ -- 37
+if$ -- 280
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 4
+newline$ -- 14
+num.names$ -- 12
+pop$ -- 26
+preamble$ -- 1
+purify$ -- 20
+quote$ -- 0
+skip$ -- 40
+stack$ -- 0
+substring$ -- 87
+swap$ -- 16
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 24
+warning$ -- 0
+while$ -- 13
+width$ -- 0
+write$ -- 36

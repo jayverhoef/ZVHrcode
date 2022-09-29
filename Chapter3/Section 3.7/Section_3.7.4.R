@@ -53,16 +53,17 @@ pdf(file = paste0('Cloropleth_LISA.pdf'), width = 10, height = 10)
 dev.off()
 system("pdfcrop '/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7.4/Cloropleth_LISA.pdf'")
 
-X11()
+setwd('/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7')
 pdf(file = paste0('plot_LISA.pdf'), width = 8, height = 8)
   old_par = par(mar = c(5,5,3,1))
   infl_out = moran.plot(sealPolys_obs$Estimate, 
     listw = nb2listw(Nlist_obs, style = 'W'), zero.policy=TRUE, cex =2,
     xlab = 'Centered Estimate', ylab = 'Sum of Weighted Neighbors', cex.lab = 2,
-    cex.axis = 1.5, labels = FALSE, pch = 19)
+    cex.axis = 1.5, labels = FALSE, pch = 19, 
+    xlim = c(-.6, .85), ylim = c(-.6, .85))
   par(old_par)
 dev.off()
-system("pdfcrop '/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7.4/plot_LISA.pdf'")
+system("pdfcrop '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7/plot_LISA.pdf'")
 
 
 lmoran_out = localmoran(sealPolys_obs$Estimate, 

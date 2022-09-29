@@ -310,12 +310,12 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 15)
     old_par = par(mar = c(5,5,5,1))
     plot(cvgm_resid_omni$dist, cvgm_resid_omni$gamma, xlab = 'Distance (km)',
       ylab = 'Covariogram', cex.lab = 2, cex.axis = 1.5, pch = 19,
-      cex = 1 + 5*cvgm_resid_omni$np/max(cvgm_resid_omni$np))
+      cex = 1 + 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
     mtext('A', adj = -.15, padj = -.4, cex = 3)
     plot(vgm_resid_omni$dist, vgm_resid_omni$gamma, xlab = 'Distance (km)',
-      ylab = 'Covariogram', cex.lab = 2, cex.axis = 1.5, pch = 19, 
+      ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5, pch = 19, 
       ylim = c(0, max(vgm_resid_omni$gamma)),
-      cex = 1 + 5*vgm_resid_omni$np/max(vgm_resid_omni$np))
+      cex = 1 + 5*sqrt(vgm_resid_omni$np)/max(sqrt(vgm_resid_omni$np)))
     mtext('B', adj = -.15, padj = -.4, cex = 3)
     par(old.par)
 dev.off()

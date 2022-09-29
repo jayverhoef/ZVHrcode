@@ -17,15 +17,20 @@ library(spdep)
 library(Matrix)
 library(xtable)
 library(spmodel)
+library(vioplot)
+library(numDeriv)
+source('addBreakColorLegend.R')
 
 # load data for graphics and analysis
 data(sealPolys)
 seals_sf = st_as_sf(sealPolys)
 seals_sf$stockname = as.factor(as.character(seals_sf$stockname))
 
+################################################################################
 #-------------------------------------------------------------------------------
 #                    Create Neighborhood Matrices
 #-------------------------------------------------------------------------------
+################################################################################
 
 nTot = length(sealPolys)
 nObs = sum(!is.na(sealPolys$Estimate))
@@ -74,169 +79,16 @@ num = lapply(Nlist, function(x) length(x))
 num = unlist(num)
 Nmat = Neighmat(Nlist, num, length(num))
 Nmat1 = pmax(Nmat,t(Nmat))
-Nmat2 = (Nmat1 %*% Nmat1 > 0 | Nmat1 > 0)*1
-diag(Nmat2) = 0
-Nmat4 = (Nmat2 %*% Nmat2 > 0 | Nmat2 > 0)*1
-diag(Nmat4) = 0
+Nmat2 = (((Nmat1 %*% Nmat1 > 0)*1 + Nmat1) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat3 = (((Nmat2 %*% Nmat1 > 0)*1 + Nmat2) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat4 = (((Nmat3 %*% Nmat1 > 0)*1 + Nmat3) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat5 = (((Nmat4 %*% Nmat1 > 0)*1 + Nmat4) > 0)*1 - diag(dim(Nmat1)[1])
+Nmat6 = (((Nmat5 %*% Nmat1 > 0)*1 + Nmat5) > 0)*1 - diag(dim(Nmat1)[1])
 
-AllPolyCentroids = data.frame(x = coordinates(sealPolys)[,1], 
-    y = coordinates(sealPolys)[,2], 
-    stockid = as.factor(as.character(sealPolys@data$stockid)),
-    polyid = as.factor(as.character(sealPolys@data$polyid)))
-distMat = as.matrix(dist(AllPolyCentroids[,c('x','y')]))/1000
-distMat1 = distMat*Nmat
-rownames(distMat1) = attr(Nlist,'polyid')
-colnames(distMat1) = attr(Nlist,'polyid')
-distMat2 = distMat*Nmat2
-rownames(distMat2) = attr(Nlist,'polyid')
-colnames(distMat2) = attr(Nlist,'polyid')
-distMat4 = distMat*Nmat4
-rownames(distMat4) = attr(Nlist,'polyid')
-colnames(distMat4) = attr(Nlist,'polyid')
+polycentroids = st_coordinates(st_centroid(seals_sf$geometry))
+rownames(polycentroids) = rownames(seals_sf)
+distMat = as.matrix(dist(polycentroids))/1000
 
-# some useful transformations
-logit = function(x) {log(x/(1 - x))}
-expit = function(x) {exp(x)/(1 + exp(x))}
-
-
-#-------------------------------------------------------------------------------
-#
-#           makeCovMat
-#
-#-------------------------------------------------------------------------------
-
-#' make a CAR/SAR covariance matrix for modeling
-#'
-#' make a CAR/SAR covariance matrix for modeling
-#'
-#' @param theta covariance parameters, with overall variance parameter profiled out.
-#' @param indComp an additive independent component to the model.  Default is TRUE.  
-#' @param Nmat neighborhood matrix
-#' @param distMat distance matrix
-#' @param indSamp indicator vector for wheter location was sampled. Zero, or FALSE, indicates missing value
-#' @param model either 'CAR' or 'SAR' to be the model associated with the Nmat argument
-#' @param logical value on whether Nmat should be row-standardized
-#' @param rhobound a vector of two elements containing bounds for rho.  This should be determined from the eigenvalues of Nmat prior to running function
-#'
-#' @return A covariance matrix
-#'
-#' @author Jay Ver Hoef jverhoef
-#' @rdname makeCovMat
-#' @export makeCovMat 
-
-makeCovMat = function(theta, indComp = TRUE, Nmat = NULL, 
-  distMat = NULL, indSamp, model = 'CAR', rowStand = TRUE, 
-  rhoBound = c(-1,1))
-{
-  nn = sum(indSamp)
-  nN = length(indSamp)
-  V = matrix(1, nrow = nN, ncol = nN )
-  diag(V) = 0
-  itheta = 0
-  if(!is.null(Nmat)) {
-    V = as(Nmat, 'sparseMatrix')
-  }
-  if(!is.null(distMat)) {
-    itheta = itheta + 1
-    attr(theta,'names')[itheta] = 'logDist'
-    V = V * exp(-distMat/exp(theta[itheta]))
-  }
-  if(!is.null(model)) {
-    itheta = itheta + 1
-    rho = rhoBound[1] + .00005 + exp(theta[itheta])/
-      (1 + exp(theta[itheta]))*.9999*(rhoBound[2] - rhoBound[1])
-    attr(theta,'names')[itheta] = 'logitRho'
-    rs = rep(1, times = nN)
-    if(rowStand) rs = apply(V,1,sum)
-    if(model == 'CAR')  V = diag(rs) - rho*V
-    if(model == 'SAR') V = (diag(nN) - rho*(1/rs)*V) %*%
-      (diag(nN) - rho*Matrix:::t((1/rs)*V))
-  }
-  if(indComp & any(c(!is.null(Nmat), !is.null(distMat)))) {
-    itheta = itheta + 1
-    relEps = exp(theta[itheta])
-    attr(theta,'names')[itheta] = 'relEps'
-    V = V -  V %*% solve(V + diag(rep(relEps,times = nN)),V)
-  }
-  if(indComp & !any(c(!is.null(Nmat), !is.null(distMat)))) {
-    V = diag(nN)
-  }
-  list(V = V, theta = theta)
-}
-
-#-------------------------------------------------------------------------------
-#
-#           m2LL
-#
-#-------------------------------------------------------------------------------
-
-#' two times the negative log-likelihood
-#'
-#' two times the negative log-likelihood
-#'
-#' @param theta covariance parameters, with overall variance parameter profiled out.
-#' @param X design matrix for fixed effects
-#' @param y vector of data for response variable
-#' @param indComp an additive independent component to the model.  Default is TRUE.  
-#' @param Nmat neighborhood matrix
-#' @param distMat distance matrix
-#' @param indSamp indicator vector for wheter location was sampled. Zero, or FALSE, indicates missing value
-#' @param model either 'CAR' or 'SAR' to be the model associated with the Nmat argument
-#' @param logical value on whether Nmat should be row-standardized
-#' @param rhobound a vector of two elements containing bounds for rho.  This should be determined from the eigenvalues of Nmat prior to running function
-#'
-#' @return two times the negative log-likelihood
-#'
-#' @author Jay Ver Hoef jverhoef
-#' @rdname m2LL
-#' @export m2LL 
-
-m2LL = function(theta, X, y, indComp = TRUE, Nmat = NULL, 
-  distMat = NULL, indSamp, model = 'CAR', rowStand = TRUE, 
-  rhoBound = c(-1,1), MLmeth = 'REMLE')
-{
-  if(any(abs(theta) > 10.1)) return(1e+32)
-
-  ntheta = 0
-  nn = length(y)
-  nN = length(indSamp)
-	Vlist = makeCovMat(theta = theta, indComp = indComp, Nmat = Nmat, distMat = distMat, 
-		indSamp = indSamp, model = model, rowStand = rowStand, rhoBound = rhoBound)
-  WMi = Vlist$V
-  theta = Vlist$theta
-  WMi.oo = WMi[indSamp,indSamp] 
-  WMi.uu = WMi[!indSamp,!indSamp]
-  WMi.uo = WMi[!indSamp,indSamp]
-  WMi.ou = WMi[indSamp,!indSamp]
-  Vi.oo = WMi.oo - WMi.ou %*% Matrix:::solve(WMi.uu, WMi.uo)
-  XVi = t(X) %*% as.matrix(Vi.oo)
-  covbi = XVi %*% X
-  covb = solve(covbi)
-  bHat = covb %*% XVi %*% y
-  r = y - X %*% bHat
-  n = length(y)
-  p = length(X[1,])
-  if(MLmeth == 'MLE') {
-  m2LL = n*log(t(r) %*% Vi.oo %*% r) - 
-    as.numeric(Matrix:::determinant(Vi.oo, logarithm = TRUE)$modulus) +
-    n*(log(2*pi) + 1 - log(n))
-	} else if(MLmeth == 'REMLE') {
-  m2LL = (n-p)*log(t(r) %*% Vi.oo %*% r) - 
-    as.numeric(Matrix:::determinant(Vi.oo, logarithm = TRUE)$modulus) +
-    as.numeric(determinant(XVi %*% X, logarithm = TRUE)$modulus) +
-    (n - p)*(log(2*pi) + 1 - log((n - p)))
-	} else {return('MLmeth argument must be either MLE or REMLE')}
- 
-	m2LL = as.numeric(m2LL)
-	attr(m2LL,'covParms') = theta
-	m2LL
-}
-
-DF = sealPolys@data
-indSamp = !is.na(DF$Estimate)
-X0 = as.matrix(model.matrix(Estimate ~ 1, data = DF))
-X1 = as.matrix(model.matrix(Estimate ~ I(as.factor(stockid)), data = DF))
-y = DF$Estimate[!is.na(DF$Estimate)]
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -244,331 +96,115 @@ y = DF$Estimate[!is.na(DF$Estimate)]
 #-------------------------------------------------------------------------------
 ################################################################################
 
-#reproduce parts of Figure 5 in Ver Hoef et al. 2018
-#investigate CAR versus SAR, and Row-standardized versus unstandardized
-evals = eigen(Nmat1)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-#undebug(m2LL)
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_XC1 = optOut$objective
+# reproduce parts of Figure 5 in Ver Hoef et al. 2018
+# investigate CAR versus SAR, and row-standardized versus binary weights
 
-spfit_mC1R = spautor(Estimate ~ 1, data = seals_sf, spcov_type = 'car',
-	W = Nmat1, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_mC1R)
+formulas = c(Estimate ~ 1, Estimate ~ stockname)
+Ws = list(Nmat1, Nmat2, Nmat4)
+formlabs = c('m','X')
+Wlabs = c('1','2','4')
+mods = c('car','sar')
+rowstand = c(TRUE, FALSE)
+store_results = matrix(nrow = 24, ncol = 7)
+ii = 0
+for(i in 1:2) {
+	for(j in 1:3) {
+		for(k in 1:2) {
+			for(m in 1:2) {
+				spfit = spautor( data = seals_sf, estmethod = 'ml', 
+						control = list(reltol = 1e-7),
+						formulas[[i]], 
+						W = Ws[[j]], 
+						spcov_type = mods[k],
+						row_st = rowstand[m] )
+				ii = ii + 1
+				store_results[ii,1] = 3*(i - 1) + j
+				store_results[ii,2] = i
+				store_results[ii,3] = j
+				store_results[ii,4] = k
+				store_results[ii,5] = m
+				store_results[ii,6] = -2*logLik(spfit)
+				store_results[ii,7] = AIC(spfit)
+			}
+		}
+	}
+}
+# fix AIC results
+store_results[1:12,7] = store_results[1:12,6] + 6
+store_results[13:24,7] = store_results[13:24,6] + 14
+store_results[1:12,1] = store_results[1:12,1] + 1
+store_results[13:24,1] = store_results[13:24,1] + 2
+lmout_m = splm(Estimate ~ 1, data = seals_sf, spcov_type = 'none', 
+	estmeth = 'ml')
+lmout_X = splm(Estimate ~ stockname, data = seals_sf, spcov_type = 'none', 
+	estmeth = 'ml')
+store_jitter = store_results
+store_jitter[,1] = store_jitter[,1] + ((1:4) - 2.5)/10
 
-spfit_XU = splm(Estimate ~ stockname, data = seals_sf, spcov_type = 'none',
-	control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XU)
+file_name = "Seals_m2LL_AIC"
+pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 
-spfit_XC1 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat1, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC1)
+	layout(matrix(1:2, nrow = 1))
+	labs = c('m0', 'm1','m2', 'm4', 'X0','X1', 'X2', 'X4')
+	sar_col = '#4daf4a'
+	car_col = '#e41a1c'
+	padj = 0
+	adj = -.2
+	cex_mtext = 3.2
+	cex_all = 1.8
+	par(mar = c(5,5,4,1))
+	plot(store_jitter[,c(1,6)], xlim = c(.9, max(store_jitter[,1]) + .1),
+		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
+			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
+		type = 'n', xlab = '', xaxt = 'n',
+		ylab = expression("-2"*italic(L)(bold(theta)~";"~bold(y))), cex.lab = 2, cex.axis = 1.5)
+	points(1, -2*logLik(lmout_m), pch = 19, cex = cex_all)
+	points(5, -2*logLik(lmout_X), pch = 19, cex = cex_all)
+	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
+	points(store_jitter[ind,1],store_jitter[ind,6], col = car_col, 
+		pch = 15, cex = cex_all)
+	ind = store_jitter[,4] == 1 & store_jitter[,5] == 2
+	points(store_jitter[ind,1],store_jitter[ind,6], col = car_col, 
+		pch = 19, cex = cex_all)
+	ind = store_jitter[,4] == 2 & store_jitter[,5] == 1
+	points(store_jitter[ind,1],store_jitter[ind,6], col = sar_col, 
+		pch = 15, cex = cex_all)
+	ind = store_jitter[,4] == 2 & store_jitter[,5] == 2
+	points(store_jitter[ind,1],store_jitter[ind,6], col = sar_col, 
+		pch = 19, cex = cex_all)
+	axis(1, at = 1:8, labels = labs, las = 1, cex.axis = 1.5)
+	legend(4.3,-338, legend = 
+		c('Independence','CAR unstandardized','CAR row-standard',
+			'SAR unstandardized','SAR row-standard'),
+		pch = c(19, 19, 15, 19, 15), col = c('black',car_col, car_col,
+			sar_col, sar_col), cex = 1.3)
+	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
 
-spfit_XC1R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat1, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC1R)
-
-spfit_XS1 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat1, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS1)
-
-spfit_XS1R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat1, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS1R)
-
-spfit_XC2 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat2, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC2)
-
-spfit_XC2R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat2, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC2R)
-
-spfit_XS2 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat2, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS2)
-
-spfit_XS2R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat2, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS2R)
-
-spfit_XC4 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat4, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC4)
-
-spfit_XC4R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'car',
-	W = Nmat4, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XC4R)
-
-spfit_XS4 = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat4, row_st = FALSE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS4)
-
-spfit_XS4R = spautor(Estimate ~ stockname, data = seals_sf, spcov_type = 'sar',
-	W = Nmat4, row_st = TRUE, control = list(reltol = 1e-7), estmethod = 'ml')
-2*logLik(spfit_XS4R)
-
-
-evals = eigen(Nmat2)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_C2U = optOut$objective
-
-evals = eigen(Nmat4)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_C4U = optOut$objective
-
-
-evals = eigen(Nmat1)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-#undebug(makeCovMat)
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_S1U = optOut$objective
-
-
-evals = eigen(Nmat2)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_S2U = optOut$objective
-
-evals = eigen(Nmat4)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_S4U = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-m2LLargmin_C1R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-m2LLargmin_C2R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-m2LLargmin_C4R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-m2LLargmin_S1R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$par
-m2LLargmin_S2R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$par
-m2LLargmin_S4R = optOut$objective
-
-file_name = 'seal_2LL'
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
-	m2LLargmin = c(m2LLargmin_C1U, m2LLargmin_C2U, m2LLargmin_C4U, m2LLargmin_S1U,
-		m2LLargmin_S2U, m2LLargmin_S4U, m2LLargmin_C1R, m2LLargmin_C2R,
-		m2LLargmin_C4R, m2LLargmin_S1R,  m2LLargmin_S2R,  m2LLargmin_S4R)
-	labs = c('C1U', 'C2U', 'C4U', 'S1U', 'S2U', 'S4U', 	
-		'C1R', 'C2R', 'C4R', 'S1R', 'S2R', 'S4R')
-	par(mar = c(5,5,1,1))
-	plot(1:12, -m2LLargmin, pch = 19, cex = 3, ylab = '2(log-likelihood)', 
-		cex.axis = 1.5, cex.lab = 2, xaxt = 'n', xlab = '')
-	axis(1, at = 1:12, labels = labs, las = 2, cex.axis = 1.5)
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-		sec_path,file_name,'-crop.pdf','\''))
-
-# Because the fixed effects do not change, we can also use REMLE
-
-evals = eigen(Nmat1)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_C1U = optOut$objective
-
-evals = eigen(Nmat2)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_C2U = optOut$objective
-
-evals = eigen(Nmat4)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_C4U = optOut$objective
-
-
-evals = eigen(Nmat1)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_S1U = optOut$objective
-
-
-evals = eigen(Nmat2)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_S2U = optOut$objective
-
-evals = eigen(Nmat4)$values
-minevals = min(evals)
-maxevals = max(evals)
-LB = 1/minevals
-UB = 1/maxevals
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, rowStand = FALSE,
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE', model = 'SAR',
-	rhoBound = c(LB,UB))
-theta = optOut$minimum
-m2LLargmin_REML_S4U = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$minimum
-m2LLargmin_REML_C1R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$minimum
-m2LLargmin_REML_C2R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$minimum
-m2LLargmin_REML_C4R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat1, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$minimum
-m2LLargmin_REML_S1R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat2, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$par
-m2LLargmin_REML_S2R = optOut$objective
-
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, model = 'SAR',
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$par
-m2LLargmin_REML_S4R = optOut$objective
-
-file_name = 'seal_2LL_REMLE'
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 8.5)
-	m2LLargmin_REML = c(m2LLargmin_REML_C1U, m2LLargmin_REML_C2U, m2LLargmin_REML_C4U, m2LLargmin_REML_S1U,
-		m2LLargmin_REML_S2U, m2LLargmin_REML_S4U, m2LLargmin_REML_C1R, m2LLargmin_REML_C2R,
-		m2LLargmin_REML_C4R, m2LLargmin_REML_S1R,  m2LLargmin_REML_S2R,  m2LLargmin_REML_S4R)
-	labs = c('C1U', 'C2U', 'C4U', 'S1U', 'S2U', 'S4U', 	
-		'C1R', 'C2R', 'C4R', 'S1R', 'S2R', 'S4R')
-	par(mar = c(5,5,1,1))
-	plot(1:12, -m2LLargmin_REML, pch = 19, cex = 3, ylab = '2(log-likelihood)', 
-		cex.axis = 1.5, cex.lab = 2, xaxt = 'n', xlab = '')
-	axis(1, at = 1:12, labels = labs, las = 2, cex.axis = 1.5)
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-		sec_path,file_name,'-crop.pdf','\''))
-
-
-################################################################################
-#-------------------------------------------------------------------------------
-#          Profile Likelihood for Autocorrelation Parameter
-#-------------------------------------------------------------------------------
-################################################################################
-
-thetatry = (-10:70)/20
-rhovals = -1 + 2*expit(thetatry)
-LL2_C4R = NULL
-for(i in thetatry)
-	LL2_C4R = c(LL2_C4R, 
-		-m2LL(i, X = X1, y = y, indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, 
-			MLmeth = 'MLE'))
-
-file_name = 'seal_rhoprofile'
-pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
-
-	plot(rhovals, LL2_C4R, type = 'l', lwd = 3, ylab = '2 x loglikelihood',
-		xlab = 'rho values')
-	LB = -m2LLargmin_C4R - qchisq(0.95, df = 1)
-	lines(c(rhovals[1], rhovals[81]), c(LB, LB),
-		lty = 2, lwd = 3)
+	par(mar = c(5,5,4,1))
+	plot(store_jitter[,c(1,6)], xlim = c(1, max(store_jitter[,1])),
+		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
+			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
+		type = 'n', xlab = '', xaxt = 'n',
+		ylab = 'AIC', cex.lab = 2, cex.axis = 1.5)
+	points(1, AIC(lmout_m), pch = 19, cex = cex_all)
+	points(5, AIC(lmout_X), pch = 19, cex = cex_all)
+	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
+	points(store_jitter[ind,1],store_jitter[ind,7], col = car_col, 
+		pch = 15, cex = cex_all)
+	ind = store_jitter[,4] == 1 & store_jitter[,5] == 2
+	points(store_jitter[ind,1],store_jitter[ind,7], col = car_col, 
+		pch = 19, cex = cex_all)
+	ind = store_jitter[,4] == 2 & store_jitter[,5] == 1
+	points(store_jitter[ind,1],store_jitter[ind,7], col = sar_col, 
+		pch = 15, cex = cex_all)
+	ind = store_jitter[,4] == 2 & store_jitter[,5] == 2
+	points(store_jitter[ind,1],store_jitter[ind,7], col = sar_col, 
+		pch = 19, cex = cex_all)
+	axis(1, at = 1:8, labels = labs, las = 1, cex.axis = 1.5)
+	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
 	
+	layout(1)
+
 dev.off()
 
 system(paste0('pdfcrop ','\'',SLEDbook_path,
@@ -578,15 +214,406 @@ system(paste0('cp ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
+
+
+################################################################################
+#-------------------------------------------------------------------------------
+#          Likelihood Surface and Profile Likelihood
+#-------------------------------------------------------------------------------
+################################################################################
+
+spfit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
+	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE )
+summary(spfit)
+
+#set grids sequences and dimensions
+seqs = seq(-1,1,by = 0.05)
+grid_dim = length(seqs)
+
+# create a sequence of values to try for range and partial sill
+de_seq = log(coef(spfit, type = "spcov")['de']) + .2*seqs
+de_seq = exp(de_seq)
+range_seq = 0.99*(seqs + 1)/2
+
+zA = matrix(NA, nrow = grid_dim, ncol = grid_dim)
+for(i in 1:grid_dim) {
+	for(j in 1:grid_dim) {
+		spautorout = spautor(
+			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
+			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
+			spcov_initial = spcov_initial(spcov_type = 'car', 
+				de = de_seq[i], range = range_seq[j],
+				known = c('de','range'))
+		)	
+		zA[i,j] = logLik(spautorout)
+	}
+}
+
+store_range = rep(NA, times = grid_dim)
+for(i in 1:grid_dim) {
+		spautorout = spautor(
+			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
+			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
+			spcov_initial = spcov_initial(spcov_type = 'car', 
+				range = range_seq[i],
+				known = c('range'))
+		)	
+	store_range[i] = logLik(spautorout)
+}
+
+store_de = rep(NA, times = grid_dim)
+for(i in 1:grid_dim) {
+		spautorout = spautor(
+			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
+			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
+			spcov_initial = spcov_initial(spcov_type = 'car', 
+				de = de_seq[i],
+				known = c('de'))
+		)	
+	store_de[i] = logLik(spautorout)
+}
 
 # use profile likelihood to get confidence interval on autocorrelation parameter	
+minrhoindx = min(which(2*store_range > 
+	(2*logLik(spfit) - qchisq(0.95, df = 1))))
+maxrhoindx = max(which(2*store_range > 
+	(2*logLik(spfit) - qchisq(0.95, df = 1))))
 
-minrhoindx = min(which(LL2_C4R > -m2LLargmin_C4R - qchisq(0.95, df = 1)))
-maxrhoindx = max(which(LL2_C4R > -m2LLargmin_C4R - qchisq(0.95, df = 1)))
+# linear interpolation for bounds of confidence interval
+lo_range = mean(range_seq[minrhoindx],range_seq[minrhoindx-1])
+up_range = mean(range_seq[maxrhoindx],range_seq[maxrhoindx+1])
+lo_range
+up_range
 
-# linear interpolation for lower bound if confidence interval
-mean(rhovals[minrhoindx],rhovals[minrhoindx-1])
-mean(rhovals[maxrhoindx],rhovals[maxrhoindx+1])
+# use profile likelihood to get confidence interval on variance parameter	
+minsigindx = min(which(2*store_de > 
+	(2*logLik(spfit) - qchisq(0.95, df = 1))))
+maxsigindx = max(which(2*store_de > 
+	(2*logLik(spfit) - qchisq(0.95, df = 1))))
+
+# linear interpolation for bounds of confidence interval
+lo_sig = mean(de_seq[minsigindx],de_seq[minsigindx-1])
+up_sig = mean(de_seq[maxsigindx],de_seq[maxsigindx+1])
+lo_sig
+up_sig
+
+file_name = 'Seals_logLik'
+#pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
+tiff(paste0(file_name,'.tiff'), width = 960, height = 480)
+
+	padj = -.5
+	adj = -.17
+	cex_mtext = 3.3
+	cex_lab = 3.5
+	cex_axis = 2
+	
+	layout(matrix(c(1,1,2,2,
+									1,1,3,3), nrow = 2, byrow = TRUE))
+	nbrks = 20
+	brks = quantile(zA, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	par(mar = c(7,7,5,2), mgp=c(4, 1.3, 0))
+	image(de_seq, range_seq, zA, breaks = brks, col = cramp,
+		cex.main = 2, xlab = '', ylab = expression(rho),
+		cex.axis = cex_axis, cex.lab = cex_lab)
+	title(xlab = expression(sigma^2), line = 5, cex.lab = cex_lab)
+	points(coef(spfit, type = "spcov")['de'], 
+		coef(spfit, type = "spcov")['range'], 
+		pch = 19, cex = 2.5, col = 'black')
+	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
+
+	cex_lab = 2.7
+	adj = -.13
+
+	par(mar = c(6,9,5,1), mgp=c(4, 1.3, 0))
+	plot(de_seq,2*store_de, type = 'l', lwd = 3, 
+		xlab = '', 
+		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~hat(rho),bold(y))), 
+		cex.lab = cex_lab, cex.axis = cex_axis)
+	points(coef(spfit, type = "spcov")['de'], 2*logLik(spfit), pch = 19,
+		cex = 2.5)
+	lines(c(min(de_seq), max(de_seq)), 
+		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
+		lty = 2, lwd = 3)
+	lines(c(lo_sig, up_sig), 
+		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
+		lwd = 7)
+	title(xlab = expression(sigma^2), line = 5, cex.lab = 3)
+	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
+
+
+	plot(range_seq,2*store_range, type = 'l', lwd = 3, 
+		xlab = '', 
+		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~hat(sigma)^2,bold(y))), 
+		cex.lab = cex_lab, cex.axis = cex_axis)
+	points(coef(spfit, type = "spcov")['range'], 2*logLik(spfit), pch = 19,
+		cex = 2.5)
+	lines(c(-1, 1), rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
+		lty = 2, lwd = 3)
+	lines(c(lo_range, up_range), 
+		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
+		lwd = 7)
+	title(xlab = expression(rho), line = 5, cex.lab = 3)
+	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
+		
+	layout(1)
+
+dev.off()
+	
+system(paste0('tiff2pdf -o','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.tiff','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'.tiff','\''))
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+
+################################################################################
+#-------------------------------------------------------------------------------
+# Hessian, Fisher Information, and Covariance Matrix for Covariance Parameters
+#-------------------------------------------------------------------------------
+################################################################################
+
+spfit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
+	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE )
+theta = coef(spfit, type = 'spcov')
+
+# ---------------------- Analytical Approach ----------------------------
+
+# create the covariance matrix and take its inverse
+D = diag(apply(Nmat4,1,sum))
+DW = D - theta['range']*Nmat4
+DWi = solve(DW)
+Vi = DW/theta['de']
+V = theta['de']*DWi
+A = -theta['de']*DWi %*% Nmat4 %*% DWi
+		
+# compute Fisher Information element by element using trace formula
+FI = matrix(rep(NA, times = 4), nrow = 2)
+FI[1,1] = sum(diag(Vi %*% DWi %*% Vi %*% DWi))
+FI[1,2] = FI[2,1] = sum(diag(Vi %*% DWi %*% Vi %*% A))
+FI[2,2] = sum(diag(Vi %*% A %*% Vi %*% A))
+FI = 0.5*FI
+asycov = solve(FI)
+theta[c('de','range')] - 1.96*sqrt(diag(asycov))
+theta[c('de','range')] + 1.96*sqrt(diag(asycov))
+
+# asymptotic correlation matrix
+diag(1/sqrt(diag(asycov))) %*% asycov %*% diag(1/sqrt(diag(asycov)))
+
+# ---------------------- Numerical Hessian Approach ----------------------------
+
+# a function to return log-likelihood for specified theta
+fixed_parms = function(theta) {
+	#initialize covariance parameters and hold them constant
+	spini = spcov_initial = spcov_initial(spcov_type = 'car', de = theta[1], 
+		range = theta[2], known = c('de','range'))
+	ModelFit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
+		control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE, 
+		spcov_initial = spini)
+	logLik(ModelFit)
+}
+fixed_parms(theta)
+# find numerical Hessian
+FishInf = -hessian(fixed_parms, theta[c(1,3)])
+# asymptotic covariance matrix
+asycov_comp = solve(FishInf)
+
+theta[c('de','range')] - 1.96*sqrt(diag(asycov_comp))
+theta[c('de','range')] + 1.96*sqrt(diag(asycov_comp))
+
+# asymptotic correlation matrix
+diag(1/sqrt(diag(asycov_comp))) %*% asycov_comp %*% 
+	diag(1/sqrt(diag(asycov_comp)))
+
+################################################################################
+#-------------------------------------------------------------------------------
+#          Nonstationarity
+#-------------------------------------------------------------------------------
+################################################################################
+
+spfit4_rs = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
+	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE)
+rhohat_rs = coef(spfit4_rs, type = 'spcov')['range']
+sig2hat_rs = coef(spfit4_rs, type = 'spcov')['de']
+
+spfit4_un = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'ml', 
+	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = FALSE)
+rhohat_un = coef(spfit4_un, type = 'spcov')['range']
+sig2hat_un = coef(spfit4_un, type = 'spcov')['de']
+
+# create fitted CAR covariance matrix for 4th order neighbors, both
+# row-standardized and unstandardized
+n = dim(Nmat4)[1]
+Sigma_rs = sig2hat_rs*
+    solve(diag(apply(Nmat4,1,sum)) - 
+		rhohat_rs*Nmat4)
+margvar_rs = diag(Sigma_rs)
+plot(apply(Nmat4,1,sum), margvar_rs)
+
+Sigma_un = sig2hat_un*
+    solve(diag(dim(Nmat4)[1]) - 
+		rhohat_un*Nmat4)
+margvar_un = diag(Sigma_un)
+plot(apply(Nmat4,1,sum), margvar_un)
+
+# correlation matrix for Sigma_rs
+Cormat_rs = diag(1/sqrt(diag(Sigma_rs))) %*% Sigma_rs %*%
+	diag(1/sqrt(diag(Sigma_rs)))
+cN1 = Cormat_rs[Nmat1 == 1]
+cN2 = Cormat_rs[Nmat2 - Nmat1 == 1]
+cN3 = Cormat_rs[Nmat3 - Nmat2 == 1]
+cN4 = Cormat_rs[Nmat4 - Nmat3 == 1]
+cN5 = Cormat_rs[Nmat5 - Nmat4 == 1]
+cN6 = Cormat_rs[Nmat6 - Nmat5 == 1]
+
+corNei = rbind(cbind(cN1,1), cbind(cN2,2), cbind(cN3,3), cbind(cN4,4),
+	cbind(cN5,5), cbind(cN6,6)) 
+corNei = data.frame(cor = corNei[,1], ordNei = corNei[,2])
+vioplot(cor ~ ordNei, data = corNei)
+
+dist_cor = data.frame(dist = distMat[upper.tri(distMat)],
+	cor = Cormat_rs[upper.tri(Cormat_rs)])
+plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200) )
+
+file_name = 'Seals_nonstationary'
+#pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
+png(paste0(file_name,'.png'), width = 960, height = 960)
+
+	padj = -.25
+	adj = -.23
+	cex_mtext = 3.5
+	cex_lab = 3.5
+	cex_axis = 2
+	layout(matrix(1:4, nrow = 2, byrow = TRUE))
+	# A
+	par(mar = c(7,7,5,2), mgp=c(4, 1.3, 0))
+	plot(apply(Nmat4,1,sum), margvar_rs, ylab = 'Marginal Variance',
+		xlab = 'Number of Neighbors', cex.lab = cex_lab, 
+		cex.axis = cex_axis, cex = 1.5)
+	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
+	# B
+	plot(apply(Nmat4,1,sum), margvar_un, ylab = 'Marginal Variance',
+		xlab = 'Number of Neighbors', cex.lab = cex_lab, 
+		cex.axis = cex_axis, cex = 1.5)
+	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
+	# C
+	vioplot(cor ~ ordNei, data = corNei, xlab = '',
+		ylab = '', cex.lab = cex_lab+2, cex.axis = cex_axis)
+	title(ylab="Autocorrelation", xlab="Neighbor Order", cex.lab = cex_lab)
+	axis(1, at = 1:4, labels = as.character(1:4), las = 1, cex.axis = cex_axis,
+		cex.lab = cex_lab, xlab = 'Number of')
+	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
+	# D
+	plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200),
+		xlab = 'Distance', ylab = 'Autocorrelation', cex.lab = cex_lab, 
+		cex.axis = cex_axis)
+	mtext('D', adj = adj, cex = cex_mtext, padj = padj)
+
+	layout(1)
+
+dev.off()
+	
+system(paste0('img2pdf ','\'',SLEDbook_path,
+	sec_path,file_name,'.png','\'', ' -o ', '\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'.png','\''))
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+################################################################################
+#-------------------------------------------------------------------------------
+#                         Other Models
+#-------------------------------------------------------------------------------
+################################################################################
+
+# model that allows islands
+# let spmodel determine neighbors by those that share any border
+spautor_3parms = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+summary(spautor_3parms)
+-2*logLik(spautor_3parms)
+-2*logLik(spautor_3parms) + 2*5 + 2*3
+
+# try a geostatistical model based on centroids
+splm_ml = splm(Estimate ~ stockname, data = seals_sf, 
+	spcov_type = "circular",
+	xcoord = polycentroids$X, ycoord = polycentroids$Y,
+	estmethod = 'ml')
+summary(splm_ml)
+-2*logLik(splm_ml)
+-2*logLik(splm_ml) + 2*5 + 2*3
+
+# try the Tieseldorf weights
+Tdorfsum = apply(Nmat4,1,sum)
+W_Tdorf = (1/sqrt(Tdorfsum))*Nmat4
+K_Tdorf_vec = 1/sqrt(Tdorfsum)
+1/max(eigen(W_Tdorf)$values)
+1/min(eigen(W_Tdorf)$values)
+
+spautor_Tdorf = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car',
+	W = W_Tdorf, M = K_Tdorf_vec, row_st = FALSE)
+summary(spautor_Tdorf)
+-2*logLik(spautor_Tdorf)
+-2*logLik(spautor_Tdorf) + 2*5 + 2*2
+
+################################################################################
+#-------------------------------------------------------------------------------
+#          ANOVA on Fixed Effects
+#-------------------------------------------------------------------------------
+################################################################################
+
+smry_spautor_3parms = summary(spautor_3parms)
+smry_spautor_3parms
+smry_spautor_3parms$coefficients$fixed
+
+# asymptotic marginal test
+anova(spautor_3parms)
+
+# check it manually
+# intercept
+L = matrix(c(1,0,0,0,0), nrow = 1)
+L
+Chi2 = t(L %*% coef(spautor_3parms)) %*% 
+	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
+	(L %*% coef(spautor_3parms))
+Chi2
+1 - pchisq(Chi2,df = 1)
+#stock
+L = cbind(rep(0, times = 4),  diag(4))
+L
+Chi2 = t(L %*% coef(spautor_3parms)) %*% 
+	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
+	(L %*% coef(spautor_3parms))
+Chi2
+1 - pchisq(Chi2,df = 4)
+
+# likelihood ratio test
+spautor_3parms_meanonly = spautor(Estimate ~ 1, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+summary(spautor_3parms_meanonly)
+-2*logLik(spautor_3parms_meanonly)
+anova(spautor_3parms_meanonly, spautor_3parms)
+# check it manually
+chi2 = 2*logLik(spautor_3parms) - 2*logLik(spautor_3parms_meanonly)
+chi2
+1-pchisq(chi2, df = 4)
+
 
 ################################################################################
 #-------------------------------------------------------------------------------
@@ -594,196 +621,50 @@ mean(rhovals[maxrhoindx],rhovals[maxrhoindx+1])
 #-------------------------------------------------------------------------------
 ################################################################################
 
-#use independence model
-lm_summ_out = summary(lm(Estimate ~ I(as.factor(stockid)), data = DF))
-FixEff_LM = as.data.frame(lm_summ_out$coefficients)
-rownames(FixEff_LM) = 1:5
-FixEff_LM = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
-	FixEff_LM)
 
-#use C4R MLE model
-X = X1
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-
-WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
-	indComp = FALSE)$V)
-WMi.oo = WMi[indSamp,indSamp] 
-WMi.uu = WMi[!indSamp,!indSamp]
-WMi.uo = WMi[!indSamp,indSamp]
-WMi.ou = WMi[indSamp,!indSamp]
-Vi.oo = WMi.oo - WMi.ou %*% solve(WMi.uu, WMi.uo)
-XVi = t(X) %*% Vi.oo
-covbi = XVi %*% X
-covb = solve(covbi)
-bHat = covb %*% XVi %*% y
-bHat
-r = as.matrix(y - X %*% bHat)
-n = length(y)
-p = length(X[1,])
-sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
-bHat_se = sqrt(sigma*diag(covb))
-Pval = 2*(1-pt(abs(bHat/bHat_se), df = n - p))
-FixEff_MLE = cbind(bHat,
-	bHat_se,
-	bHat/bHat_se,
-	Pval)
-rownames(FixEff_MLE) = 1:5
-FixEff_MLE = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
-	FixEff_MLE)
-colnames(FixEff_MLE) = colnames(FixEff_LM)
-
-#use C4R REMLE model
-X = X1
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'REMLE')
-theta = optOut$minimum
-
-WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
-	indComp = FALSE)$V)
-WMi.oo = WMi[indSamp,indSamp] 
-WMi.uu = WMi[!indSamp,!indSamp]
-WMi.uo = WMi[!indSamp,indSamp]
-WMi.ou = WMi[indSamp,!indSamp]
-Vi.oo = WMi.oo - WMi.ou %*% solve(WMi.uu, WMi.uo)
-XVi = t(X) %*% Vi.oo
-covbi = XVi %*% X
-covb = solve(covbi)
-bHat = covb %*% XVi %*% y
-bHat
-r = as.matrix(y - X %*% bHat)
-n = length(y)
-p = length(X[1,])
-sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
-bHat_se = sqrt(sigma*diag(covb))
-Pval = 2*(1-pt(abs(bHat/bHat_se), df = n - p))
-FixEff_REMLE = cbind(bHat,
-	bHat_se,
-	bHat/bHat_se,
-	Pval)
-rownames(FixEff_REMLE) = 1:5
-FixEff_REMLE = cbind(data.frame(Effect = c('Intercept', 'Stock 9', 'Stock 10', 'Stock 11', 'Stock 12')),
-	FixEff_REMLE)
-colnames(FixEff_REMLE) = colnames(FixEff_LM)
-
-FixEff = rbind(FixEff_LM, FixEff_MLE, FixEff_REMLE)
+summary(spautor_3parms)
+library(xtable)
+FE_table = summary(spautor_3parms)$coefficient$fixed
+FE_table
 print(
-    xtable(FixEff, 
-      align = c('l',rep('l', times = length(FixEff[1,]))),
-      digits = c(0,0,rep(3, times = 3),5),
+    xtable(FE_table, 
+      align = c('l',rep('l', times = length(FE_table[1,]))),
+      digits = c(0,4,4,3,5),
       caption = 'Fitted fixed effects',
       label = 'tab:SealsFixEff'
     ),
     size = 'footnotesize',
     sanitize.text.function = identity,
-    include.rownames = FALSE,
+    include.rownames = TRUE,
     sanitize.rownames.function = identity,
     only.contents = TRUE,
     include.colnames = FALSE
 )
 
-# Compare Stock 9 to Stock 11 using REML estimates
-cont = matrix(c(0,-1, 0, 1, 0), ncol = 1)
-t(cont) %*% bHat
-# standard error
-sqrt(t(cont) %*% (sigma*covb) %*% cont)
-# t-value 
-(t(cont) %*% bHat)/sqrt(t(cont) %*% (sigma*covb) %*% cont)
-# Prob of t-value given null hypothesis of equality
-2*(1-pt(abs((t(cont) %*% bHat)/sqrt(t(cont) %*% (sigma*covb) %*% cont)), 
-	df = n - p))
+ell = c(1,1,0,0,0)
+# Dixon/Cape Decision estimate
+DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
+DCest
+# Dixon/Cape Decision standard error
+DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
+DCse
+# Dixon/Cape Decision confidence interval
+DCest - qnorm(.975)*DCse
+DCest + qnorm(.975)*DCse
+
+# Estimate the difference between the mean of the southern
+# three stocks minus the mean of the northern two stocks 
+
+ell = c(0,1/3,-1/2,-1/2,1/3)
+# Dixon/Cape Decision estimate
+DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
+DCest
+# Dixon/Cape Decision standard error
+DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
+DCse
+# Dixon/Cape Decision confidence interval
+DCest - qnorm(.975)*DCse
+DCest + qnorm(.975)*DCse
 
 
-################################################################################
-#-------------------------------------------------------------------------------
-#                  Prediction
-#-------------------------------------------------------------------------------
-################################################################################
 
-X = X1
-optOut = optimize(m2LL, interval = c(-10,10), X = X1, y = y, 
-	indSamp = indSamp, Nmat = Nmat4, indComp = FALSE, MLmeth = 'MLE')
-theta = optOut$minimum
-theta
--1 + expit(theta)*2
-      
-WMi = as.matrix(makeCovMat(theta, indSamp = indSamp, Nmat = Nmat4, 
-	indComp = FALSE)$V)
-WMi.oo = WMi[indSamp,indSamp] 
-WMi.uu = WMi[!indSamp,!indSamp]
-WMi.uo = WMi[!indSamp,indSamp]
-WMi.ou = WMi[indSamp,!indSamp]
-Vi.oo = WMi.oo - WMi.ou %*% solve(WMi.uu, WMi.uo)
-XVi = t(X) %*% Vi.oo
-covbi = XVi %*% X
-covb = solve(covbi)
-bHat = covb %*% XVi %*% y
-bHat
-r = as.matrix(y - X %*% bHat)
-n = length(y)
-p = length(X[1,])
-sigma = as.numeric((t(r) %*% Vi.oo %*% r)/n)
-Vi.oo = Vi.oo/sigma
-covb = sigma*covb
-
-Xall = as.matrix(model.matrix( ~ I(as.factor(stockid)), data = DF))
-Xp = Xall[!indSamp,]
-Vall = sigma*solve(WMi)
-Vpred = Vall[indSamp,!indSamp]
-ViVpred = Vi.oo %*% Vpred
-ViX = Vi.oo %*% X1
-preds <- matrix(NA, nrow = sum(!indSamp), ncol = 2)
-preds[,1] <- apply(as.vector(Vi.oo %*% y) * Vpred, 2, sum) +
-	Xp %*% bHat - t(Vpred) %*% ((Vi.oo %*% X1) %*% bHat)	
-preds[,2] <- sqrt(diag(Vall[!indSamp, !indSamp]) - 
-	apply(ViVpred * Vpred, 2, sum) +
-	apply((covb %*% t(Xp)) * t(Xp), 2, sum) -
-	2*apply((covb %*% t(Xp)) * (t(X1) %*% ViVpred), 2, sum) +
-	apply(((covb %*% t(ViX)) %*% Vpred) * (t(X) %*% ViVpred), 2, sum))
-# program it from Schabenberger/Gotway, pg. 243
-pse  = sqrt(diag(Vall[!indSamp, !indSamp] - t(Vpred) %*% ViVpred + 
-	(Xp - t(Vpred) %*% ViX) %*% solve(t(X1) %*% ViX) %*%
-	t(Xp - t(Vpred) %*% ViX)))
-cbind(preds[,2],pse)
-
-
-plot(sealPolys)
-Pts = coordinates(sealPolys)
-Pts = Pts[!indSamp,]
-points(Pts, pch = 19, col = 'red')
-
-file_name = 'seal_preds'
-pdf(paste0(file_name,'.pdf'), width = 17, height = 8.5)
-
-	layout(matrix(c(1,2), nrow = 1))
-	source('addBreakColorLegend.R')
-	cip = classIntervals(preds[,1], n = 6, style = 'fisher')
-	palp = viridis(6)
-	cip_colors = findColours(cip, palp)
-	old.par = par(mar = c(0,0,5,0))
-	plot(sealPolys)
-	points(Pts, pch = 19, col = cip_colors, cex = 2)
-	addBreakColorLegend(xleft = 1330000, ybottom = 986649, xright = 1390000, ytop = 1201343,
-		breaks = cip$brks, colors = palp, cex = 2, printFormat = "4.3")
-	text(920000, 1190000, 'A', cex = 6)
-
-	cip = classIntervals(preds[,2], n = 6, style = 'fisher')
-	palp = cividis(6)
-	cip_colors = findColours(cip, palp)
-	old.par = par(mar = c(0,0,5,0))
-	plot(sealPolys)
-	points(Pts, pch = 19, col = cip_colors, cex = 2)
-	addBreakColorLegend(xleft = 1330000, ybottom = 986649, xright = 1390000, ytop = 1201343,
-		breaks = cip$brks, colors = palp, cex = 2, printFormat = "4.3")
-	text(920000, 1190000, 'B', cex = 6)
-	
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-		sec_path,file_name,'-crop.pdf','\''))

@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: Conditional_Simulation.aux
+The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
+Database file #1: CondSimu.bib
+You've used 2 entries,
+            2777 wiz_defined-function locations,
+            640 strings with 5066 characters,
+and the built_in function-call counts, 943 in all, are:
+= -- 92
+> -- 30
+< -- 2
++ -- 15
+- -- 9
+* -- 84
+:= -- 167
+add.period$ -- 4
+call.type$ -- 2
+change.case$ -- 11
+chr.to.int$ -- 2
+cite$ -- 2
+duplicate$ -- 40
+empty$ -- 71
+format.name$ -- 15
+if$ -- 178
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 2
+newline$ -- 11
+num.names$ -- 8
+pop$ -- 9
+preamble$ -- 1
+purify$ -- 11
+quote$ -- 0
+skip$ -- 28
+stack$ -- 0
+substring$ -- 84
+swap$ -- 9
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 18
+warning$ -- 0
+while$ -- 10
+width$ -- 0
+write$ -- 26

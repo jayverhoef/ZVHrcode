@@ -1,0 +1,261 @@
+% ------------------------------------------------------------------------------
+%
+% PREAMBLE
+%
+% ------------------------------------------------------------------------------
+
+\documentclass[12pt, titlepage]{article}
+
+
+\usepackage{graphicx, amsmath, amssymb, natbib, setspace, sectsty, verbatim, 
+		mathrsfs, float}
+\usepackage{MnSymbol}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage[usenames, dvipsnames]{color}
+\bibpunct{(}{)}{;}{a}{}{,}
+\setlength{\parindent}{3em}
+%\parskip = 1.5ex
+%\linespread{1.3}
+%\onehalfspacing
+
+\pdfpagewidth 8.5in
+\pdfpageheight 11in
+\setlength{\oddsidemargin}{0.0in} \setlength{\textwidth}{6.5in}
+\setlength{\topmargin}{0.15in} \setlength{\textheight}{8.5in}
+\setlength{\headheight}{0.0in} \setlength{\headsep}{0.0in}
+
+\usepackage{/mnt/ExtraDrive1/Work/shTex/mymacros}
+
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\csection}[1]{\section[#1]{\centering #1 }}
+\subsectionfont{\small}
+\newcommand{\cye}[1]{\color{yellow!70!black}#1}
+\newcommand{\cre}[1]{\color{red!70!black}#1}
+\newcommand{\cbl}[1]{\color{blue!70!black}#1}
+\newcommand{\cgr}[1]{\color{green!70!black}#1}
+
+
+% ------------------------------------------------------------------------------
+%
+% BEGIN DOCUMENT
+%
+% ------------------------------------------------------------------------------
+
+\begin{document}
+
+\setcounter{equation}{0}
+\renewcommand{\theequation}{R.\arabic{equation}}
+
+
+% ------------------------------------------------------------------------------
+%
+%                    Section 8.8.1
+%                    Seal trend data
+%
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{9.11.3 Moss Heavy Metal Data}}
+
+\vspace{.3cm}
+
+In Section 8.7.4, we used a spatial linear model for the logarithm (base $e$) of lead (Pb) concentration in tissue samples that included explanatory variables for 1) year of sample (2001 or 2006), 2) (log, base $e$) distance-from-road, and 3) side-of-road (north or south).  We fit a mean structure where the dominant effect was distance-from-road. There also appeared to be some lowering of Pb concentration in 2006 due to better coverings on trucks that transported ore on the haul road, although the P-value of 0.118 would be judged nonsignificant if our critical values were $\alpha = 0.05$ or $\alpha = 0.10$. 
+
+In prior examples in this Chapter, for the wet sulfate data and harbor seals, we used kriging and spatial prediction to make maps with point-wise or polygon-wise predictions with standard errors (mean-squared prediction errors) of those predictions.  In this Section we will focus on conditional simulation for the heavy metal data.  We have 5 prediction data sets, and they are shown as stratum 1 through stratum 5 in Figure 1.8B.  Recall that the data are modeled after a log transformation, but we wish to make inferences back on the natural scale of the data.  This nonlinear back-transformation, coupled by any further computations on a whole prediction surface, complicates the construction of the covariance matrix for predictions.  Rather, we simulate a whole surface on the transformed scale, then back-tranform that whole surface, and then perform further computations.  Because we simulate many equal-probable surfaces, we perform our inference \textit{after} computing on individual surfaces by using the variation among the computed values on individual surfaces.
+
+As an example, consider whether or not there is a difference between 2001 and 2006 in each stratum for the moss heavy metal data.  First, we simulate a surface using conditional simulation, with fixed effects set at 2001 and 2006 (so we essentially simulate the surface twice, but with the same set of fixed effects and covariance parameters).  Then, we exponentiate the values comprising the surface, average the 2001 and 2006 surfaces, and then take the averaged 2001 surface minus the 2006 surface.  Trying to find the variance of this difference would be quite difficult based on our original model on the log scale.  However, using conditional simulation, we simply simulate another surface, and repeat all computations.  For our example, we did this 500 times, and a histogram of the differences between 2001 and 2006 are shown in 
+
+
+\begin{figure}[H]
+  \begin{center}
+	    \includegraphics[width=0.9\linewidth]{Moss_diffhist}
+  \end{center}
+  \caption{La te da.  \label{Fig:MossDiffHist}}
+\end{figure}
+
+\newpage{}
+
+The covariance matrix resulting from the sampling design above can be illustrated with a simple example of 3 locations, where location 1 is far from locations 2 and 3 (say autocorrelation of 0.01), but site 3 is an autocorrelation location for site 2 (say autocorrelation of 0.99).  Additionally, suppose that site 2 had two duplicate samples (nested within sites), and for each duplicate sample, there were two laboratory replicate samples, for a total of 6 samples.  Then
+$$
+\mathbf{Z}_{1} = \left(
+\begin{array}{ccc}
+	1 & 0 & 0 \\
+	0 & 1 & 0 \\
+	0 & 1 & 0 \\
+	0 & 1 & 0 \\
+	0 & 1 & 0 \\
+	0 & 0 & 1 \\
+\end{array}
+\right) 
+\hspace{.5 cm} \textrm{and} \hspace{.5cm} 
+\mathbf{Z}_{2} = \left(
+\begin{array}{cccc}
+	1 & 0 & 0 & 0 \\
+	0 & 1 & 0 & 0 \\
+	0 & 1 & 0 & 0 \\
+	0 & 0 & 1 & 0 \\
+	0 & 0 & 1 & 0 \\
+	0 & 0 & 0 & 1 \\
+\end{array}
+\right), 
+$$
+and notice that laboratory replicates, nested within site and duplicate samples, will result in a diagonal matrix, so it is confounded with the nugget effect, which is appropriate, because for this model we consider the nugget effect to be measurement error.  Let $\sigma^{2}_{PS}$ be the variance (partial sill) for the spatial autocorrelation matrix $\mathbf{R}$, let $\sigma^{2}_{LO}$ be the variance of the random effect for location, let $\sigma^{2}_{DU}$ be the variance of the random effect for duplicate samples per location, and let $\sigma^{2}_{ME}$ be the variance due to laboratory measurement errors (nugget effect).  The resulting covariance is
+$$
+\boldsymbol{\Sigma} = \sigma^{2}_{PS}\mathbf{R} + \sigma^{2}_{LO}\mathbf{Z}_{1}\mathbf{Z}_{1}^{T} + \sigma^{2}_{DU}\mathbf{Z}_{2}\mathbf{Z}_{2}^{T} + \sigma^{2}_{ME}\mathbf{I},
+$$
+and for the simple example with 3 locations and 6 samples,
+$$
+\begin{array}{c}
+\boldsymbol{\Sigma} = \sigma^{2}_{PS}\left(
+\begin{array}{cccccc}
+	1 & 0.01 & 0.01 & 0.01 & 0.01 & 0.01 \\
+	0.01 & 1 & 1 & 1 & 1 & 0.99 \\
+	0.01 & 1 & 1 & 1 & 1 & 0.99 \\
+	0.01 & 1 & 1 & 1 & 1 & 0.99 \\
+	0.01 & 1 & 1 & 1 & 1 & 0.99 \\
+	0.01 & 0.99 & 0.99 & 0.99 & 0.99 & 1 \\
+\end{array}
+\right) + 
+\sigma^{2}_{LO}\left(
+\begin{array}{cccccc}
+	1 & 0 & 0 & 0 & 0 & 0 \\
+	0 & 1 & 1 & 1 & 1 & 0 \\
+	0 & 1 & 1 & 1 & 1 & 0 \\
+	0 & 1 & 1 & 1 & 1 & 0 \\
+	0 & 1 & 1 & 1 & 1 & 0 \\
+	0 & 0 & 0 & 0 & 0 & 1 \\
+\end{array}
+\right) + \\
+\sigma^{2}_{DU}\left(
+\begin{array}{cccccc}
+	1 & 0 & 0 & 0 & 0 & 0 \\
+	0 & 1 & 1 & 0 & 0 & 0 \\
+	0 & 1 & 1 & 0 & 0 & 0 \\
+	0 & 0 & 0 & 1 & 1 & 0 \\
+	0 & 0 & 0 & 1 & 1 & 0 \\
+	0 & 0 & 0 & 0 & 0 & 1 \\
+\end{array}
+\right) + 
+\sigma^{2}_{ME}\left(
+\begin{array}{cccccc}
+	1 & 0 & 0 & 0 & 0 & 0 \\
+	0 & 1 & 0 & 0 & 0 & 0 \\
+	0 & 0 & 1 & 0 & 0 & 0 \\
+	0 & 0 & 0 & 1 & 0 & 0 \\
+	0 & 0 & 0 & 0 & 1 & 0 \\
+	0 & 0 & 0 & 0 & 0 & 1 \\
+\end{array}
+\right)
+\end{array}
+$$
+There are 5 covariance parameters, as we will choose the exponential autocovariance model, $\rho(r;\alpha) = \exp(-r/\alpha)$, so $\boldsymbol{\theta} = (\sigma^{2}_{PS},\alpha, \sigma^{2}_{LO},\sigma^{2}_{DU},\sigma^{2}_{ME})$.  An additional feature of the covariance function is that we assume that the two years are independent of each other, but share the same set of covariance parameters.
+
+
+For this example, we will not explore other covariance functions, as that was covered in previous examples.  Here, we will explore searching for a parsimonius mean structure.  We have three explanatory variables, and up to a 3-way interaction.  
+
+[DALE, YOU MAY WANT TO PUT THIS MODEL SELECTION STUFF IN CHAPTER 9, AND POSSIBLY EXPAND UPON IT?  NOT SURE EXACTLY WHERE IT FITS.  IT SEEMS LIKE SOME OF THIS NEEDS TO BE SAID, AS THE WHOLE ISSUE OF MODEL SELECTION IS VERY BIG AMONST ECOLOGISTS]
+
+There are many ways to try to create a parsimonious model when there are multiple explanatory variables.  One way is to add each explanatory variable, one at a time, and then use P-values, AIC, BIC, LOOCV, or any from the many criteria in the literature to decide on which term to keep.  Then, we can consider adding a second term, removing the one already added from the candidate pool.  This process can proceed through the interaction terms as well, and is known as a forward selection proceedure.
+
+We could also take the opposite approach, and start will all of the terms in the model, then remove the one with the highest P-value, or use AIC, BIC, LOOCV, etc., to eliminate the worst model after removing each term one at a time.  This process can proceed, generally removing the higher interaction terms first, and continuing to the main effects.  This is called a backward selection procedure. Various modification are possible, such as trying some eliminated terms, one at a time, at each step, because P-values and likelihood-based criteria can change depending on the particular set of terms in the model. For example, it is entirely possible to have eliminated a term by using some significance level of P-values, only to find that, if it is entered into the model again later in the stepwise process, it has a significant P-value that suggests it be included in the model.
+
+The forward and backward selection proceedures do not examine all possible combinations of explanatory variables, and the order of selection may in fact miss the single best model as described in the previous paragraph.  Thus, rather then going through a series of models sequentially, another approach is to simply try all possible combinations of explanatory variables, and again use a whole-model criteria, such as AIC, BIC, LOOCV, etc, to choose the single best model. The problem with this approach is that it can be computationally expensive, especially for spatial models that may take extra time to fit when sample sizes are large.  It is also possible to try all possible spatial autocorrelation models, but a look at Table 6.2 shows that it will require a lot of model-fitting, especially if taken in combination with every possible mean structure.
+
+Yet another idea is to keep several more-or-less equivalent models rather than selecting a single one, and this has been called ``multi-model inference'' \citep{BurnhamEtAl2002ModelSelectionMultimodel}.  This could be especially useful for prediction, where the predictions from each model can be averaged, which has been called ``model averaging'' \citep[e.g.][]{HoetingEtAl1999Bayesianmodelaveraging382}.  The use of multiple models make the predictions robust to model mis-specification and is intuitively appealing.  On the other hand, the use of multiple models can be confusing if we are interested in fixed effects and covariance parameters, as it may be difficult to summarize their meaning across models, and fitting many models can be very costly in terms of time, especially if one wants to do model diagnostics, etc., which require some human interpretation \citep{ver_hoef_iterating_2015}.
+
+[END OF BRIEF DISCUSSION ON MODEL SELECTION]
+ 
+
+We used a backward model selection process using P-values to create a parsimonius mean structure for the moss heavy metal data. We first fit all explanatory variables, all 2-way interactions, and the single 3-way interaction using REMLE with an exponential autocovariance model.  We removed terms with the highest P-values first, and for a final model, kept all terms with P-values $<$ 0.15.  We prefer to be conservative in removing terms, and by leaving terms in with somewhat weak evidence, it allows the reader to decide for themselves on the importance of retained explanatory variables.  We removed terms in the following order, with P-value for removal in parenthesis: 1) side-of-road (P = 0.715), 2) year$\times$side-of-road (P = 0.715), 3) year$\times$distance-to-road$\times$side-of-road (P = 0.768), and 4) year$\times$distance-to-road (P = 0.382.  The fixed effect table produced by \texttt{spmodel} for the final model was
+\begin{verbatim}
+Coefficients (fixed):
+                    Estimate Std. Error z value Pr(>|z|)    
+(Intercept)          8.07345    0.22059  36.599   <2e-16 ***
+year2006            -0.40732    0.26060  -1.563    0.118    
+dist2road           -0.57895    0.01880 -30.791   <2e-16 ***
+dist2road:sideroadS -0.11134    0.01229  -9.059   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+\end{verbatim}
+
+The estimated range parameter was 11.125, and for the exponential autocorrelation model, the ``effective range'', or the range beyond which the autocorrelation is below approximately 0.05, is 3 times the estimated range range parameter, so spatial autocorrelation gets very small beyond a distance of 33.375 kilometers.
+
+As we will show in Chapter DOX, the generalization of R$^{2}$ for spatial models (using the Aitken model adaptation), is
+$$
+R^{2} = 1-\frac{(\mathbf{y} - \mathbf{X}\tilde{\boldsymbol{\beta}})^{T}\hat{\boldsymbol{\Sigma}}^{-1}(\mathbf{y} - \mathbf{X}\tilde{\boldsymbol{\beta}})}{(\mathbf{y} - \mathbf{1}\tilde{\beta}_{0})^{T}\hat{\boldsymbol{\Sigma}}^{-1}(\mathbf{y} - \mathbf{1}\tilde{\beta}_{0})}.
+$$
+$R^{2}$ has a typical interpretation as the amount of variation explained by fixed effects.  Then $1 - R^{2}$ is the amount of variation due to random effects, and that can be partitioned among the four variance components.  For example, the amount of variation explained by the spatial component of the model, the partial sill, is
+$$
+(1 - R^{2})\frac{\sigma^{2}_{PS}}{\sigma^{2}_{PS} + \sigma^{2}_{LO} + \sigma^{2}_{DU} + \sigma^{2}_{ME}}
+$$
+The partitioning of variability is given in Table~\ref{tab:mossVC}, which includes the estimated variance for each component.
+\begin{table}[H] 
+	\caption{Estimated variance components for moss heavy metal data. \label{tab:mossVC}}
+\begin{center}
+\begin{tabular}{|c|c|cc|}
+  \hline
+  \hline
+  Variance Component & Symbol & Est & Prop \\
+	\hline
+  \hline
+  Fixed Effects & R$^{2}$ & 0.8120 & 0.8120 \\
+	Partial Sill & $\sigma^{2}_{PS}$ & 0.2016 & 0.1284  \\ 
+	Locations & $\sigma^{2}_{LO}$ & 0.0640 & 0.0408 \\ 
+	Duplicates & $\sigma^{2}_{DU}$ & 0.0267 & 0.0170 \\ 
+	Measurement Error & $\sigma^{2}_{ME}$ & 0.0028 & 0.0018  \\ 
+  \hline
+  \hline
+\end{tabular}
+\end{center}
+\end{table}
+Also, recall that we have samples that had laboratory replicates, which was confounded with the nugget effect as measurement error.  One might wonder, what is a separate estimate of variance if we just use the replicate samples, where we use the average squared-errors from the mean of each pair of replicate samples, with the bias correction?  That is, let
+$$
+\overline{\sigma}^{2}_{ME} = \frac{1}{k-1}\sum_{i=1}^{k}\sum_{j=1}^{m}(y_{i,j} - \mu_{i})^{2}
+$$
+where $\mu_{i}$ is the mean for the $i$th pair of $k$ replicates and $m$ = 2.  Then for the moss heavy metal data, $\overline{\sigma}^{2}_{ME} = 0.00282$, which is virtually identical to the estimated measurement error in Table~\ref{tab:mossVC}.
+
+The fitted model is shown in Figure~\ref{Fig:MossModelFit}, which reveals several interesting features.  First, note that the fitted intercept and lines for 2006 are lower than 2001.  Recall that some mitigation measures were put in place to lower the amount of ore dust escaping from the back of trucks transporting ore on the haul road between 2001 and 2006.  That appears to have had an effect of lowering heavy metal concentrations in moss, although under the spatial model this effect is not very significant (the year effect for the fitted model had a P-value of 0.118, see above).  Visually, just looking at the raw data, it seems that there should be stronger evidence of the effect.  For example, for a given distance from the haul road, almost all of the values north of the road in 2006 are lower than those in 2001.  It is often difficult to make strong inferences about parameters in spatial models that contain a mean, as we discuss further in Chapter DOX.  However, in Chapter 9, we will use prediction to compare estimated averages of realized surfaces, rather than mean parameters from a model, and our inferences will be much stronger.
+
+\begin{figure}[H]
+  \begin{center}
+	    \includegraphics[width=0.9\linewidth]{Moss_modelfit}
+  \end{center}
+  \caption{Fitted model to moss heavy metal data.  \label{Fig:MossModelFit}}
+\end{figure}
+
+Another noteworthy feature of Figure~\ref{Fig:MossModelFit} is that the fitted line for 2006 on the north side of the road does not seem to be particularly good, as it is above most of the raw data.  What is going on here?  This is a good example of a behavior of spatial models that needs to be understood if one is to use these models.  To help clarify, we simplify the situation to 1-dimension in Figure~\ref{Fig:MossDishSim}A, where we simulated data with a bowl-shaped pattern along the single x-coordinate.  If we fit a spatial model to these data, using REMLE with an exponential autocovariance function, we obtain estimates where the range is 86.9, the partial sill is 121.2, and the nugget effect is 0.215.  This represents very strong autocorrelation, where the range and partial sill are far beyond the bounds of the x-coordinate and data, respectively.  This is not unusual, as we have seen the strong ridge in the likelihood between the partial sill and range parameter before (e.g., Figures 8.4AB, and 8.11C), where the optimum can be well beyond the bounds of the data.
+
+If $\hat{\boldsymbol{\Sigma}}$ is the fitted covariance matrix for the data in Figure~\ref{Fig:MossDishSim}A, then the generalized least squares estimate of the overall mean, in common to all random variables that produced the data, is
+$$
+\hat{\mu} = \frac{\mathbf{1}^{T}\hat{\boldsymbol{\Sigma}}^{-1}\mathbf{y}}{\mathbf{1}^{T}\hat{\boldsymbol{\Sigma}}^{-1}\mathbf{1}},
+$$
+which for these data is $\hat{\mu} = 5.01$, and is shown as a dashed line across Figure~\ref{Fig:MossDishSim}A.  The weights applied to each datum are given directly below, Figure~\ref{Fig:MossDishSim}B, where the weights are computed as $
+\mathbf{w} = (\mathbf{1}^{T}\hat{\boldsymbol{\Sigma}}^{-1})/(\mathbf{1}^{T}\hat{\boldsymbol{\Sigma}}^{-1}\mathbf{1})$.  There a two ways to understand Figure~\ref{Fig:MossDishSim}.  From an intuitive standpoint, autocorrelated data in time or space often ``run away'' from the mean for extended time and distances, producing an oscillating pattern.  However, if the covariance is proper (positive definite), then the data always return towards the mean.  If we assume that the data in Figure~\ref{Fig:MossDishSim}A are spatially autocorrelated, then it makes sense, based on the shape of the data, that they are turning toward the mean at the endpoints.  In that sense, the estimate of the mean is reasonable.  Turning to Figure~\ref{Fig:MossDishSim}B, note that the weights at the edges are largest.  If we think about ``information'', then the data in the middle are highly redundant, being autocorrelated with many of their neighbors, while the data at the edges are most independent from all other data, being the most distant from all others.  Weighting for the mean, then, puts a premium on locations that are most independent, and gives them higher weights. Note that, after estimating the spatial covariance matrix (or assuming that it is known or fixed), the weights do not depend on the data.  The weights would be the same for any set of data, such as a trending set, or an inverted bowl shape. From both an intuitive idea of returning towards the mean, or an understanding of autocorrelation and weighting, the GLS estimate of the mean makes sense.  
+
+This simple example (Figure~\ref{Fig:MossDishSim}) also illustrates that, for spatial models, residuals \textit{do not} sum to zero.  This is important to keep in mind when performing model diagnostics, as many are computed on residuals.  Model diagnostics developed for residuals where the model is assumed to have independent errors may behave differently for spatially autocorrelated errors.
+
+Returning to Figure~\ref{Fig:MossModelFit}, it does appear that the residuals for 2006 on the north side of the road have a somewhat bowl-shaped pattern and the same is true for the south side of the road.  The same is not true for 2001.  One might argue that the intercept for the north side of the road is tied to the intercept for the south side of the road, which complicates the interpretation.  This is true, but the model could have allowed for separate intercepts and slopes for all year by side-of-road combinations.  We leave it as an exercise for the reader to determine if the apparent fits in 2006 improve under those conditions.  Another possibility would be to add a quadratic term to distance-from-road, but it appears that would only improve the fit to 2006 on the north side of the road at the expense of more model complexity.  The current fitted model is perfectly capable and reasonable for the observed data, especially once we understand some behaviors on the way that these models are fit.
+
+\begin{figure}[H]
+  \begin{center}
+	    \includegraphics[width=0.6\linewidth]{Moss_dishsim}
+  \end{center}
+  \caption{Simulated data with bowl-shaped pattern.  A. Simulated data along a single x-coordinate, where the dashed line is the estimated mean.  B.  The weights used to compute the mean as a function of the x-coordinate of the datum.  \label{Fig:MossDishSim}}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                BIBLIOGRAPHY
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\bibliographystyle{consbiol}
+\bibliographystyle{/mnt/ExtraDrive1/Work/shTex/asa}
+\bibliography{DaleChap884.bib}
+%\bibliographystyle{/home/jay/Data/shTex/shTex/asa}
+%\bibliography{/home/jay/Data/shTex/shTex/StatBibTex.bib}
+
+
+
+
+\end{document}
+

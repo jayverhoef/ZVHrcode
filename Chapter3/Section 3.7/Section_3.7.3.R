@@ -37,7 +37,7 @@ yexp = (ytop - ybottom)*.35
 # use nblag to create lists of neighbors by order
 seal.lags <- nblag(Nlist_obs, 3)
 
-setwd('/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7.3')
+setwd('/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7')
 pdf(file = paste0('Neighbor_lags.pdf'), width = 10, height = 10)
   # create the zoomed-in plot of all polygons
   plot(sealPolys, xlim = c(xleft, xright), 
@@ -53,7 +53,7 @@ pdf(file = paste0('Neighbor_lags.pdf'), width = 10, height = 10)
   # add the 3rd order connections
   plot(seal.lags[[3]], coords_obs, add=TRUE, col='#bebada', lwd = 3)
 dev.off()
-system("pdfcrop '/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7.3/Neighbor_lags.pdf'")
+system("pdfcrop '/media/jay/data/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter3/Section 3.7/Neighbor_lags.pdf'")
 
 # make a table of number of neighbors by order
 # for correlogram, response variable is sealPolys_obs$Estimate

@@ -14,7 +14,7 @@ data(SO4obs)
 pdf(paste0(file_name,'.pdf'))
 scatterplot3d(SO4obs@coords[,1]/1000, SO4obs@coords[,2]/1000, SO4obs@data$SO4,
   pch=16, type="h", angle=120, grid=FALSE, box=FALSE, 
-  xlab="Albers CONUS North (km)", ylab="Albers CONUS West (km)", zlab="SO4", 
+  xlab="Albers CONUS North (km)", ylab="Albers CONUS West (km)", zlab="SO4 (kg/ha)", 
   cex.lab = 1.5, cex.axis = 1.1)
 dev.off()
 system(paste0('pdfcrop ','\'',SLEDbook_path,

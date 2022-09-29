@@ -8,13 +8,14 @@ library(spdep)
 library(nlme)
 library(classInt)
 library(viridis)
+source('addBreakColorLegend.R')
 data(caribouDF)
 
 # ---------- CREATE THE DATA FRAME 
 
 
 cip = classIntervals(caribouDF$z, n = 4, style = 'fisher')
-palp = viridis(6)[3:6]
+palp = viridis(5)[1:4]
 cip_colors = findColours(cip, palp)
 
 file_name = "caribou_Design"
@@ -25,8 +26,8 @@ pdf(file = paste0(file_name,'.pdf'), width = 10, height = 8)
     xlim = c(0.7,5.3), ylim = c(0.7,6.3),
     col = cip_colors, cex.lab = 2.5, cex.axis = 2, xlab = 'x-coordinate',
     ylab = 'y-coordinate')
-  text(caribouDF$x,caribouDF$y,labels = caribouDF$tarp, pos = 3, cex = 2)
-  text(caribouDF$x,caribouDF$y,labels = caribouDF$water, pos = 1, cex = 2)
+  text(caribouDF$x,caribouDF$y,labels = caribouDF$tarp, pos = 3, cex = 2, col = 'white')
+  text(caribouDF$x,caribouDF$y,labels = caribouDF$water, pos = 1, cex = 2, col = 'white')
   par(mar = c(0,0,0,0))
   plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
     xlab = '', ylab = '', bty = 'n')

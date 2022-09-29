@@ -75,7 +75,11 @@ plot(USboundary[USboundary$STATE_NAME %in% states,])
       SO4obs@coords[spatialOutliers[outlier_number,2],2], 
       pch = 19, col = 'red', cex = 1.2)
   }
-  for(i in 1:length(spatialOutliers[,1])) {
+  # outliers
+  points(SO4obs@coords[146,1], SO4obs@coords[146,2], pch = 1,  cex = 2.5, lwd = 1.5)
+  points(SO4obs@coords[153,1], SO4obs@coords[153,2], pch = 1,  cex = 2.5, lwd = 1.5)
+  points(SO4obs@coords[173,1], SO4obs@coords[173,2], pch = 1,  cex = 2.5, lwd = 1.5)
+   for(i in 1:length(spatialOutliers[,1])) {
     outlier_number = i
     #plot arrows connecting pairs of point, originating toward NN
     arrows(SO4obs@coords[spatialOutliers[outlier_number,1],1],
@@ -138,7 +142,7 @@ pdf(paste0(file_name,'.pdf'))
   plot(storeResults[,2:3], pch = 1, 
     xlab = 'Seal Trend at Originating Site',
     ylab = 'Seal Trend at Mean of Neighbors',
-    cex.lab = 2, cex.axis = 1.5)
+    cex.lab = 2, cex.axis = 1.5, xlim = c(-.6,.85), ylim = c(-.6,.85))
   lines(c(min(storeResults[,2]),max(storeResults[,2])),
     c(min(storeResults[,2]),max(storeResults[,2])),
     lty = 2, lwd = 2)
