@@ -1,6 +1,8 @@
 sec_path = 'Rcode/Chapter2/Section 2.2/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
+library(xtable)
+
 # Create plots to illustrate separability and additivity (Figure 2.1)
 file_name = "sep_and_add"
 pdf(paste0(file_name,'.pdf'), height = 7, width = 11)
@@ -111,3 +113,68 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
+# covariance functions 
+
+C_1 = function(x,y){
+	distmat = as.matrix(dist(cbind(x,y)))
+	(1 - (3/8)*distmat + (1/128)*distmat^3)*(distmat <= 4)
+}
+C1mat = C_1(x,y)
+C1mat[lower.tri(C1mat)] = NA
+C1mat
+print(
+    xtable(C1mat, 
+      align = c('c',rep('c', times = length(C1mat[1,]))),
+      digits = c(0,rep(3, times = 5))
+    ),
+    hline.after = NULL,
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
+
+C_2 = function(x,y){
+	xdist = abs(outer(x, rep(1, times = length(x))) - 
+		outer(rep(1, times = length(x)), x))
+	ydist = abs(outer(y, rep(1, times = length(y))) - 
+		outer(rep(1, times = length(y)), y))
+	(1 - (1/5)*xdist)*(1 - (1/2)*ydist)*(xdist <= 5 & ydist <= 2)
+}
+C2mat = C_2(x,y)
+C2mat[lower.tri(C2mat)] = NA
+C2mat
+print(
+    xtable(C2mat, 
+      align = c('c',rep('c', times = length(C2mat[1,]))),
+      digits = c(0,rep(3, times = 5))
+    ),
+    hline.after = NULL,
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
+
+C_3 = function(x,y){
+	distmat = as.matrix(dist(cbind(x,y)))
+  exp(-distmat/2) + 1*diag(length(x))
+}
+C3mat = C_3(x,y)
+C3mat[lower.tri(C3mat)] = NA
+C3mat
+print(
+    xtable(C3mat, 
+      align = c('c',rep('c', times = length(C3mat[1,]))),
+      digits = c(0,rep(3, times = 5))
+    ),
+    hline.after = NULL,
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
