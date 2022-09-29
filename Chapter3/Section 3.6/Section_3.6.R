@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter3/Section 3.6/'
+sec_path = 'Rcode/Chapter3/Section 3.6/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 ################################################################################
@@ -64,7 +64,7 @@ cp = cp[ind]
 sv = sv[ind]
 ## Make the data into 15 equally spaced bins. 
 bins <- cut(ds,  breaks = seq(0, 2500, by = 2500/15))
-bins <- factor(ctg, levels = levels(bins), 
+bins <- factor(bins, levels = levels(bins), 
   labels = format(round(tapply(ds, bins, mean), 0), 0))
 # Compute covariogram and semivariograms using bin means
 sample_cvg <- tapply(cp, bins, mean)
@@ -73,28 +73,34 @@ sample_n <- tapply(cp, bins, length)
 
 # make plots
 mtxtadj = -.12
+cex_lab = 2.5
+cex_axis = 1.8
 pdf(paste0(file_name,'.pdf'), width = 11, height = 14)
   layout(matrix(1:6, nrow = 3, byrow = TRUE))
   old.par = par(mar = c(5,5,5,2))
   plot(ds, cp, pch = 19, cex = .5, 
-    ylab = 'Autocovariance', xlab = 'Distance (km)', cex.lab = 2, cex.axis = 1.5)
+    ylab = 'Autocovariance', xlab = 'Distance (km)', cex.lab = cex_lab, 
+    cex.axis = cex_axis)
   mtext('A', adj = mtxtadj, cex = 3)
   plot(ds, sv, pch = 19, cex = .5, 
-    ylab = 'Semivariogram', xlab = 'Distance (km)', cex.lab = 2, cex.axis = 1.5)
+    ylab = 'Semivariogram', xlab = 'Distance (km)', cex.lab = cex_lab, 
+    cex.axis = cex_axis)
   mtext('B', adj = mtxtadj, cex = 3)
   boxplot(cp ~ bins, ylab = 'Autocovariance', xlab = 'Distance (km)',
-    cex.lab = 2, cex.axis = 1.5)
+    cex.lab = cex_lab, cex.axis = cex_axis)
   mtext('C', adj = mtxtadj, cex = 3)
   boxplot(sv ~ bins, ylab = 'Semivariogram', xlab = 'Distance (km)',
-    cex.lab = 2, cex.axis = 1.5)
+    cex.lab = cex_lab, cex.axis = cex_axis)
   mtext('D', adj = mtxtadj, cex = 3)
   plot(as.numeric(names(sample_cvg)), sample_cvg, pch = 19, 
     ylab = 'Autocovariance', xlab = 'Distance (km)',
-    cex.lab = 2, cex.axis = 1.5, cex = 8*sample_n/max(sample_n))
-  mtext('E', adj = mtxtadj, 3)
+    cex.lab = cex_lab, cex.axis = cex_axis, 
+    cex = 8*sqrt(sample_n)/max(sqrt(sample_n)))
+  mtext('E', adj = mtxtadj, cex = 3)
   plot(as.numeric(names(sample_svg)), sample_svg, pch = 19,
     ylab = 'Semivariogram', xlab = 'Distance (km)',
-    cex.lab = 2, cex.axis = 1.5, cex = 8*sample_n/max(sample_n))
+    cex.lab = cex_lab, cex.axis = cex_axis, 
+    cex = 8*sqrt(sample_n)/max(sqrt(sample_n)))
   mtext('F', adj = mtxtadj, cex = 3)
   par(old.par)
 dev.off()

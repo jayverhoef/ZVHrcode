@@ -317,7 +317,7 @@ mean((hold_outfill_1000[,1] - .2)^2)
 mean((hold_outfill_1000[,2] - 1)^2)
 mean((hold_outfill_1000[,2]/hold_outfill_1000[,1] - 5)^2)
 
-#create output for latex
+#create output for latex, this is for MLE
 hold_results = cbind(
 	c(50,250,1000),
 	c(

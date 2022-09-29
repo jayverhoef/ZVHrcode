@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter6/Section 6.2/'
+sec_path = 'Rcode/Chapter6/Section 6.2/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(gstat)
@@ -40,9 +40,9 @@ lines(variogramLine(vgm(psill = 1, "Lin",  range = 2, nugget = 0),
 lines(variogramLine(vgm(psill = 1, "Lin",  range = 3, nugget = 0), 
   covariance = TRUE, maxdist = 4), type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[2], " = 1", "")), 
-  expression(paste(theta[2], " = 2", "")), 
-  expression(paste(theta[2], " = 3", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 1", "")), 
+  expression(paste(alpha, " = 2", "")), 
+  expression(paste(alpha, " = 3", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Circular 
@@ -59,9 +59,9 @@ lines(variogramLine(vgm(psill = 1, "Cir",  range = 3, nugget = 0),
   covariance = TRUE, maxdist = 4), lwd = 3,
   type = "l", lty = 3)
 legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[2], " = 1", "")), 
-  expression(paste(theta[2], " = 2", "")), 
-  expression(paste(theta[2], " = 3", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 1", "")), 
+  expression(paste(alpha, " = 2", "")), 
+  expression(paste(alpha, " = 3", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Spherical
@@ -78,9 +78,9 @@ lines(variogramLine(vgm(psill = 1, "Sph",  range = 3, nugget = 0),
   covariance = TRUE, maxdist = 4), lwd = 3,
   type = "l", lty = 3)
 legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[2], " = 1", "")), 
-  expression(paste(theta[2], " = 2", "")), 
-  expression(paste(theta[2], " = 3", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 1", "")), 
+  expression(paste(alpha, " = 2", "")), 
+  expression(paste(alpha, " = 3", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Cosine
@@ -96,9 +96,9 @@ plot(x, my_cos_fnc(x, theta2 = 0.2), xlab = "r", ylab = "Covariance",
 lines(x, my_cos_fnc(x, theta2 = 0.5),type = "l", lty = 2, lwd = 3)
 lines(x, my_cos_fnc(x, theta2 = 1),type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2,bg = 'white',
-  legend=c(expression(paste(theta[2], " = 0.2", "")), 
-  expression(paste(theta[2], " = 0.5", "")), 
-  expression(paste(theta[2], " = 1", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 0.2", "")), 
+  expression(paste(alpha, " = 0.5", "")), 
+  expression(paste(alpha, " = 1", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Wave
@@ -114,9 +114,9 @@ plot(x, my_wave_fnc(x, theta2 = 0.1), xlab = "r", ylab = "Covariance",
 lines(x, my_wave_fnc(x, theta2 = 0.2),type = "l", lty = 2, lwd = 3)
 lines(x, my_wave_fnc(x, theta2 = 0.5),type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2,bg = 'white',
-  legend=c(expression(paste(theta[2], " = 0.1", "")), 
-  expression(paste(theta[2], " = 0.2", "")), 
-  expression(paste(theta[2], " = 0.5", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 0.1", "")), 
+  expression(paste(alpha, " = 0.2", "")), 
+  expression(paste(alpha, " = 0.5", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Exponential
@@ -133,9 +133,9 @@ lines(variogramLine(vgm(psill = 1, "Exp",  range = 1, nugget = 0),
   covariance = TRUE, maxdist = 4), lwd = 3,
   type = "l", lty = 3)
 legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[2], " = 1/3", "")), 
-  expression(paste(theta[2], " = 2/3", "")), 
-  expression(paste(theta[2], " = 1", ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = 1/3", "")), 
+  expression(paste(alpha, " = 2/3", "")), 
+  expression(paste(alpha, " = 1", ""))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Gaussian
@@ -152,9 +152,9 @@ lines(variogramLine(vgm(psill = 1, "Gau",  range = 3/sqrt(3), nugget = 0),
   covariance = TRUE, maxdist = 4), lwd = 3,
   type = "l", lty = 3)
 legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[2], " = ", 1/sqrt(3), "")), 
-  expression(paste(theta[2], " = ", 2/sqrt(3), "")), 
-  expression(paste(theta[2], " = ", 3/sqrt(3), ""))),lty=1:3)
+  legend=c(expression(paste(alpha, " = ", 1/sqrt(3), "")), 
+  expression(paste(alpha, " = ", 2/sqrt(3), "")), 
+  expression(paste(alpha, " = ", 3/sqrt(3), ""))),lty=1:3)
 
 par(old.par)
 dev.off()
@@ -196,9 +196,9 @@ plot(x, my_cau_fnc(x, theta2 = 1/2, theta3 = 1), xlab = "r", ylab = "Covariance"
 lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
 lines(x, my_cau_fnc(x, theta2 = 2, theta3 = 1),type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 0.5, ", theta[3], " = 1.0", "")), 
-          expression(paste(theta[2], " = 1.0, ", theta[3], " = 1.0", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.0", ""))),
+  legend=c(expression(paste(alpha, " = 0.5, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 2.0, ", phi, " = 1.0", ""))),
           lty=1:3)
           
 plot(x, my_cau_fnc(x, theta2 = 1, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
@@ -208,10 +208,10 @@ lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
 lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
 lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 2),type = "l", lty = 4, lwd = 3)
 legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 1.0, ", theta[3], " = 0.5", "")), 
-          expression(paste(theta[2], " = 1.0, ", theta[3], " = 1.0", "")), 
-          expression(paste(theta[2], " = 1.0, ", theta[3], " = 1.5", "")),
-          expression(paste(theta[2], " = 1.0, ", theta[3], " = 2.0", ""))),
+  legend=c(expression(paste(alpha, " = 1.0, ", phi, " = 0.5", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.5", "")),
+          expression(paste(alpha, " = 1.0, ", phi, " = 2.0", ""))),
           lty=1:4)
 
 #-------------------------------------------------------------------------------
@@ -228,9 +228,9 @@ plot(x, my_pe_fnc(x, theta2 = 1, theta3 = 1.5), xlab = "r", ylab = "Covariance",
 lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
 lines(x, my_pe_fnc(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 1.0, ", theta[3], " = 1.5", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.5", "")), 
-          expression(paste(theta[2], " = 3.0, ", theta[3], " = 1.5", ""))),
+  legend=c(expression(paste(alpha, " = 1.0, ", theta, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", theta, " = 1.5", ""))),
           lty=1:3)
 
 plot(x, my_pe_fnc(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
@@ -240,10 +240,10 @@ lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.0),type = "l", lty = 2, lwd = 3)
 lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
 lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 2.0),type = "l", lty = 4, lwd = 3)
 legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 2.0, ", theta[3], " = 0.5", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.0", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.5", "")),
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 2.0", ""))),
+  legend=c(expression(paste(alpha, " = 2.0, ", theta, " = 0.5", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.0", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")),
+          expression(paste(alpha, " = 2.0, ", theta, " = 2.0", ""))),
           lty=1:4)
 
 #-------------------------------------------------------------------------------
@@ -261,9 +261,9 @@ plot(x, my_mat_fnc_2(x, theta2 = 1, theta3 = 1.5), xlab = "r", ylab = "Covarianc
 lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
 lines(x, my_mat_fnc_2(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
 legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 1.0, ", theta[3], " = 1.5", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.5", "")), 
-          expression(paste(theta[2], " = 3.0, ", theta[3], " = 1.5", ""))),
+  legend=c(expression(paste(alpha, " = 1.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", nu, " = 1.5", ""))),
           lty=1:3)
 
 plot(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
@@ -274,10 +274,10 @@ lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 2.5),type = "l", lty = 3, lwd = 3)
 lines(variogramLine(vgm(psill = 1, "Gau",  range = 2 * sqrt(2), nugget = 0), 
   covariance = TRUE, maxdist = 4), type = "l", lty = 4, lwd = 3)
 legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(theta[2], " = 2.0, ", theta[3], " = 0.5", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 1.5", "")), 
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = 2.5", "")),
-          expression(paste(theta[2], " = 2.0, ", theta[3], " = ", infinity, ""))),
+  legend=c(expression(paste(alpha, " = 2.0, ", nu, " = 0.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 2.5", "")),
+          expression(paste(alpha, " = 2.0, ", nu, " = ", infinity, ""))),
           lty=1:4)
 
 dev.off()
@@ -301,8 +301,11 @@ system(paste0('rm ','\'',SLEDbook_path,
 file_name = "SimPlot1"
 
 pdf(paste0(file_name,'.pdf'), width = 14, height = 8)
-    
+   
+cex_main = 2.5
+ 
 source('addBreakColorLegend.R')
+
 layout(matrix(1:12, ncol = 6, byrow = TRUE), widths = c(4,1,4,1,4,1))
 
 # create a grid of points
@@ -321,8 +324,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("No-correlation")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("No-correlation"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -342,8 +345,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Spherical (", theta[2], " = 1)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Spherical (", alpha, " = 1)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -363,8 +366,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Wave (", theta[2], " = 0.1)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Wave (", alpha, " = 0.1)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -384,8 +387,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Spherical (", theta[2], " = 2, ", "nugget = 0.25)")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Spherical (", alpha, " = 2, ", 
+		sigma[0]^2, " = 0.25)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -405,8 +409,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Spherical (", theta[2], " = 2)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Spherical (", alpha, " = 2)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -426,8 +430,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Wave (", theta[2], " = 0.5)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Wave (", alpha, " = 0.5)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -446,6 +450,11 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
+
+
+
+
+
 ################################################################################
 #-------------------------------------------------------------------------------
 #              Simulation Plot 2 
@@ -456,7 +465,10 @@ file_name = "SimPlot2"
 
 pdf(paste0(file_name,'.pdf'), width = 14, height = 8)
     
+cex_main = 2.5
+
 source('addBreakColorLegend.R')
+
 layout(matrix(1:12, ncol = 6, byrow = TRUE), widths = c(4,1,4,1,4,1))
 
 # create a grid of points
@@ -475,8 +487,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 1/3)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Exponential (", alpha, " = 1/3)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -496,8 +508,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Gaussian (", theta[2], " = 1/",sqrt(3),")")), 
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Gaussian (", alpha, " = 1/",sqrt(3),")"))), 
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -518,8 +530,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Mat\uE9rn (", theta[2], " = 1, ", theta[3], " = 1.5)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Mat\uE9rn (", alpha, " = 1, ", 
+		nu, " = 1.5)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -539,8 +552,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 1)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Exponential (", alpha, " = 1)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -560,8 +573,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Gaussian (", theta[2], " = 3/",sqrt(3),")")), 
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Gaussian (", alpha, " = 3/",sqrt(3),")"))), 
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -582,8 +595,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Mat\uE9rn (", theta[2], " = 1, ", theta[3], " = 2.5)", "")),
-  breaks = cip$brks, cex.main = 2.1,
+  main = expression(bold(paste("Mat\uE9rn (", alpha, " = 1, ", 
+		nu, " = 2.5)", ""))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',

@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter6/Section 6.3/'
+sec_path = 'Rcode/Chapter6/Section 6.3/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(gstat)
@@ -15,7 +15,8 @@ source('addBreakColorLegend.R')
 file_name = "SimAniso"
 
 pdf(paste0(file_name,'.pdf'), width = 14, height = 8)
-    
+
+cex_main = 2.0    
 source('addBreakColorLegend.R')
 layout(matrix(1:12, ncol = 6, byrow = TRUE), widths = c(4,1,4,1,4,1))
 
@@ -28,6 +29,13 @@ names(xy) <- c("x", "y")
 ## Geometric anisotropic model c(45, 1/4)
 #-------------------------------------------------------------------------------
 
+# gstat uses geographical coordinates, so anisotropy of 45 degrees is
+# pi/4 in polar coordinates, the other anisotropy parameter is the ratio
+# of the y-axis (long axis) to x-axis (short axis) in gstat parameterization
+# but these are reversed in polar coordinates, as, prior to rotation,
+# the y-axis becomes the short axis by the ratio 1/4 to the longer x-axis.
+# These same considerations hold for all geometric anisotropy plots in this
+# figure
 g.dummy.1 <- gstat(formula = z ~ 1, locations = ~x+y, dummy = T, beta = 0,
                    model = vgm(1, "Exp", 2/3, anis = c(45, 1/4)), nmax = 20)
 set.seed(171)
@@ -36,8 +44,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 2/3), ani = c(45,1/4)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Exponential(", alpha, " = 2/3, ", 
+		phi,"=", pi,"/4, ", tau, "=1/4)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -57,8 +66,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 2/3), ani = c(60,1/4)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Exponential(", alpha, " = 2/3, ", 
+		phi,"=", pi,"/6, ", tau, "=1/4)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -113,8 +123,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Separable (", theta[2], " = 1, ", theta[3], " = 2)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Separable (", alpha[1], " = 1, ", 
+		alpha[2], " = 2)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -134,8 +145,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 2/3), ani = c(45,1/2)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Exponential(", alpha, " = 2/3, ", 
+		phi,"=", pi,"/4, ", tau, "=1/2)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -155,8 +167,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Exponential (", theta[2], " = 2/3), ani = c(60,1/2)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Exponential(", alpha, " = 2/3, ", 
+		phi,"=", pi,"/6, ", tau, "=1/2)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -185,8 +198,9 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(paste("Separable (", theta[2], " = 2, ", theta[3], " = 1)")),
-  breaks = cip$brks, cex.main = 1.9,
+  main = expression(bold(paste("Separable (", alpha[1], " = 2, ", 
+		alpha[2], " = 1)"))),
+  breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
 plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',

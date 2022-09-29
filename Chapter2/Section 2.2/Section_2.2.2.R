@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter2/Section 2.2/'
+sec_path = 'Rcode/Chapter2/Section 2.2/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 # Create plots to illustrate separability and additivity (Figure 2.1)
@@ -79,6 +79,31 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 10)
   mtext('F', adj = adj, cex = 3, padj = padj)
   par(old.par)
 dev.off()
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
+
+
+
+x = c(1,1,2,2,5)
+y = c(4,3,3,2,4)
+labs = c(1,2,3,4,5)
+
+file_name = "locs4geocovfuns"
+pdf(paste0(file_name,'.pdf'), height = 7, width = 7)
+# Create plots of loci of equal correlation for second-order stationary covariance functions (Figure 2.3)
+
+	par(mar = c(5,5,1,1))
+	plot(x,y, xlim = c(1,5), ylim = c(1,5), pch = 19, cex = 2,
+		cex.lab = 2.5, cex.axis = 1.8)
+	text(x,y, labels = labs, pos = 3, cex = 2)
+
+dev.off()
+
 system(paste0('pdfcrop ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('cp ','\'',SLEDbook_path,

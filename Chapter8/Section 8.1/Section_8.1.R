@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter8/Section 8.1/'
+sec_path = 'Rcode/Chapter8/Section 8.1/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 ################################################################################
@@ -256,13 +256,13 @@ plot(hold6, type = 'l', xlab="", lwd = lwd_all ,
   ylab="", cex.axis = 1.5)
 
 par(mar=c(5,6,5,2))
-plot(hold7, type = 'l', xlab="(Effective) Range", lwd = lwd_all , 
+plot(hold7, type = 'l', xlab="(Practical) Range", lwd = lwd_all , 
   cex.lab = 2, cex.axis = 1.5, ylab="Profile log-likelihood")
 par(mar=c(5,1,5,2))
-plot(hold8, type = 'l', xlab="(Effective) Range", lwd = lwd_all ,
+plot(hold8, type = 'l', xlab="(Practical) Range", lwd = lwd_all ,
   ylab="", main = "Gaussian", cex.main = 3, cex.lab = 2, cex.axis = 1.5)
 par(mar=c(5,1,5,2))
-plot(hold9, type = 'l', xlab="(Effective) Range", lwd = lwd_all , 
+plot(hold9, type = 'l', xlab="(Practical) Range", lwd = lwd_all , 
   cex.lab = 2, cex.axis = 1.5, ylab="")
 
 par(old.par)

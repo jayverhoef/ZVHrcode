@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter6/Section 6.5/'
+sec_path = 'Rcode/Chapter6/Section 6.5/figures/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(gstat)
@@ -26,7 +26,7 @@ plot(variogramLine(vgm(psill = 0, "Nug",  0, nugget = 1), covariance = FALSE, ma
      ylim = c(0, 1), xlab = "r", ylab = "Semivariogram", main = "No-correlation", type = "l", cex.main=2, lwd = 3, cex.lab = 2, cex.axis = 1.5)
 points(0, 0, pch = 19, cex = 2)
 legend("bottomright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[1], " = 1", ""))),lty=1)
+  legend=c(expression(paste(sigma^2, " = 1", ""))),lty=1)
 
 #-------------------------------------------------------------------------------
 ## Exponential
@@ -41,9 +41,9 @@ lines(variogramLine(vgm(psill = 1, "Exp",  range = 2/3, nugget = 0),
 lines(variogramLine(vgm(psill = 1, "Exp",  range = 1, nugget = 0), 
   covariance = FALSE, maxdist = 4), type = "l", lty = 3, lwd = 3)
 legend("bottomright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(theta[1], " = 1, ", theta[2], " = 1/3")), 
-  expression(paste(theta[1], " = 1, ", theta[2], " = 2/3")), 
-  expression(paste(theta[1], " = 1, ", theta[2], " = 1"))),lty=1:3)
+  legend=c(expression(paste(sigma^2, " = 1, ", alpha, " = 1/3")), 
+  expression(paste(sigma^2, " = 1, ", alpha, " = 2/3")), 
+  expression(paste(sigma^2, " = 1, ", alpha, " = 1"))),lty=1:3)
 
 #-------------------------------------------------------------------------------
 ## Linear
