@@ -1,0 +1,1067 @@
+# R code for displaying model-based sampling designs (toy examples) in Figure 10.1
+x <- rep(seq(0.1,0.9,0.2),5)
+y <- rep(seq(0.9,0.1,-0.2),each=5)
+z <- cbind(x,y)
+par(pty="s",bty="n",xaxt="n",yaxt="n",mfrow=c(2,3))
+black1 <- t(matrix(c(z[1,],z[5,],z[13,],z[21,],z[25,]),nrow=2))
+black2 <- t(matrix(c(z[1,],z[3,],z[5,],z[21,],z[25,]),nrow=2))
+black3 <- t(matrix(c(z[2,],z[10,],z[13,],z[16,],z[24,]),nrow=2))
+black4 <- t(matrix(c(z[3,],z[8,],z[13,],z[18,],z[23,]),nrow=2))
+black5 <- t(matrix(c(z[1,],z[2,],z[3,],z[24,],z[25,]),nrow=2))
+black6 <- t(matrix(c(z[1,],z[2,],z[14,],z[19,],z[24,]),nrow=2))
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black1[,1],black1[,2],cex=1.5,pch=16)
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black2[,1],black2[,2],cex=1.5,pch=16)
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black3[,1],black3[,2],cex=1.5,pch=16)
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black4[,1],black4[,2],cex=1.5,pch=16)
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black5[,1],black5[,2],cex=1.5,pch=16)
+plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
+matpoints(black6[,1],black6[,2],cex=1.5,pch=16)
+#
+
+# CPElocations for the "big example" sampling design (output of B_ML.sas with rho=0.5 and nugget=.50):
+0.025 0.965
+0.325 0.025
+0.585 0.915
+0.565 0.605
+0.985 0.965
+0.425 0.975
+0.025 0.405
+0.845 0.015
+0.995 0.515
+0.585 0.935
+0.005 0.995
+0.905 0.765
+0.435 0.975
+0.985 0.955
+0.275 0.305
+0.315 0.035
+0.275 0.315
+0.645 0.025
+0.595 0.935
+0.985 0.545
+0.995 0.945
+0.585 0.575
+0.915 0.775
+0.035 0.065
+0.325 0.045
+0.615 0.355
+0.625 0.365
+0.035 0.645
+0.025 0.435
+0.325 0.735
+0.895 0.285
+0.585 0.585
+0.025 0.055
+0.855 0.025
+0.035 0.655
+0.265 0.305
+0.035 0.055
+0.875 0.275
+0.035 0.435
+0.625 0.035
+0.025 0.655
+0.015 0.995
+0.875 0.285
+0.335 0.715
+0.335 0.725
+0.605 0.345
+0.845 0.005
+0.915 0.765
+0.985 0.555
+0.615 0.035
+
+# EKlocations for the "big example" sampling design (output of VPE_ML.sas for rho=0.5 and nugget=0.50):
+0.985 0.885
+0.995 0.395
+0.025 0.165
+0.095 0.355
+0.325 0.935
+0.355 0.445
+0.445 0.925
+0.245 0.665
+0.545 0.095
+0.715 0.555
+0.865 0.965
+0.975 0.885
+0.915 0.925
+0.985 0.025
+0.225 0.655
+0.615 0.415
+0.005 0.535
+0.315 0.025
+0.615 0.935
+0.035 0.055
+0.525 0.675
+0.605 0.235
+0.955 0.975
+0.225 0.455
+0.745 0.005
+0.045 0.605
+0.775 0.035
+0.075 0.995
+0.985 0.685
+0.855 0.435
+0.255 0.525
+0.735 0.015
+0.675 0.865
+0.415 0.095
+0.595 0.965
+0.295 0.475
+0.295 0.995
+0.845 0.235
+0.105 0.715
+0.005 0.935
+0.645 0.025
+0.015 0.155
+0.875 0.365
+0.775 0.955
+0.125 0.015
+0.165 0.385
+0.975 0.165
+0.965 0.585
+0.835 0.135
+0.155 0.745
+
+# R code for plots of the two "big example" sampling designs (CPE-optimal and EK-optimal when rho=0.5 and nugget=0.5)
+# for Figure 10.2:
+CPElocations <- matrix(scan("CPEdesignlocations.dat"),ncol=2,byrow=T)
+EKlocations <- matrix(scan("trueEKdesignlocations.dat"),ncol=2,byrow=T)
+par(mfrow=c(1,2),pty="s")
+plot(CPElocations,pch=16,xaxt="n",yaxt="n",xlab="",ylab="",bty="n",cex=0.5)
+lines(c(0,0),c(0,1))
+lines(c(0,1),c(1,1))
+lines(c(1,1),c(1,0))
+lines(c(1,0),c(0,0))
+plot(EKlocations,pch=16,xaxt="n",yaxt="n",xlab="",ylab="",bty="n",cex=0.5)
+lines(c(0,0),c(0,1))
+lines(c(0,1),c(1,1))
+lines(c(1,1),c(1,0))
+lines(c(1,0),c(0,0))
+
+# Probability-based sampling designs for Figure 10.3
+set.seed(1001)
+x <- runif(25)
+y <- runif(25)
+par(pty="s",xaxt="n",yaxt="n",mfrow=c(1,3),bty="n")
+plot(x,y,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+x0 <- runif(1,min=0,max=0.2)
+y0 <- runif(1,min=0,max=0.2)
+x00 <- c(x0,x0+0.2,x0+0.4,x0+0.6,x0+0.8)
+y00 <- c(y0,y0+0.2,y0+0.4,y0+0.6,y0+0.8)
+x <- rep(x00,5)
+y <- rep(y00,each=5)
+plot(x,y,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+x <- matrix(0,25,1)
+y <- matrix(0,25,1)
+for(i in 1:5){
+ for(j in 1:5){
+  x[(i-1)*5+j,1] <- runif(1,min=0.2*(i-1),max=0.2*i)
+  y[(i-1)*5+j,1] <- runif(1,min=0.2*(j-1),max=0.2*j)
+}}
+plot(x,y,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+segments(c(0,0,0,0),c(0.2,0.4,0.6,0.8),c(1,1,1,1),c(0.2,0.4,0.6,0.8))
+segments(c(0.2,0.4,0.6,0.8),c(0,0,0,0),c(0.2,0.4,0.6,0.8),c(1,1,1,1))
+
+# Augmented space-filling designs for Figure 10.5
+par(pty="s",xaxt="n",yaxt="n",mfrow=c(1,3),bty="n")
+# left panel
+set.seed(3141)
+x0 <- c(1/14,3/14,5/14,7/14,9/14,11/14,13/14)
+y0 <- x0
+x <- rep(x0,7)
+y <- rep(y0,each=7)
+xsample <- sample(x,15)
+ysample <- sample(y,15)
+xdell <- matrix(0,30,1)
+ydell <- xdell
+for(i in 1:30){
+xdel <- runif(1,-1/14,1/14)
+ydel <- runif(1,-1/14,1/14)
+if(sqrt(xdel^2+ydel^2)<1/14){
+xdell[i,1] <- xdel
+ydell[i,1] <- ydel}
+}
+xnew <- xsample+xdell[1:15,1]
+ynew <- ysample+ydell[1:15,1]
+xall <- cbind(x,xnew)
+yall <- cbind(y,ynew)
+plot(xall,yall,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+
+# middle panel
+set.seed(3143)
+x00 <- c(1/14,3/14,5/14,7/14,9/14,11/14)
+y00 <- x00
+x6 <- rep(x00,6)
+y6 <- rep(y00,each=6)
+xsample2 <- sample(x6,2)
+ysample2 <- sample(y6,2)
+plot(x,y,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+x000 <- c(0,(1/3)*(1/7),(2/3)*(1/7),1/7)
+y000 <- c(0,(1/3)*(1/7),(2/3)*(1/7),1/7)
+xdelta <- rep(x000,4)
+ydelta <- rep(y000,each=4)
+points(xsample2[1]+xdelta,ysample2[1]+ydelta,pch=16)
+points(xsample2[2]+xdelta,ysample2[2]+ydelta,pch=16)
+
+# right panel
+# library(spatstat)
+set.seed(2141)
+xyssipp <- rSSI(1/9,49)
+xssisample <- sample(xyssipp$x,15)
+yssisample <- sample(xyssipp$y,15)
+for(i in 1:30){
+xssidel <- runif(1,-1/14,1/14)
+yssidel <- runif(1,-1/14,1/14)
+xssidell <- matrix(0,30,1)
+yssidell <- xssidell
+if(sqrt(xssidel^2+yssidel^2)<1/14){
+xssidell[i,1] <- xssidel
+yssidell[i,1] <- yssidel}
+}
+xssinew <- xssisample+xssidell[1:15,1]
+yssinew <- yssisample+yssidell[1:15,1]
+xssiall <- cbind(xyssipp$x,xssinew)
+yssiall <- cbind(xyssipp$y,yssinew)
+plot(xssiall,yssiall,xlab="",ylab="",xlim=c(0,1),ylim=c(0,1),pch=16)
+segments(c(0,0,1,1),c(0,1,1,0),c(0,1,1,0),c(1,1,0,0))
+
+# SAS code for average variance of GLS estimates of treatment differences for the 9-observation example of Section 10.6:
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0,
+0 0 1 0 0 1};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 0 1 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0,
+0 0 1 0 0 1};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+#
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 0 1 1 0 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 0 1 0 1 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 0 1 0 1 0,
+0 0 1 1 0 0,
+0 0 1 0 0 1};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 0 1 0 1 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 0 1 0 1 0,
+0 0 1 1 0 0,
+0 0 1 0 0 1};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0,
+0 0 1 0 0 1};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 0 1 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 1 0 0,
+0 1 0 0 0 1,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 0 1 0 0 1,
+0 0 1 1 0 0,
+0 0 1 0 1 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 0 1,
+0 1 0 1 0 0,
+0 1 0 0 1 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+proc iml;
+x={1 0 0 1 0 0,
+1 0 0 0 1 0,
+1 0 0 0 0 1,
+0 1 0 0 0 1,
+0 1 0 0 1 0,
+0 1 0 1 0 0,
+0 0 1 0 0 1,
+0 0 1 0 1 0,
+0 0 1 1 0 0};
+id=i(3);
+cov={1 0.8 0.64,
+0.8 1 0.8,
+0.64 0.8 1};
+v=id@cov;
+con1={0,0,0,1,-1,0};
+con2={0,0,0,1,0,-1};
+con3={0,0,0,0,1,-1};
+ginvvar=ginv(x`*inv(v)*x);
+var1=con1`*ginvvar*con1;
+var2=con2`*ginvvar*con2;
+var3=con3`*ginvvar*con3;
+var=var1+var2+var3;
+print x var;
+run;
+
+# SAS code to compute average variance of estimated treatment difference for a 5x5 quasi-complete Latin square design
+# under a first-order CAR model:
+proc iml;
+x={1 0 0 0 0,
+0 1 0 0 0,
+0 0 1 0 0,
+0 0 0 1 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 0 1 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 0 1 0 0,
+0 0 1 0 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 0 1 0,
+0 0 0 1 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 1 0 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 0 1 0 0,
+0 0 0 1 0,
+1 0 0 0 0,
+0 1 0 0 0};
+id=i(25);
+nrook=j(25,25,0);
+nrook[1,2]=1;
+nrook[1,6]=1;
+nrook[2,1]=1;
+nrook[2,3]=1;
+nrook[2,7]=1;
+nrook[3,2]=1;
+nrook[3,4]=1;
+nrook[3,8]=1;
+nrook[4,3]=1;
+nrook[4,5]=1;
+nrook[4,9]=1;
+nrook[5,4]=1;
+nrook[5,10]=1;
+nrook[6,1]=1;
+nrook[6,7]=1;
+nrook[6,11]=1;
+nrook[7,2]=1;
+nrook[7,6]=1;
+nrook[7,8]=1;
+nrook[7,12]=1;
+nrook[8,3]=1;
+nrook[8,7]=1;
+nrook[8,9]=1;
+nrook[8,13]=1;
+nrook[9,4]=1;
+nrook[9,8]=1;
+nrook[9,10]=1;
+nrook[9,14]=1;
+nrook[10,5]=1;
+nrook[10,9]=1;
+nrook[10,15]=1;
+nrook[11,6]=1;
+nrook[11,12]=1;
+nrook[11,16]=1;
+nrook[12,7]=1;
+nrook[12,11]=1;
+nrook[12,13]=1;
+nrook[12,17]=1;
+nrook[13,8]=1;
+nrook[13,12]=1;
+nrook[13,14]=1;
+nrook[13,18]=1;
+nrook[14,9]=1;
+nrook[14,13]=1;
+nrook[14,15]=1;
+nrook[14,19]=1;
+nrook[15,10]=1;
+nrook[15,14]=1;
+nrook[15,20]=1;
+nrook[16,11]=1;
+nrook[16,17]=1;
+nrook[16,21]=1;
+nrook[17,12]=1;
+nrook[17,16]=1;
+nrook[17,18]=1;
+nrook[17,22]=1;
+nrook[18,13]=1;
+nrook[18,17]=1;
+nrook[18,19]=1;
+nrook[18,23]=1;
+nrook[19,14]=1;
+nrook[19,18]=1;
+nrook[19,20]=1;
+nrook[19,24]=1;
+nrook[20,15]=1;
+nrook[20,19]=1;
+nrook[20,25]=1;
+nrook[21,16]=1;
+nrook[21,22]=1;
+nrook[22,17]=1;
+nrook[22,21]=1;
+nrook[22,23]=1;
+nrook[23,18]=1;
+nrook[23,22]=1;
+nrook[23,24]=1;
+nrook[24,19]=1;
+nrook[24,23]=1;
+nrook[24,25]=1;
+nrook[25,20]=1;
+nrook[25,24]=1;
+print nrook;
+vinv=id-0.25#nrook;
+ginvvar=ginv(x`*vinv*x);
+con12={1,-1,0,0,0};
+con13={1,0,-1,0,0};
+con14={1,0,0,-1,0};
+con15={1,0,0,0,-1};
+con23={0,1,-1,0,0};
+con24={0,1,0,-1,0};
+con25={0,1,0,0,-1};
+con34={0,0,1,-1,0};
+con35={0,0,1,0,-1};
+con45={0,0,0,1,-1};
+var12=con12`*ginvvar*con12;
+var13=con13`*ginvvar*con13;
+var14=con14`*ginvvar*con14;
+var15=con15`*ginvvar*con15;
+var23=con23`*ginvvar*con23;
+var24=con24`*ginvvar*con24;
+var25=con25`*ginvvar*con25;
+var34=con34`*ginvvar*con34;
+var35=con35`*ginvvar*con35;
+var45=con45`*ginvvar*con45;
+var=var12+var13+var14+var15+var23+var24+var25+var34+var35+var45;
+print x var;
+run;
+
+# SAS code to compute loss in efficiency using CRD rather than quasi-complete Latin square for a 5x5 arrangement of
+# plots under a 1st-order CAR model
+proc iml;
+/** Module to permute the rows of a matrix **/
+start PermuteRows(M);
+   n = nrow(M);          /** how many rows? **/
+   r = RanPerm(n);      /** or use RANPERM in SAS 9.3 to get a random permutation **/
+   return ( M[r,] );     /** return matrix with permuted rows **/
+finish;
+x={1 0 0 0 0,
+0 1 0 0 0,
+0 0 1 0 0,
+0 0 0 1 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 0 1 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 0 1 0 0,
+0 0 1 0 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 0 1 0,
+0 0 0 1 0,
+0 0 0 0 1,
+0 1 0 0 0,
+0 0 1 0 0,
+1 0 0 0 0,
+0 0 0 0 1,
+0 0 1 0 0,
+0 0 0 1 0,
+1 0 0 0 0,
+0 1 0 0 0};
+id=i(25);
+nrook=j(25,25,0);
+nrook[1,2]=1;
+nrook[1,6]=1;
+nrook[2,1]=1;
+nrook[2,3]=1;
+nrook[2,7]=1;
+nrook[3,2]=1;
+nrook[3,4]=1;
+nrook[3,8]=1;
+nrook[4,3]=1;
+nrook[4,5]=1;
+nrook[4,9]=1;
+nrook[5,4]=1;
+nrook[5,10]=1;
+nrook[6,1]=1;
+nrook[6,7]=1;
+nrook[6,11]=1;
+nrook[7,2]=1;
+nrook[7,6]=1;
+nrook[7,8]=1;
+nrook[7,12]=1;
+nrook[8,3]=1;
+nrook[8,7]=1;
+nrook[8,9]=1;
+nrook[8,13]=1;
+nrook[9,4]=1;
+nrook[9,8]=1;
+nrook[9,10]=1;
+nrook[9,14]=1;
+nrook[10,5]=1;
+nrook[10,9]=1;
+nrook[10,15]=1;
+nrook[11,6]=1;
+nrook[11,12]=1;
+nrook[11,16]=1;
+nrook[12,7]=1;
+nrook[12,11]=1;
+nrook[12,13]=1;
+nrook[12,17]=1;
+nrook[13,8]=1;
+nrook[13,12]=1;
+nrook[13,14]=1;
+nrook[13,18]=1;
+nrook[14,9]=1;
+nrook[14,13]=1;
+nrook[14,15]=1;
+nrook[14,19]=1;
+nrook[15,10]=1;
+nrook[15,14]=1;
+nrook[15,20]=1;
+nrook[16,11]=1;
+nrook[16,17]=1;
+nrook[16,21]=1;
+nrook[17,12]=1;
+nrook[17,16]=1;
+nrook[17,18]=1;
+nrook[17,22]=1;
+nrook[18,13]=1;
+nrook[18,17]=1;
+nrook[18,19]=1;
+nrook[18,23]=1;
+nrook[19,14]=1;
+nrook[19,18]=1;
+nrook[19,20]=1;
+nrook[19,24]=1;
+nrook[20,15]=1;
+nrook[20,19]=1;
+nrook[20,25]=1;
+nrook[21,16]=1;
+nrook[21,22]=1;
+nrook[22,17]=1;
+nrook[22,21]=1;
+nrook[22,23]=1;
+nrook[23,18]=1;
+nrook[23,22]=1;
+nrook[23,24]=1;
+nrook[24,19]=1;
+nrook[24,23]=1;
+nrook[24,25]=1;
+nrook[25,20]=1;
+nrook[25,24]=1;
+vinv=id-0.25#nrook;
+do m=1 to 10;
+x=PermuteRows(x);
+ginvvar=ginv(x`*vinv*x);
+con12={1,-1,0,0,0};
+con13={1,0,-1,0,0};
+con14={1,0,0,-1,0};
+con15={1,0,0,0,-1};
+con23={0,1,-1,0,0};
+con24={0,1,0,-1,0};
+con25={0,1,0,0,-1};
+con34={0,0,1,-1,0};
+con35={0,0,1,0,-1};
+con45={0,0,0,1,-1};
+var12=con12`*ginvvar*con12;
+var13=con13`*ginvvar*con13;
+var14=con14`*ginvvar*con14;
+var15=con15`*ginvvar*con15;
+var23=con23`*ginvvar*con23;
+var24=con24`*ginvvar*con24;
+var25=con25`*ginvvar*con25;
+var34=con34`*ginvvar*con34;
+var35=con35`*ginvvar*con35;
+var45=con45`*ginvvar*con45;
+var=var12+var13+var14+var15+var23+var24+var25+var34+var35+var45;
+print x var;
+end;
+run;
+

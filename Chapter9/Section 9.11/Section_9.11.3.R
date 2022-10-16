@@ -1,5 +1,6 @@
 sec_path = 'Rcode/Chapter9/Section 9.11/'
 setwd(paste0(SLEDbook_path,sec_path))
+library(xtable)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -162,34 +163,48 @@ strat2_all = matrix(NA, nrow = dim(DFp2)[1], ncol = nsim)
 strat3_all = matrix(NA, nrow = dim(DFp3)[1], ncol = nsim)
 strat4_all = matrix(NA, nrow = dim(DFp4)[1], ncol = nsim)
 strat5_all = matrix(NA, nrow = dim(DFp5)[1], ncol = nsim)
+k = 1
 for(k in 1:nsim) {
 	cat("\r", "Simulation: ", k)
 
-	theta_k = theta + t(tcov_chol) %*% rnorm(5)
-
+  # draw covariance parameter using information matrix as covariance matrix
 	get_pos = 0
 	while(get_pos == 0) {
 		theta_k = theta + t(tcov_chol) %*% rnorm(5)
 		if(all(theta_k > 0)) get_pos = 1
 	}
 
+	# form covariance matrix from random draw of covariance parameters
 	Sigma_k =  theta_k[1]*exp(-D/theta_k[3])*part_mask + 
 		theta_k[2]*diag(n) + theta_k[4]*Z1%*%t(Z1) + theta_k[5]*Z2%*%t(Z2)
 	Sigma_ki = solve(Sigma_k)
 
+	#draw fixed effects parameters given covariance matrix
 	covb = solve(t(X) %*% Sigma_ki %*% X)
-	beta_k = covb %*% t(X) %*% Sigma_ki %*% DF$Pb
-
+	beta = covb %*% t(X) %*% Sigma_ki %*% DF$Pb
+	betacov_chol = chol(covb)
+	beta_k = beta + t(betacov_chol) %*% rnorm(length(beta))
+  
 	#strat 1
+	# covariance matrix for data and prediction locations without nugget,
+	# years are independent by using part_mask
 	Sigma_k1 = theta_k[1]*exp(-D1/theta_k[3])*part_mask1
+	# subset to prediction locations, add nugget effect
 	Sigma_k1pp = Sigma_k1[(n+1):n1,(n+1):n1] + sum(theta_k[c(2,4,5)])*diag(n1 - n)
+	# subset to covariance between observed and prediction locations
 	Sigma_k1op = Sigma_k1[1:n,(n+1):n1]
+	# design matrix for prediction locations
 	Xp1 = model.matrix(~ year + dist2road + sideroad:dist2road, data = DFp1)
-	mup_k1 = Xp1 %*% beta_k + t(Sigma_k1op) %*% Sigma_ki %*% (DF$Pb - X %*% beta_k)
+	# conditional mean given the sampled beta and covariance matrix
+	mup_k1 = Xp1 %*% beta_k + t(Sigma_k1op) %*% Sigma_ki %*% 
+		(DF$Pb - X %*% beta_k)
+	# conditional variance given the sampled beta and covariance parameters
+	# equation 9.3, broken into several parts
 	Sigp_k1 = Sigma_k1pp - t(Sigma_k1op) %*% Sigma_ki %*% Sigma_k1op
 	XD = Xp1 - t(Sigma_k1op) %*% Sigma_ki %*% X
 	Sigp_k1 = Sigp_k1 + XD %*% covb %*% t(XD)
-	simstrat1 = mup_k1 + chol(Sigp_k1) %*% rnorm(dim(Sigp_k1)[1])
+	# simulate a realization
+	simstrat1 = mup_k1 + t(chol(Sigp_k1)) %*% rnorm(dim(Sigp_k1)[1])
 	strat1_all[,k] = simstrat1
 
 	
@@ -202,7 +217,7 @@ for(k in 1:nsim) {
 	Sigp_k2 = Sigma_k2pp - t(Sigma_k2op) %*% Sigma_ki %*% Sigma_k2op
 	XD = Xp2 - t(Sigma_k2op) %*% Sigma_ki %*% X
 	Sigp_k2 = Sigp_k2 + XD %*% covb %*% t(XD)
-	simstrat2 = mup_k2 + chol(Sigp_k2) %*% rnorm(dim(Sigp_k2)[1])
+	simstrat2 = mup_k2 + t(chol(Sigp_k2)) %*% rnorm(dim(Sigp_k2)[1])
 	strat2_all[,k] = simstrat2
 		
 	#strat3
@@ -214,7 +229,7 @@ for(k in 1:nsim) {
 	Sigp_k3 = Sigma_k3pp - t(Sigma_k3op) %*% Sigma_ki %*% Sigma_k3op
 	XD = Xp3 - t(Sigma_k3op) %*% Sigma_ki %*% X
 	Sigp_k3 = Sigp_k3 + XD %*% covb %*% t(XD)
-	simstrat3 = mup_k3 + chol(Sigp_k3) %*% rnorm(dim(Sigp_k3)[1])
+	simstrat3 = mup_k3 + t(chol(Sigp_k3)) %*% rnorm(dim(Sigp_k3)[1])
 	strat3_all[,k] = simstrat3
 
 	#strat4
@@ -226,7 +241,7 @@ for(k in 1:nsim) {
 	Sigp_k4 = Sigma_k4pp - t(Sigma_k4op) %*% Sigma_ki %*% Sigma_k4op
 	XD = Xp4 - t(Sigma_k4op) %*% Sigma_ki %*% X
 	Sigp_k4 = Sigp_k4 + XD %*% covb %*% t(XD)
-	simstrat4 = mup_k4 + chol(Sigp_k4) %*% rnorm(dim(Sigp_k4)[1])
+	simstrat4 = mup_k4 + t(chol(Sigp_k4)) %*% rnorm(dim(Sigp_k4)[1])
 	strat4_all[,k] = simstrat4
 
 	#strat5
@@ -238,10 +253,15 @@ for(k in 1:nsim) {
 	Sigp_k5 = Sigma_k5pp - t(Sigma_k5op) %*% Sigma_ki %*% Sigma_k5op
 	XD = Xp5 - t(Sigma_k5op) %*% Sigma_ki %*% X
 	Sigp_k5 = Sigp_k5 + XD %*% covb %*% t(XD)
-	simstrat5 = mup_k5 + chol(Sigp_k5) %*% rnorm(dim(Sigp_k5)[1])
+	simstrat5 = mup_k5 + t(chol(Sigp_k5)) %*% rnorm(dim(Sigp_k5)[1])
 	strat5_all[,k] = simstrat5
 
 }
+
+junk = chol(Sigp_k4)
+Sigp_k1[1:5,1:5]
+plot(strat4_all[6,], type = 'l')
+
 save(strat1_all,file = 'strat1_all.rda')
 save(strat2_all,file = 'strat2_all.rda')
 save(strat3_all,file = 'strat3_all.rda')
@@ -259,6 +279,14 @@ np3 = dim(strat3_all)[1]/2
 np4 = dim(strat4_all)[1]/2
 np5 = dim(strat5_all)[1]/2
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#        Histogram of yearly differences at prediction locations
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 strat1_yeardiff = apply(exp(strat1_all[1:np1,]) - 
 	exp(strat1_all[(np1 + 1):(2*np1),]),2,mean)
 strat2_yeardiff = apply(exp(strat2_all[1:np2,]) - 
@@ -270,7 +298,7 @@ strat4_yeardiff = apply(exp(strat4_all[1:np4,]) -
 strat5_yeardiff = apply(exp(strat5_all[1:np5,]) - 
 	exp(strat5_all[(np5 + 1):(2*np5),]),2,mean)
 
-file_name = 'Moss_diffhist'
+file_name = 'figures/Moss_diffhist'
 pdf(paste0(file_name,'.pdf'), width = 6, height = 10)
 
 layout(matrix(1:5, ncol = 1))
@@ -311,58 +339,261 @@ sum(strat5_yeardiff > 0)
 2*(1 - sum(strat5_yeardiff > 0)/500)
 2*(1 - pnorm(mean(strat5_yeardiff)/sqrt(var(strat5_yeardiff))))
 
-plot(DFp1[,c('easting','northing')], pch = 19, cex = .5)
-pchange1 = (exp(strat1_all[(np1 + 1):(2*np1),]) - exp(strat1_all[1:np1,]))/
-	exp(strat1_all[1:np1,])
-pchange1_mn = apply(pchange1,1,median)
-pchange2 = (exp(strat2_all[(np2 + 1):(2*np2),]) - exp(strat2_all[1:np2,]))/
-	exp(strat2_all[1:np2,])
-pchange2_mn = apply(pchange2,1,median)
-pchange3 = (exp(strat3_all[(np3 + 1):(2*np3),]) - exp(strat3_all[1:np3,]))/
-	exp(strat3_all[1:np3,])
-pchange3_mn = apply(pchange3,1,median)
-pchange4 = (exp(strat4_all[(np4 + 1):(2*np4),]) - exp(strat4_all[1:np4,]))/
-	exp(strat4_all[1:np4,])
-pchange4_mn = apply(pchange4,1,median)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Map of Percent Change from 2001 to 2006
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-xypred1_4 = rbind(DFp1[,c('easting','northing')],
-	DFp2[,c('easting','northing')],	
-	DFp3[,c('easting','northing')],
-	DFp4[,c('easting','northing')])
-pchange1_4_mn = c(pchange1_mn, pchange2_mn, pchange3_mn, pchange4_mn)
-brks_pred = quantile(pchange1_4_mn, probs = seq(0, 1, .125))
-brks_pred[8] = 0
-brks_pred = c(-(7:0)/10,0.1,0.35)
-cip = classIntervals(pchange1_4_mn, style = 'fixed', 
+file_name = 'figures/Moss_diffmaps'
+pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
+
+layout(matrix(c(1,1,2,3), nrow = 2, byrow = TRUE), heights = c(1.8, 1))
+#stratum 4
+preds01 = exp(strat4_all[1:np4,])
+preds06 = exp(strat4_all[(np4 + 1):(2*np4),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6.5,0.3, 0.7, 2)
+cip = classIntervals(preddiffmn, style = 'fixed', 
 		fixedBreaks= brks_pred)
-palp = c(viridis(12)[1:7],viridis(12)[11:12])
+palp = viridis(12)[c(1:6,10:12)]
 cip_colors = findColours(cip, palp)
-plot(xypred1_4, col = cip_colors, pch = 19, cex = .5)
-addBreakColorLegend(xleft = -405, ybottom = 1986, xright = -401, ytop = 1999,
+par(mar = c(5,5,5,1))
+plot(DFp4[,c('easting','northing')], col = cip_colors, pch = 19, cex = 2,
+	cex.lab = 2, cex.axis = 1.5, main = 'Mean Proportional Change from 2001 to 2006',
+	cex.main = 2)
+
+#stratum 3
+preds01 = exp(strat3_all[1:np3,])
+preds06 = exp(strat3_all[(np3 + 1):(2*np3),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddiffmn, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp3[,c('easting','northing')], col = cip_colors, pch = 19, cex = 1.5)
+
+#stratum 2
+preds01 = exp(strat2_all[1:np2,])
+preds06 = exp(strat2_all[(np2 + 1):(2*np2),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddiffmn, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp2[,c('easting','northing')], col = cip_colors, pch = 19, cex = 1)
+
+#stratum 1
+preds01 = exp(strat1_all[1:np1,])
+preds06 = exp(strat1_all[(np1 + 1):(2*np1),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddiffmn, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp1[,c('easting','northing')], col = cip_colors, pch = 19, cex = .3)
+
+addBreakColorLegend(xleft = -402, ybottom = 1986, xright = -400, ytop = 1999,
 			breaks = brks_pred, colors = palp, cex = 1.5, printFormat = "4.3")
-			
+
+######## B ########
+
+#stratum 4
+preds01 = exp(strat4_all[1:np4,])
+preds06 = exp(strat4_all[(np4 + 1):(2*np4),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+brks_pred = c(-(6:0)/6.5,0.3, 0.7, 2)
+cip = classIntervals(preddifflo, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+par(mar = c(0,1,5,1))
+plot(DFp4[,c('easting','northing')], type = 'n', bty = 'n', xlab = '',
+	ylab = '', xaxt = 'n', yaxt = 'n', main = 'Lower 90% Bound',
+	cex.main = 2)
+points(DFp4[,c('easting','northing')], col = cip_colors, pch = 19, cex = 1.0)
+
+#stratum 3
+preds01 = exp(strat3_all[1:np3,])
+preds06 = exp(strat3_all[(np3 + 1):(2*np3),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+brks_pred = c(-(6:0)/6.5,0.3, 0.7, 2)
+cip = classIntervals(preddifflo, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+par(mar = c(5,5,5,1))
+points(DFp3[,c('easting','northing')], col = cip_colors, pch = 19, cex = 0.7)
+
+#stratum 2
+preds01 = exp(strat2_all[1:np2,])
+preds06 = exp(strat2_all[(np2 + 1):(2*np2),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddifflo, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp2[,c('easting','northing')], col = cip_colors, pch = 19, cex = .5)
+
+#stratum 1
+preds01 = exp(strat1_all[1:np1,])
+preds06 = exp(strat1_all[(np1 + 1):(2*np1),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddifflo, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp1[,c('easting','northing')], col = cip_colors, pch = 19, cex = .1)
+
+
+######## C ########
+
+#stratum 4
+preds01 = exp(strat4_all[1:np4,])
+preds06 = exp(strat4_all[(np4 + 1):(2*np4),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+brks_pred = c(-(6:0)/6.5,0.3, 0.7, 2)
+cip = classIntervals(preddiffup, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+par(mar = c(0,1,5,1))
+plot(DFp4[,c('easting','northing')], type = 'n', bty = 'n', xlab = '',
+	ylab = '', xaxt = 'n', yaxt = 'n', main = 'Upper 90% Bound',
+	cex.main = 2)
+points(DFp4[,c('easting','northing')], col = cip_colors, pch = 19, cex = 1.0)
+
+#stratum 3
+preds01 = exp(strat3_all[1:np3,])
+preds06 = exp(strat3_all[(np3 + 1):(2*np3),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+brks_pred = c(-(6:0)/6.5,0.3, 0.7, 2)
+cip = classIntervals(preddiffup, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+par(mar = c(5,5,5,1))
+points(DFp3[,c('easting','northing')], col = cip_colors, pch = 19, cex = 0.7)
+
+#stratum 2
+preds01 = exp(strat2_all[1:np2,])
+preds06 = exp(strat2_all[(np2 + 1):(2*np2),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddiffup, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp2[,c('easting','northing')], col = cip_colors, pch = 19, cex = .5)
+
+#stratum 1
+preds01 = exp(strat1_all[1:np1,])
+preds06 = exp(strat1_all[(np1 + 1):(2*np1),])
+preddiff = (preds06 - preds01)/preds01
+preddiffmn = apply(preddiff,1,mean)
+preddiffup = apply(preddiff,1,quantile, prob = 0.95)
+preddifflo = apply(preddiff,1,quantile, prob = 0.05)
+quantile(cbind(preddiffmn, preddiffup, preddifflo), probs = (0:9)/9)
+brks_pred = c(-(6:0)/6,0.3, 0.7, 2)
+cip = classIntervals(preddiffup, style = 'fixed', 
+		fixedBreaks= brks_pred)
+palp = viridis(12)[c(1:6,10:12)]
+cip_colors = findColours(cip, palp)
+points(DFp1[,c('easting','northing')], col = cip_colors, pch = 19, cex = .1)
+
+layout(1)
+
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#           Percent Above a Threshold
+#           Proportion Above a Threshold
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-mean(apply((exp(strat1_all[1:np1,]) > 55)*1, 2, mean))
-quantile(apply((exp(strat1_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
-mean(apply((exp(strat1_all[(np1 + 1):(2*np1),]) > 55)*1, 2, mean))
-quantile(apply((exp(strat1_all[(np1 + 1):(2*np1),]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
+p_above_thresh = rbind(
+c(
+quantile(apply((exp(strat1_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025, 0.5, 0.975)),
+quantile(apply((exp(strat1_all[(np1 + 1):(2*np1),]) > 55)*1, 2, mean), prob = c(0.025, 0.5, 0.975))),
+c(
+quantile(apply((exp(strat2_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025,0.5, 0.975)),
+quantile(apply((exp(strat2_all[(np2 + 1):(2*np2),]) > 55)*1, 2, mean), prob = c(0.025, 0.5, 0.975))),
+c(
+quantile(apply((exp(strat3_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025, 0.5, 0.975)),
+quantile(apply((exp(strat3_all[(np3 + 1):(2*np3),]) > 55)*1, 2, mean), prob = c(0.025, 0.5, 0.975)))
+)
 
-mean(apply((exp(strat2_all[1:np1,]) > 55)*1, 2, mean))
-quantile(apply((exp(strat2_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
-mean(apply((exp(strat2_all[(np2 + 1):(2*np2),]) > 55)*1, 2, mean))
-quantile(apply((exp(strat2_all[(np2 + 1):(2*np2),]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
-
-mean(apply((exp(strat3_all[1:np1,]) > 55)*1, 2, mean))
-quantile(apply((exp(strat3_all[1:np1,]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
-mean(apply((exp(strat3_all[(np3 + 1):(2*np3),]) > 55)*1, 2, mean))
-quantile(apply((exp(strat3_all[(np3 + 1):(2*np3),]) > 55)*1, 2, mean), prob = c(0.025, 0.975))
+print(
+    xtable(p_above_thresh, 
+      align = c('l',rep('l', times = length(p_above_thresh[1,]))),
+      digits = c(0, rep(3, times = 6)),
+      caption = 'Metrics for model selection',
+      label = 'tab:ModSelMetrics'
+    ),
+    size = 'footnotesize',
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------

@@ -1,0 +1,17 @@
+\begin{thebibliography}{2}
+\newcommand{\enquote}[1]{``#1''}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{Neitlich et~al.(2017)Neitlich, Ver~Hoef, Berryman, Mines, Geiser,
+  Hasselbach, and Shiel}]{NeitlichEtAl2017Trendsspatialpatterns}
+Neitlich, P.~N., Ver~Hoef, J.~M., Berryman, S.~D., Mines, A., Geiser, L.~H.,
+  Hasselbach, L.~M., and Shiel, A.~E. (2017), \enquote{Trends in {Spatial}
+  {Patterns} of {Heavy} {Metal} {Deposition} on {National} {Park} {Service}
+  {Lands} along the {Red} {Dog} {Mine} {Haul} {Road}, {Alaska}, 2001–2006,}
+  \textit{PLOS ONE}, 12, e0177936.
+
+\bibitem[{Ver~Hoef(2012)}]{VerHoef2012Whoinventeddelta124}
+Ver~Hoef, J.~M. (2012), \enquote{Who {Invented} the {Delta} {Method}?}
+  \textit{The American Statistician}, 66, 124--127.
+
+\end{thebibliography}

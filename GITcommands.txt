@@ -1,7 +1,7 @@
 #github cloud commits
 cd '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode'
 git add .
-git commit -a -m '29 Sept 2022 with Dale'
+git commit -a -m '16 Oct 2022 final originals'
 git push origin master
 git pull origin master
 
