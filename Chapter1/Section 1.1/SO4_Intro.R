@@ -5,23 +5,24 @@ library(ZVHdata)
 library(classInt)
 library(viridis)
 library(colorspace)
+library(sf)
+source('addBreakColorLegend.R')
 
 # load data from package
 data(SO4obs)
 data(USboundary)
 
 # Make traditional plots of predictions and standard errors
-cip = classIntervals(SO4obs@data$SO4, n = 6, style = 'fisher')
+cip = classIntervals(SO4obs$SO4, n = 6, style = 'fisher')
 palp = viridis(6)
 cip_colors = findColours(cip, palp)
 
-file_name = "SO4_Intro"
-source('addBreakColorLegend.R')
+file_name = "figures/SO4_Intro"
 pdf(file = paste0(file_name,'.pdf'), width = 11, height = 8.5)
   old.par = par(mar = c(0,0,5,0))
   layout(matrix(1:2, nrow = 1, byrow = TRUE), widths = c(3,1))
-  plot(SO4obs, col = cip_colors, pch = 19, cex = 1.5)
-  plot(USboundary, add = TRUE, border = 'black')
+  plot(st_geometry(USboundary), border = 'black')
+  plot(SO4obs, add = TRUE, col = cip_colors, pch = 19, cex = 1.5)
   par(mar = c(0,0,0,0))
   plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
     xlab = '', ylab = '', bty = 'n')

@@ -5,6 +5,8 @@
 #-------------------------------------------------------------------------------
 ################################################################################
 library(ZVHdata)
+library(sf)
 data(SO4obs)
-summary(SO4obs@data$SO4)
-stem(SO4obs@data$SO4)
+SO4data = st_drop_geometry(SO4obs)$SO4
+summary(SO4data)
+stem(SO4data)

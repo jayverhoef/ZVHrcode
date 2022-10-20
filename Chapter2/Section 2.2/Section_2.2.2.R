@@ -1,10 +1,17 @@
-sec_path = 'Rcode/Chapter2/Section 2.2/figures/'
+sec_path = 'Rcode/Chapter2/Section 2.2/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(xtable)
 
-# Create plots to illustrate separability and additivity (Figure 2.1)
-file_name = "sep_and_add"
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#    Create plots to illustrate separability and additivity (Figure 2.1)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/sep_and_add"
 pdf(paste0(file_name,'.pdf'), height = 7, width = 11)
 
 	layout(matrix(1:2, nrow = 1))
@@ -17,12 +24,12 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 11)
 		par(mar = c(5,5,5,1))
 		plot(x,y,pch=16,xlim=c(0,6),ylim=c(0,6),xlab="",ylab="",cex=2.0,
 			cex.axis = 2)
-		segments(x0=1,y0=1.5,x1=3,y1=4.5,col="red",lty="solid",lwd=3.0)
-		segments(x0=1,y0=1.5,x1=5,y1=4.5,col="green",lty="solid",lwd=3.0)
-		segments(x0=3,y0=1.5,x1=5,y1=4.5,col="blue",lty="solid",lwd=3.0)
-		segments(x0=1,y0=4.5,x1=3,y1=1.5,col="red",lty="solid",lwd=3.0)
-		segments(x0=1,y0=4.5,x1=5,y1=1.5,col="green",lty="solid",lwd=3.0)
-		segments(x0=3,y0=4.5,x1=5,y1=1.5,col="blue",lty="solid",lwd=3.0)
+		segments(x0=1,y0=1.5,x1=3,y1=4.5,lty=1,lwd=3.0)
+		segments(x0=1,y0=1.5,x1=5,y1=4.5,lty=5,lwd=3.0)
+		segments(x0=3,y0=1.5,x1=5,y1=4.5,lty=3,lwd=5.0)
+		segments(x0=1,y0=4.5,x1=3,y1=1.5,lty=1,lwd=3.0)
+		segments(x0=1,y0=4.5,x1=5,y1=1.5,lty=5,lwd=3.0)
+		segments(x0=3,y0=4.5,x1=5,y1=1.5,lty=3,lwd=5.0)
 		points(x,y,pch=16,cex=2.0)
 		x <- c(2,4,4)
 		y <- c(1.5,1.5,4.5)
@@ -30,9 +37,9 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 11)
 
 		plot(x,y,pch=16,xlim=c(0,6),ylim=c(0,6),xlab="",ylab="",cex=2.0,
 			cex.axis = 2)
-		segments(x0=2,y0=1.5,x1=4,y1=1.5,lty="dashed",lwd=2.0)
-		segments(x0=4,y0=1.5,x1=4,y1=4.5,lty="dashed",lwd=2.0)
-		segments(x0=2,y0=1.5,x1=4,y1=4.5,lty="solid",lwd=2.0)
+		segments(x0=2,y0=1.5,x1=4,y1=1.5,lty="dashed",lwd=3.0)
+		segments(x0=4,y0=1.5,x1=4,y1=4.5,lty="dashed",lwd=3.0)
+		segments(x0=2,y0=1.5,x1=4,y1=4.5,lty="solid",lwd=3.0)
 		mtext('B', adj = adj, cex = 3, padj = padj)
 
 	layout(1)
@@ -47,8 +54,16 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
-file_name = "spatialconfigs"
-# Create plots of loci of equal correlation for second-order stationary covariance functions (Figure 2.2)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#    Create plots of loci of equal correlation for second-order stationary 
+#                  covariance functions (Figure 2.2)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/spatialconfigs"
 library(plotrix)
 pdf(paste0(file_name,'.pdf'), height = 7, width = 10)
   padj = -.5
@@ -90,12 +105,20 @@ system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#    Create plots of loci of equal correlation for second-order stationary
+#                       covariance functions (Figure 2.3)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 x = c(1,1,2,2,5)
 y = c(4,3,3,2,4)
 labs = c(1,2,3,4,5)
 
-file_name = "locs4geocovfuns"
+file_name = "figures/locs4geocovfuns"
 pdf(paste0(file_name,'.pdf'), height = 7, width = 7)
 # Create plots of loci of equal correlation for second-order stationary covariance functions (Figure 2.3)
 
@@ -114,7 +137,13 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
-# covariance functions 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                         Covariance Functions
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 C_1 = function(x,y){
 	distmat = as.matrix(dist(cbind(x,y)))

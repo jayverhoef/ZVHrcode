@@ -90,15 +90,17 @@
 MaityTest = function(spdata, lagmat, A, df, xlims, ylims, grid.spacing = c(1,1), block.dims, nBoot = 100, kappa = 1, user.bandwidth = F, bandwidth = c(1,1))
 {
 	dname <- deparse(substitute(spdata))
-	spdata.class <- class(spdata)
-	if(spdata.class == "geodata")
-	{
-		spdata <- cbind(spdata$coords, spdata$data)
-	}
-	if(spdata.class == "SpatialPointsDataFrame")
-	{
-		spdata <- cbind(coordinates(spdata), spdata[[1]])
-	}
+# doesn't work, as class(spdata) has length 2: "matrix" and "array"
+# We only pass matrices, so discard this code
+#	spdata.class <- class(spdata)
+#	if(spdata.class == "geodata")
+#	{
+#		spdata <- cbind(spdata$coords, spdata$data)
+#	}
+#	if(spdata.class == "SpatialPointsDataFrame")
+#	{
+#		spdata <- cbind(coordinates(spdata), spdata[[1]])
+#	}
 	if(!is.matrix(spdata))
 	{stop("spdata must be a matrix")}
 	if(dim(spdata)[2] != 3)

@@ -2,23 +2,24 @@ sec_path = 'Rcode/Chapter1/Section 1.1/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(ZVHdata)
-library(maptools)
-library(lattice)
-library(spdep)
-library(nlme)
 library(classInt)
 library(viridis)
 source('addBreakColorLegend.R')
 data(caribouDF)
 
-# ---------- CREATE THE DATA FRAME 
-
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Experimental Design for Caribou Data
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 cip = classIntervals(caribouDF$z, n = 4, style = 'fisher')
 palp = viridis(5)[1:4]
 cip_colors = findColours(cip, palp)
 
-file_name = "caribou_Design"
+file_name = "figures/caribou_Design"
 pdf(file = paste0(file_name,'.pdf'), width = 10, height = 8)
   layout(matrix(1:2, nrow = 1), widths = c(4,1))
   old.par = par(mar = c(5,5,1,1))
@@ -43,8 +44,15 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Boxplots of Caribou Data
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-file_name = "caribou_boxplots"
+file_name = "figures/caribou_boxplots"
 pdf(file = paste0(file_name,'.pdf'), width = 10, height = 7)
   old.par = par(mar = c(2,6,1,1))
   boxplot(z ~ tarp + water, data = caribouDF, cex.lab = 2.3, cex.axis = 1.5,

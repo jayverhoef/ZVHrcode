@@ -3,23 +3,34 @@ setwd(paste0(SLEDbook_path,sec_path))
 
 # attach data library
 library(ZVHdata)
-library(sp)
+library(sf)
 library(akima)
+library(viridis)
+library(classInt)
+library(colorspace)
+library(gstat)
+source('addBreakColorLegend.R')
+
 # load data for graphics and analysis
 data(SO4obs)
 
+SO4_data = unlist(as.vector(st_drop_geometry(SO4obs)))
 
 # from Section 3.6, remove the outlers and use sqrt of response
-SO4clean = SO4obs[!(1:length(SO4obs) %in% c(146,153,173)),]
-xy = coordinates(SO4clean)
-DF = data.frame(z = sqrt(SO4clean@data$SO4), easting = xy[,1], northing = xy[,2])
+SO4clean = SO4_data[!(1:length(SO4_data) %in% c(146,153,173))]
+xy = st_coordinates(SO4obs)
+xy = xy[!(1:length(SO4_data) %in% c(146,153,173)),]
+DF = data.frame(z = sqrt(SO4clean), easting = xy[,1], northing = xy[,2])
 
-################################################################################
 #-------------------------------------------------------------------------------
-#         Wire-frame plots of planar, quadratic, and cubic surfaces
 #-------------------------------------------------------------------------------
-################################################################################
-file_name = "so4-poly-surfaces-1x3"
+#-------------------------------------------------------------------------------
+#        Wire-frame plots of planar, quadratic, and cubic surfaces
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/so4-poly-surfaces-1x3"
 
 # Planar surface
 # fit the linear model on the coordinates
@@ -68,11 +79,13 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
-################################################################################
 #-------------------------------------------------------------------------------
-#         Leverage
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#        Leverage quadratic surface
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # standardize variables for stability of inverse
 xc = (DF$easting - mean(DF$easting))/sqrt(var(DF$easting))
@@ -87,10 +100,18 @@ levrg = diag(X %*% solve(t(X) %*% X, t(X)))
 boxplot(levrg)
 # find out which site have highest leverage
 data(USboundary)
-plot(USboundary)
-plot(SO4clean[which(levrg >.15),], add = TRUE, pch = 19, cex = 2, col = 'red')
+plot(st_geometry(USboundary))
+points(DF[which(levrg >.15),c('easting','northing')], pch = 19, 
+	cex = 2, col = 'red')
 
-# cubic surface
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#        Leverage Cubic Surface
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 # create design matrix
 X = model.matrix(~ xc + yc + I(xc^2) + I(yc^2) + xc*yc + I(xc^3) + I(yc^3) + 
   I(xc^2)*yc + xc*I(yc^2), data = DF)
@@ -100,14 +121,17 @@ levrg = diag(X %*% solve(t(X) %*% X, t(X)))
 boxplot(levrg)
 # find out which site have highest leverage
 data(USboundary)
-plot(USboundary)
-plot(SO4clean[which(levrg >.4),], add = TRUE, pch = 19, cex = 2, col = 'red')
+plot(st_geometry(USboundary))
+points(DF[which(levrg >.4),c('easting','northing')], add = TRUE, 
+	pch = 19, cex = 2, col = 'red')
 
-################################################################################
 #-------------------------------------------------------------------------------
-#         F-tests for order of polynomial
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#        F-tests for order of polynomial
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 fit_4 <- lm(z ~ poly(easting, northing, degree = 4), data = DF)
 fit_5 <- lm(z ~ poly(easting, northing, degree = 5), data = DF)
@@ -130,11 +154,13 @@ tab = data.frame(Surface = c('Planar', 'Quadratic', 'Cubic', 'Quartic',
 )
 tab
 
-################################################################################
 #-------------------------------------------------------------------------------
-#         Residuals
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#        Plot Residuals Along Coordinates
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # plot residuals along coordinates
 r2 = residuals(fit_2)
@@ -146,19 +172,22 @@ r3 = residuals(fit_3)
 plot(DF$northing, r3)
 plot(DF$easting, r3)
 
-library(classInt)
-library(viridis)
-library(colorspace)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#        Plot Residuals Spatially
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-# plot residuals spatially
+# plot residuals spatially from quadratic surface
 cip = classIntervals(r2, n = 6, style = 'fisher')
 palp = viridis(6)
 cip_colors = findColours(cip, palp)
-source('addBreakColorLegend.R')
   old.par = par(mar = c(0,0,5,0))
   layout(matrix(1:2, nrow = 1, byrow = TRUE), widths = c(3,1))
-  plot(SO4obs, col = cip_colors, pch = 19, cex = 1.5)
-  plot(USboundary, add = TRUE, border = 'black')
+  plot(st_geometry(USboundary), border = 'black')
+  plot(SO4obs, col = cip_colors, add = TRUE, pch = 19, cex = 1.5)
   par(mar = c(0,0,0,0))
   plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
     xlab = '', ylab = '', bty = 'n')
@@ -166,15 +195,15 @@ source('addBreakColorLegend.R')
     breaks = cip$brks, colors = palp, cex = 1.5)
   par(old.par)
 
-# plot residuals spatially
-cip = classIntervals(r3, n = 6, style = 'fisher')
+# plot residuals spatially from cubic surface
+ip = classIntervals(r3, n = 6, style = 'fisher')
 palp = viridis(6)
 cip_colors = findColours(cip, palp)
 source('addBreakColorLegend.R')
   old.par = par(mar = c(0,0,5,0))
   layout(matrix(1:2, nrow = 1, byrow = TRUE), widths = c(3,1))
-  plot(SO4obs, col = cip_colors, pch = 19, cex = 1.5)
-  plot(USboundary, add = TRUE, border = 'black')
+  plot(st_geometry(USboundary), border = 'black')
+  plot(SO4obs, col = cip_colors, add = TRUE, pch = 19, cex = 1.5)
   par(mar = c(0,0,0,0))
   plot(c(0,1),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
     xlab = '', ylab = '', bty = 'n')
@@ -182,36 +211,47 @@ source('addBreakColorLegend.R')
     breaks = cip$brks, colors = palp, cex = 1.5)
   par(old.par)
 
-# directional semivariogram for cubic residuals 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#        Directional Semivariogram for Cubic Residuals
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-file_name = "so4-dirsvgm-cubic-resids"
-library(gstat)
+file_name = "figures/so4-dirsvgm-cubic-resids"
 vgm_resid_dir <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
-  x = DF$easting/1000, y = DF$northing/1000), alpha=c(0,45,90,135), cutoff = 2500, 
-  width = 2500/15)
+  x = DF$easting/1000, y = DF$northing/1000), alpha=c(0,45,90,135), 
+  cutoff = 2500, width = 2500/15)
  
 pdf(paste0(file_name,'.pdf'), height = 8, width = 11)
+  cexA = 4
   old_par = par(mar = c(5,5,3,1))
-  plot(vgm_resid_dir$dist, vgm_resid_dir$gamma, type = 'n', xlab = 'Distance (km)',
-    ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5)
+  plot(vgm_resid_dir$dist, vgm_resid_dir$gamma, type = 'n', 
+		xlab = 'Distance (km)', ylab = 'Semivariogram', cex.lab = 2, 
+		cex.axis = 1.5)
   points(vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'gamma'], pch = 1, 
-    cex = 10*vgm_resid_dir$np/max(vgm_resid_dir$np))
+    cex = cexA*sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'np'])/
+			max(sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'np'])))
   lines(vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'gamma'], lwd = 2)
   points(vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'gamma'], pch = 2, 
-    cex = 10*vgm_resid_dir$np/max(vgm_resid_dir$np))
+    cex = cexA*sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'np'])/
+			max(sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'np'])))
   lines(vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 45,'gamma'], lwd = 2)
   points(vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'gamma'], pch = 5, 
-    cex = 10*vgm_resid_dir$np/max(vgm_resid_dir$np))
+    cex = cexA*sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'np'])/
+			max(sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'np'])))
   lines(vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 90,'gamma'], lwd = 2)
   points(vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'gamma'], pch = 22, 
-    cex = 10*vgm_resid_dir$np/max(vgm_resid_dir$np))
+    cex = cexA*sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'np'])/
+			max(sqrt(vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'np'])))
   lines(vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'gamma'], lwd = 2)
   legend(100, 0.52, legend=(c('N-S','NE-SW','E-W','SE-NW')), 
@@ -225,6 +265,14 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#        Spatial Tests
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # spatial test for isotropy
 #library(spTest)
@@ -249,6 +297,7 @@ min(dt_res[,1])
 max(dt_res[,1])
 min(dt_res[,2])
 max(dt_res[,2])
+
 
 GuanTestUnif(as.matrix(dt_res), 
   lagmat = rbind(c(1, 0), c(0, 1), c(1,1),c(-1, 1)), 
@@ -294,7 +343,13 @@ MaityTest(as.matrix(dt_res),
   ylims = c(0, 30), 
   block.dims = c(15,10))
 
-# omnidirectional semivariogram for cubic residuals 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#    Omnidirectional Semivariogram  and Autocovariance for Cubic Residuals
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 vgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
   x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
@@ -304,18 +359,18 @@ cvgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3,
   x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
   width = 2500/15, covariogram = TRUE)
 
-file_name = "so4-omnisvgm-cubic-resids"
+file_name = "figures/so4-omnisvgm-cubic-resids"
 pdf(paste0(file_name,'.pdf'), height = 7, width = 15)
   layout(matrix(1:2, nrow = 1))
     old_par = par(mar = c(5,5,5,1))
     plot(cvgm_resid_omni$dist, cvgm_resid_omni$gamma, xlab = 'Distance (km)',
-      ylab = 'Covariogram', cex.lab = 2, cex.axis = 1.5, pch = 19,
-      cex = 1 + 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
+      ylab = 'Autocovariance Function', cex.lab = 2, cex.axis = 1.5, pch = 19,
+      cex = 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
     mtext('A', adj = -.15, padj = -.4, cex = 3)
     plot(vgm_resid_omni$dist, vgm_resid_omni$gamma, xlab = 'Distance (km)',
       ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5, pch = 19, 
       ylim = c(0, max(vgm_resid_omni$gamma)),
-      cex = 1 + 5*sqrt(vgm_resid_omni$np)/max(sqrt(vgm_resid_omni$np)))
+      cex = 5*sqrt(vgm_resid_omni$np)/max(sqrt(vgm_resid_omni$np)))
     mtext('B', adj = -.15, padj = -.4, cex = 3)
     par(old.par)
 dev.off()

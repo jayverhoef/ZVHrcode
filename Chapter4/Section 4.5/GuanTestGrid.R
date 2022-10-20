@@ -79,23 +79,25 @@
 GuanTestGrid = function(spdata, delta = 1, lagmat = rbind(c(1,0), c(0, 1), c(1, 1), c(-1,1)), A = rbind(c(1, -1, 0 , 0), c(0, 0, 1, -1)), df = 2, window.dims = c(2,2), pt.est.edge = TRUE, sig.est.edge = TRUE, sig.est.finite = TRUE)
 {	
 	dname <- deparse(substitute(spdata))
-	spdata.class <- class(spdata)
-	if(spdata.class == "geodata")
-	{
-		spdata <- cbind(spdata$coords, spdata$data)
-	}
-	if(spdata.class == "SpatialGridDataFrame")
-	{
-		spdata <- cbind(coordinates(spdata), spdata[[1]])
-	}
-	if(spdata.class == "SpatialPixelsDataFrame")
-	{
-		delta.x <- summary(spdata)$grid[1,2]
-		delta.y <- summary(spdata)$grid[1,2]
-		if(delta.x != delta.y)
-		{stop("spacing between sampling locations must be the same in the X and Y directions")}
-		delta <- delta.x
-	}
+# doesn't work, as class(spdata) has length 2: "matrix" and "array"
+# We only pass matrices, so discard this code
+#	spdata.class <- class(spdata)
+#	if(spdata.class == "geodata")
+#	{
+#		spdata <- cbind(spdata$coords, spdata$data)
+#	}
+#	if(spdata.class == "SpatialGridDataFrame")
+#	{
+#		spdata <- cbind(coordinates(spdata), spdata[[1]])
+#	}
+#	if(spdata.class == "SpatialPixelsDataFrame")
+#	{
+#		delta.x <- summary(spdata)$grid[1,2]
+#		delta.y <- summary(spdata)$grid[1,2]
+#		if(delta.x != delta.y)
+#		{stop("spacing between sampling locations must be the same in the X and Y # directions")}
+#		delta <- delta.x
+#	}
 	if(!is.matrix(spdata))
 	{stop("spdata must be a matrix")}
 	if(dim(spdata)[2] != 3)

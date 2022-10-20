@@ -3,13 +3,15 @@ setwd(paste0(SLEDbook_path,sec_path))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #                         Get the Data
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
 # attach data library
 library(ZVHdata)
-library(sp)
+library(sf)
 library(viridis)
 library(classInt)
 library(colorspace)
@@ -22,36 +24,35 @@ data(MOSSobs)
 data(MOSSpreds)
 data(CAKRboundary)
 
-
 # transform some of the variables
-DF = data.frame(MOSSobs@data, easting = MOSSobs@coords[,1]/1e+3,
-	northing = MOSSobs@coords[,2]/1e+3)
+DF = data.frame(st_drop_geometry(MOSSobs), 
+	easting = st_coordinates(MOSSobs)[,1]/1e+3,
+	northing = st_coordinates(MOSSobs)[,2]/1e+3)
 DF$year = as.factor(DF$year)
 DF$field_dup = as.factor(DF$field_dup)
 DF$dist2road = log(DF$dist2road)
 DF$Pb = log(DF$Pb)
 
-
-
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #                  Sample Design with Autocorrelation Points
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-
+#-------------------------------------------------------------------------------
 
 DF01 = DF[DF$year == '2001',]
 indAC = str_detect(DF01$sample, 'AC')
 
-file_name = 'Moss_autocorr_samples'
+file_name = 'figures/Moss_autocorr_samples'
 pdf(paste0(file_name,'.pdf'), width = 16, height = 8)
 
 layout(matrix(1:2, nrow = 1))
 
 	par(mar = c(0,0,1,0))
-	plot(CAKRboundary)
+	plot(st_geometry(CAKRboundary))
 	rect(-420000, 1985000, -410000, 1995000, lwd = 2, col = 'grey80')
-	plot(MOSSobs[MOSSobs$year == 2001,], add = TRUE, pch = 19)
+	plot(st_geometry(MOSSobs[MOSSobs$year == 2001,]), add = TRUE, pch = 19)
 	text(-437000, 2011000, 'A', cex = 4)
 
 	par(mar = c(5,5,3,1))
@@ -171,7 +172,9 @@ summary(lm(Pb ~ sample,
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #                            Graph of Fitted Model
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
@@ -201,40 +204,36 @@ slp_2006N = PbOutFinal$coefficient$fixed[c('dist2road')]
 slp_2006S = sum(PbOutFinal$coefficient$fixed[c('dist2road','dist2road:sideroadS')])
 
 
-file_name = 'Moss_modelfit'
-pdf(paste0(file_name,'.pdf'), width = 24, height = 8)
+file_name = 'figures/Moss_modelfit'
+pdf(paste0(file_name,'.pdf'), width = 10, height = 10)
 
-layout(matrix(1:2, nrow = 1))
-
-old.par = par(mar = c(5,5,1,1))
-  plot(
-    c(-(DF[DF$year == 2001 & 
-        DF$sideroad == 'N','dist2road']),
-      (DF[DF$year == 2001 & 
-        DF$sideroad == 'S','dist2road'])),
-    c((DF[DF$year == 2001 & DF$sideroad == 'N','Pb']),
-      (DF[DF$year == 2001 & DF$sideroad == 'S','Pb'])),
-    xlab = 'Log Distance From Road Towards South', 
-    ylab = 'Log Lead Concentration', 
-    pch = 19, cex = 1.2, cex.lab = 2.5, cex.axis = 1.8, ylim = c(-1,9)
-  )
-  points(
-    c(-(DF[DF$year == 2006 & 
-        DF$sideroad == 'N','dist2road']),
-      (DF[DF$year == 2006 & 
-        DF$sideroad == 'S','dist2road'])),
-    c((DF[DF$year == 2006 & DF$sideroad == 'N','Pb']),
-      (DF[DF$year == 2006 & DF$sideroad == 'S','Pb'])),
-    pch = 3, cex = 2, lwd = 1.2
-  )
-
+  xaxs = rep(0, times = dim(DF)[1])
+  xaxs[DF$sideroad == 'N'] = -1
+  xaxs[DF$sideroad == 'S'] = 1
+  xaxs = xaxs*DF$dist2road
+  old.par = par(mar = c(5,5,1,1))
+  plot(xaxs, DF$Pb, xlab = 'Log Distance From Road',
+    ylab = 'Log Lead Concentration (ln Pb mg/kg)', pch = 19, type = 'n',
+    cex = 1.5, cex.lab = 2, cex.axis = 1.5,
+    xaxt = 'n', col = 'white', ylim = c(-.25,7.8))
+  axis(1, at = c(-10,-5,0,5,10), label = c('10','5','0','5','10'), 
+		cex.axis = 1.5)
+  points(xaxs[DF$year == '2001'], 
+    DF$Pb[DF$year == '2001'], 
+    pch = 19, cex = 1.5)
+  points(xaxs[DF$year == '2006'], 
+    DF$Pb[DF$year == '2006'], 
+    pch = 3, cex = 2, lwd = 2)
+  text(-9,6,label = 'North', cex = 3)
+  text(9,6,label = 'South', cex = 3)
   lines(c(0,-11),c(int_2001N, int_2001N + slp_2001N*(11)), lwd = 3, lty = 1)
   lines(c(0,-11),c(int_2006N, int_2006N + slp_2006N*(11)), lwd = 3, lty = 2)
   lines(c(0,11),c(int_2001S, int_2001S + slp_2001S*(11)), lwd = 3, lty = 1)
   lines(c(0,11),c(int_2006S, int_2006S + slp_2006S*(11)), lwd = 3, lty = 2)
-
-  legend(5, 8.7, legend = c('2001', '2006'),
-    pch = c(19, 3), cex = 3, lty = c(1,2), lwd = 2)
+  legend(-2.7, 3, legend = c('2001', '2006'),
+    pch = c(19, 3), cex = 2.5)
+  legend(-3.75, 1.3, legend = c('2001','2006'), lty = c(1,2),
+    cex = 2.5, lwd = 2)
 
 dev.off()
 
@@ -248,7 +247,9 @@ system(paste0('rm ','\'',SLEDbook_path,
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #                Simulation and Graph of Dish-Shaped Residuals
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
@@ -270,7 +271,7 @@ FitSimWts = (1/sum(solve(SigmaSimFit)))%*%
 FitSimWts %*% DFsim$y
 
 
-file_name = 'Moss_dishsim'
+file_name = 'figures/Moss_dishsim'
 
 pdf(paste0(file_name,'.pdf'), width = 8, height = 12)
 	layout(matrix(1:2, nrow = 2))

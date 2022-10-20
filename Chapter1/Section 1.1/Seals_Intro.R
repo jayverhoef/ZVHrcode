@@ -5,12 +5,22 @@ library(ZVHdata)
 library(shape)
 library(maps)
 library(spdep)
+library(sf)
+source('addBreakColorLegend.R')
 data(sealPolys)
 
-file_name = "seal_Stocks"
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Seal Stocks in Southeast Alaska
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/seal_Stocks"
 pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   colPalStock = c('#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3')
-  plot(sealPolys, col = colPalStock[sealPolys@data$stockid - 7])
+  plot(st_geometry(sealPolys), col = colPalStock[sealPolys$stockid - 7])
   text(980000,1085000,'8', cex = 6)
   text(1123764,1130000,'9', cex = 6)
   text(1134476,948464,'10', cex = 6)
@@ -32,9 +42,12 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
+#### as a png file
+
 png(file = paste0(file_name,'.png'), width = 960, height = 960)
   colPalStock = c('#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3')
-  plot(sealPolys, col = colPalStock[sealPolys@data$stockid - 7])
+  plot(st_geometry(sealPolys), col = colPalStock[sealPolys$stockid - 7])
   text(980000,1085000,'8', cex = 6)
   text(1123764,1130000,'9', cex = 6)
   text(1134476,948464,'10', cex = 6)
@@ -50,22 +63,29 @@ png(file = paste0(file_name,'.png'), width = 960, height = 960)
   text(-245, 42, labels = 'N', cex = 4)
 dev.off()
 
-file_name = "seal_Trends"
-source('addBreakColorLegend.R')
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Trends in Seal Stocks
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/seal_Trends"
 pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   col.pal7 = c("#440154FF", "#443A83FF", "#31688EFF", "#21908CFF", "#35B779FF", 
     "#8FD744FF", "#FDE725FF")
   missingCol = 'grey80'
-  coords = coordinates(sealPolys)
+  coords = st_drop_geometry(st_centroid(sealPolys)[,c('x','y')])
   brks7 = c(-5, -.15, -.07, -.02, .02, .07, .15, 5)
   #  par(bg = 'grey70')
   par(mar = c(0,0,0,0))
-  plot(sealPolys, col = missingCol)
+  plot(st_geometry(sealPolys), col = missingCol)
   points(coords, pch = 19, cex = 2, col = missingCol)
     #  xlim = c(896054, 1498427),ylim = c(712289, 1216913))
-  plot(sealPolys, add = TRUE, col = col.pal7[as.integer(cut(sealPolys$Estimate, 
-    breaks = brks7))])
-  points(coordinates(sealPolys), pch = 19, cex = 2, 
+  plot(st_geometry(sealPolys), add = TRUE, col = col.pal7[as.integer(
+		cut(sealPolys$Estimate, breaks = brks7))])
+  points(coords, pch = 19, cex = 2, 
     col = col.pal7[as.integer(cut(sealPolys$Estimate, breaks = brks7))]) 
   brks7[1] = min(sealPolys$Estimate, na.rm = TRUE) - .00001
   brks7[8] = max(sealPolys$Estimate, na.rm = TRUE)
@@ -79,26 +99,37 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+  
+#### as a png file
+
 png(file = paste0(file_name,'.png'), width = 960, height = 960)
   col.pal7 = c("#440154FF", "#443A83FF", "#31688EFF", "#21908CFF", "#35B779FF", 
     "#8FD744FF", "#FDE725FF")
   missingCol = 'grey80'
-  coords = coordinates(sealPolys)
+  coords = st_drop_geometry(st_centroid(sealPolys)[,c('x','y')])
   brks7 = c(-5, -.15, -.07, -.02, .02, .07, .15, 5)
   #  par(bg = 'grey70')
   par(mar = c(0,0,0,0))
-  plot(sealPolys, col = missingCol)
+  plot(st_geometry(sealPolys), col = missingCol)
   points(coords, pch = 19, cex = 2, col = missingCol)
     #  xlim = c(896054, 1498427),ylim = c(712289, 1216913))
-  plot(sealPolys, add = TRUE, col = col.pal7[as.integer(cut(sealPolys$Estimate, 
-    breaks = brks7))])
-  points(coordinates(sealPolys), pch = 19, cex = 2, 
+  plot(st_geometry(sealPolys), add = TRUE, col = col.pal7[as.integer(
+		cut(sealPolys$Estimate, breaks = brks7))])
+  points(coords, pch = 19, cex = 2, 
     col = col.pal7[as.integer(cut(sealPolys$Estimate, breaks = brks7))]) 
   brks7[1] = min(sealPolys$Estimate, na.rm = TRUE) - .00001
   brks7[8] = max(sealPolys$Estimate, na.rm = TRUE)
   addBreakColorLegend(1304916, 981392, 1357619, 1198651, brks7, 
     colors = col.pal7, cex = 1.5, printFormat = "4.3")
 dev.off()
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#           Neighbors in Seal Stocks
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 nTot = length(sealPolys)
 nObs = sum(!is.na(sealPolys$Estimate))
@@ -145,14 +176,14 @@ ytop = 800000
 xexp = (xright - xleft)*.06
 yexp = (ytop - ybottom)*.35
   
-file_name = "seal_Neighbors"
+file_name = "figures/seal_Neighbors"
 pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   layout(matrix(c(1,1,2,1,1,1,3,1,1), nrow = 3, byrow = TRUE))
   old.par = par(mar = c(0,0,0,0))
-  plot(sealPolys)
+  plot(st_geometry(sealPolys))
   rect(xleft - xexp, ybottom - yexp, xright + xexp, ytop + yexp, col = 'grey80', 
   border = NA)
-  plot(sealPolys, add = TRUE)
+  plot(st_geometry(sealPolys), add = TRUE)
   plot(Nlist, coords, add = TRUE, lwd = 2)
   text(920000, 1190000, labels = 'A', cex = 6)
   Nlist2 = apply(Nmat2, 1, function(x) as.integer(which(x > 0)))
@@ -161,7 +192,8 @@ pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   attr(Nlist2,'sym') = TRUE
   attr(Nlist2,'polyid') = attr(Nlist,'polyid')
   attr(Nlist2,'stockid') = attr(Nlist,'polyid')
-  plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+  plot(st_geometry(sealPolys), xlim = c(xleft, xright), 
+		ylim = c(ybottom, ytop))
   plot(Nlist2, coords, add = TRUE, lwd = 1)
   mtext('B', adj = -.15, padj = 1.1, cex = 4)
   Nlist4 = apply(Nmat4, 1, function(x) as.integer(which(x > 0)))
@@ -170,7 +202,7 @@ pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   attr(Nlist4,'sym') = TRUE
   attr(Nlist4,'polyid') = attr(Nlist,'polyid')
   attr(Nlist4,'stockid') = attr(Nlist,'polyid')
-  plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+  plot(st_geometry(sealPolys), xlim = c(xleft, xright), ylim = c(ybottom, ytop))
   plot(Nlist4, coords, add = TRUE, lwd = .5)
   mtext('C', adj = 0, padj = -.4, cex = 4)
   par(old.par)
@@ -182,13 +214,16 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+  
+#### as a png file
+
 png(file = paste0(file_name,'.png'), width = 960, height = 960)
   layout(matrix(c(1,1,2,1,1,1,3,1,1), nrow = 3, byrow = TRUE))
   old.par = par(mar = c(0,0,0,0))
-  plot(sealPolys)
+  plot(st_geometry(sealPolys))
   rect(xleft - xexp, ybottom - yexp, xright + xexp, ytop + yexp, col = 'grey80', 
   border = NA)
-  plot(sealPolys, add = TRUE)
+  plot(st_geometry(sealPolys), add = TRUE)
   plot(Nlist, coords, add = TRUE, lwd = 2)
   text(920000, 1190000, labels = 'A', cex = 6)
   Nlist2 = apply(Nmat2, 1, function(x) as.integer(which(x > 0)))
@@ -197,7 +232,8 @@ png(file = paste0(file_name,'.png'), width = 960, height = 960)
   attr(Nlist2,'sym') = TRUE
   attr(Nlist2,'polyid') = attr(Nlist,'polyid')
   attr(Nlist2,'stockid') = attr(Nlist,'polyid')
-  plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+  plot(st_geometry(sealPolys), xlim = c(xleft, xright), 
+		ylim = c(ybottom, ytop))
   plot(Nlist2, coords, add = TRUE, lwd = 1)
   mtext('B', adj = -.15, padj = 1.1, cex = 4)
   Nlist4 = apply(Nmat4, 1, function(x) as.integer(which(x > 0)))
@@ -206,7 +242,7 @@ png(file = paste0(file_name,'.png'), width = 960, height = 960)
   attr(Nlist4,'sym') = TRUE
   attr(Nlist4,'polyid') = attr(Nlist,'polyid')
   attr(Nlist4,'stockid') = attr(Nlist,'polyid')
-  plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+  plot(st_geometry(sealPolys), xlim = c(xleft, xright), ylim = c(ybottom, ytop))
   plot(Nlist4, coords, add = TRUE, lwd = .5)
   mtext('C', adj = 0, padj = -.4, cex = 4)
   par(old.par)
