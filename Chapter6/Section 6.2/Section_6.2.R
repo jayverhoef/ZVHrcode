@@ -6,11 +6,13 @@ library(viridis)
 library(classInt)
 source('addBreakColorLegend.R')
 
-################################################################################
 #-------------------------------------------------------------------------------
-#              Single Parameter Covariogram Figure
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#                Single Parameter Covariogram Figure
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 file_name = "Covariogram1"
 
@@ -168,11 +170,13 @@ system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
 
-################################################################################
 #-------------------------------------------------------------------------------
-#              2-Parameter Covariogram Figure
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#      2-Parameter Covariogram Figures Cachy, Powed Exponential, Matern
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 file_name = "Covariogram2"
 
@@ -255,7 +259,8 @@ my_mat_fnc_2 <- function(r, theta2, theta3){
 }
 
 
-plot(x, my_mat_fnc_2(x, theta2 = 1, theta3 = 1.5), xlab = "r", ylab = "Covariance", 
+plot(x, my_mat_fnc_2(x, theta2 = 1, theta3 = 1.5), xlab = "r", 
+	ylab = "Covariance", 
   main = "Mat\uE9rn", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
   lwd = 3, ylim = c(0,1))
 lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
@@ -290,6 +295,172 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#      2-Parameter Covariogram Figures Askey and Wendland
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "Covariogram3"
+
+pdf(paste0(file_name,'.pdf'), width = 8.5, height = 11)
+
+layout(matrix(1:6, ncol = 2, byrow = TRUE))
+old.par = par(mar = c(5,5,4,1))
+
+x <- seq(0, 4, 0.01)
+
+#-------------------------------------------------------------------------------
+## Askey
+#-------------------------------------------------------------------------------
+
+my_ask_fnc <- function(r, alpha, mu){
+	if(r/alpha < 1) {(1 - r/alpha)^mu} else { 0 }
+}
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 1, mu = 1.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = "Askey", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 2, mu = 1.5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 3, mu = 1.5)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", mu, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", mu, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 1.5", ""))),
+          lty=1:3)
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 3, mu = 1.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = "Askey", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 3, mu = 2.5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_ask_fnc(x[i], alpha = 3, mu = 3.5)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 3.0, ", mu, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 2.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 3.5", ""))),
+          lty=1:3)
+
+#-------------------------------------------------------------------------------
+## C2-Wendland
+#-------------------------------------------------------------------------------
+
+my_C2W_fnc <- function(r, alpha, mu){
+	if(r/alpha < 1) {(1 + (mu + 1)*r/alpha)*(1 - r/alpha)^(mu + 1)} else { 0 }
+}
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 1, mu = 2.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = expression(bold(paste(C^2,"-Wendland"))),
+  type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1.0))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 2, mu = 2.5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 1.5)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", mu, " = 2.5", "")), 
+          expression(paste(alpha, " = 2.0, ", mu, " = 2.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 2.5", ""))),
+          lty=1:3)
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 2.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = expression(bold(paste(C^2,"-Wendland"))),
+  type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1.0))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 10)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 3.0, ", mu, " = 2.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 10", ""))),
+          lty=1:3)
+          
+#-------------------------------------------------------------------------------
+## C4-Wendland
+#-------------------------------------------------------------------------------
+
+my_C4W_fnc <- function(r, alpha, mu){
+	if(r/alpha < 1) {((1 + (mu + 2)*r/alpha) +
+		((mu + 2)^2 - 1)/3*(r/alpha)^2)*(1 - r/alpha)^(mu + 2)} else { 0 }
+}
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C4W_fnc(x[i], alpha = 1, mu = 3.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = expression(bold(paste(C^4,"-Wendland"))),
+  type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1.0))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C4W_fnc(x[i], alpha = 2, mu = 3.5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C4W_fnc(x[i], alpha = 3, mu = 1.5)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", mu, " = 3.5", "")), 
+          expression(paste(alpha, " = 2.0, ", mu, " = 3.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 3.5", ""))),
+          lty=1:3)
+
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 3.5)
+plot(x, fit , xlab = "r", 
+	ylab = "Covariance", 
+  main = expression(bold(paste(C^4,"-Wendland"))),
+  type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1.0))
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 5)
+lines(x, fit, type = "l", lty = 2, lwd = 3)
+fit = x*0
+for(i in 1:length(x)) fit[i] = my_C2W_fnc(x[i], alpha = 3, mu = 10)
+lines(x, fit, type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 3.0, ", mu, " = 3.5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 5", "")), 
+          expression(paste(alpha, " = 3.0, ", mu, " = 10", ""))),
+          lty=1:3)
+
+layout(1)
+
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
 
 
 ################################################################################
