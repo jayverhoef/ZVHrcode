@@ -1,7 +1,15 @@
-sec_path = 'Rcode/Chapter4/Section 4.4/figures/'
+sec_path = 'Rcode/Chapter4/Section 4.4/'
 setwd(paste0(SLEDbook_path,sec_path))
 
-file_name = "rowscolumns"
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                         rowscolumns 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/rowscolumns"
 
 # Create plot of sites on an incomplete rectangular lattice (Figure 4.4)
 pdf(paste0(file_name,'.pdf'), height = 5, width = 11)
@@ -65,7 +73,7 @@ pdf(paste0(file_name,'.pdf'), height = 5, width = 11)
 		segments(0,8,10,8)
 		segments(0,9,10,9)
 		segments(0,11,10,11)
-		mtext('c', adj = adj, cex = 3, padj = padj)
+		mtext('C', adj = adj, cex = 3, padj = padj)
 		
 	layout(1)
 

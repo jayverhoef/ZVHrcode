@@ -1,15 +1,23 @@
 sec_path = 'Rcode/Chapter4/Section 4.4/'
 setwd(paste0(SLEDbook_path,sec_path))
 
-################################################################################
-#-------------------------------------------------------------------------------
-#         Figure corr-not-trend
-#-------------------------------------------------------------------------------
-################################################################################
+library(ZVHdata)
+library(sf)
+data(SO4obs)
 
-file_name = "corr-not-trend"
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                         Figure corr-not-trend 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/corr-not-trend"
+
 # Create plot of simulated data on transect with strong positive correlation and no trend (Figure 4.3)
 pdf(paste0(file_name,'.pdf'), height = 7, width = 9)
+
   y <- matrix(0,20,1)
   set.seed(1016)
   for(i in 2:20){
@@ -19,7 +27,9 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 9)
   old.par = par(mar = c(4,4.5,.5,.5))
   plot(i, y, pch = 19, cex = 2.5, cex.lab = 2, cex.axis = 1.5)
   par(old.par)
+  
 dev.off()
+
 system(paste0('pdfcrop ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('cp ','\'',SLEDbook_path,
@@ -28,22 +38,20 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
-################################################################################
 #-------------------------------------------------------------------------------
-#         VIF original and centered trend surface analysis for SO4 data
 #-------------------------------------------------------------------------------
-################################################################################
+#-------------------------------------------------------------------------------
+#          VIF original and centered trend surface analysis for SO4 data 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 
 # VIF original and centered trend surface analysis for SO4 data
-library(ZVHdata)
-
-# load data for graphics and analysis
-data(SO4obs)
-library(sp)
 
 # from Section 3.6, remove the outlers
 SO4clean = SO4obs[!(1:length(SO4obs) %in% c(146,153,173)),]
-xy = coordinates(SO4clean)
+xy = st_coordinates(SO4clean)
 str(xy)
 
 # create polynomials as data.frame
