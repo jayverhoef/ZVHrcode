@@ -40,7 +40,7 @@ ukpred = function(X, XRiX_i, Ri, x0, r0, y){
 # r0 = covariance between observed data and prediction site
 ukpredwts = function(X, XRiX_i, Ri, x0, r0){
 	t(x0) %*% XRiX_i %*% t(X) %*% Ri +
-	t(r0) %*% Ri %*% (diag(length(y)) - X %*% 
+	t(r0) %*% Ri %*% (diag(dim(R)[1]) - X %*% 
 	XRiX_i %*% t(X) %*% Ri)
 }
 
