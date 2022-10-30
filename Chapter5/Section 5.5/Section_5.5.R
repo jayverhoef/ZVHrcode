@@ -28,13 +28,13 @@ pdf(paste0(file_name,'.pdf'), height = 3, width = 8)
   adj = -.2
   plot(x1, y1, pch=16, xlab="", ylab="", xaxt="n", yaxt="n", 
 		cex = cex, lwd = lwd)
-  mtext('A', adj = adj, cex = 3, padj = padj)
+  mtext('A', adj = adj, cex = 2, padj = padj)
   plot(x2, y2, pch=16, xlab="", ylab="", xaxt="n", yaxt="n", 
 		cex = cex, lwd = lwd)
-  mtext('B', adj = adj, cex = 3, padj = padj)
+  mtext('B', adj = adj, cex = 2, padj = padj)
   plot(x3, y3, pch=16, xlab="", ylab="", xaxt="n", yaxt="n", 
 		cex = cex, lwd = lwd)
-  mtext('C', adj = adj, cex = 3, padj = padj)
+  mtext('C', adj = adj, cex = 2, padj = padj)
   par(old.par)
   
 dev.off()

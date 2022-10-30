@@ -27,7 +27,7 @@ storeResults = NULL
 for(i in 1:np) {
   j = which((1:np)!=i)[which.min(sqrt(
     (SO4data$xcoord[i] - SO4data$xcoord[(1:np)!=i])^2 +
-    (SO4data$xcoord[i] - SO4data$ycoord[(1:np)!=i])^2))]
+    (SO4data$ycoord[i] - SO4data$ycoord[(1:np)!=i])^2))]
   #i is site index, j is NN index, then values for i and j
   storeResults = rbind(storeResults,
     c(i,j,SO4data[i,'SO4'], SO4data[j,'SO4']))

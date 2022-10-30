@@ -9,18 +9,20 @@ source('addBreakColorLegend.R')
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#                Single Parameter Covariogram Figure
+#      Figure - Compactly supported autocorrelation models 
+#      1 parameter models: No-correlatin, Triangle, Circular, Spherical
+#      2 parameter models: Askey, C2-Wendland, C4-Wendland
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
 file_name = "Covariogram1"
 
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 11)
+pdf(paste0(file_name,'.pdf'), width = 8, height = 14)
 
 ###### Covariogram1 (Figure 6.1) ###### 
 
-layout(matrix(1:8, ncol = 2, byrow = TRUE))
+layout(matrix(1:10, ncol = 2, byrow = TRUE))
 
 #-------------------------------------------------------------------------------
 ## No-correlation #-------------------------------------------------------------------------------
@@ -84,232 +86,6 @@ legend("topright", cex = 1.5, lwd = 2,
   expression(paste(alpha, " = 2", "")), 
   expression(paste(alpha, " = 3", ""))),lty=1:3)
 
-#-------------------------------------------------------------------------------
-## Cosine
-#-------------------------------------------------------------------------------
-
-my_cos_fnc <- function(r, theta2){
-    cos(r / theta2)
-}
-x <- seq(0, 4, 0.01)
-plot(x, my_cos_fnc(x, theta2 = 0.2), xlab = "r", ylab = "Covariance", 
-  main = "Cosine", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3)
-lines(x, my_cos_fnc(x, theta2 = 0.5),type = "l", lty = 2, lwd = 3)
-lines(x, my_cos_fnc(x, theta2 = 1),type = "l", lty = 3, lwd = 3)
-legend("topright", cex = 1.5, lwd = 2,bg = 'white',
-  legend=c(expression(paste(alpha, " = 0.2", "")), 
-  expression(paste(alpha, " = 0.5", "")), 
-  expression(paste(alpha, " = 1", ""))),lty=1:3)
-
-#-------------------------------------------------------------------------------
-## Wave
-#-------------------------------------------------------------------------------
-
-my_wave_fnc <- function(r, theta2){
-    theta2 * sin(r / theta2) / r
-}
-x <- seq(0, 4, 0.01)
-plot(x, my_wave_fnc(x, theta2 = 0.1), xlab = "r", ylab = "Covariance", 
-  main = "Wave", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3)
-lines(x, my_wave_fnc(x, theta2 = 0.2),type = "l", lty = 2, lwd = 3)
-lines(x, my_wave_fnc(x, theta2 = 0.5),type = "l", lty = 3, lwd = 3)
-legend("topright", cex = 1.5, lwd = 2,bg = 'white',
-  legend=c(expression(paste(alpha, " = 0.1", "")), 
-  expression(paste(alpha, " = 0.2", "")), 
-  expression(paste(alpha, " = 0.5", ""))),lty=1:3)
-
-#-------------------------------------------------------------------------------
-## Exponential
-#-------------------------------------------------------------------------------
-
-plot(variogramLine(vgm(psill = 1, "Exp",  range = 1/3, nugget = 0),
-  covariance = TRUE, maxdist = 4), ylim = c(0, 1), xlab = "r", lwd = 3, 
-  ylab = "Covariance", main = "Exponential", type = "l", cex.main=2, cex.lab = 2,
-  cex.axis = 1.5)
-lines(variogramLine(vgm(psill = 1, "Exp",  range = 2/3, nugget = 0), 
-  covariance = TRUE, maxdist = 4), lwd = 3,
-  type = "l", lty = 2)
-lines(variogramLine(vgm(psill = 1, "Exp",  range = 1, nugget = 0), 
-  covariance = TRUE, maxdist = 4), lwd = 3,
-  type = "l", lty = 3)
-legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(alpha, " = 1/3", "")), 
-  expression(paste(alpha, " = 2/3", "")), 
-  expression(paste(alpha, " = 1", ""))),lty=1:3)
-
-#-------------------------------------------------------------------------------
-## Gaussian
-#-------------------------------------------------------------------------------
-
-plot(variogramLine(vgm(psill = 1, "Gau",  range = 1/sqrt(3), nugget = 0),
-  covariance = TRUE, maxdist = 4), ylim = c(0, 1), xlab = "r", lwd = 3, 
-  ylab = "Covariance", main = "Gaussian", type = "l", cex.main=2, cex.lab = 2,
-  cex.axis = 1.5)
-lines(variogramLine(vgm(psill = 1, "Gau",  range = 2/sqrt(3), nugget = 0), 
-  covariance = TRUE, maxdist = 4), lwd = 3,
-  type = "l", lty = 2)
-lines(variogramLine(vgm(psill = 1, "Gau",  range = 3/sqrt(3), nugget = 0), 
-  covariance = TRUE, maxdist = 4), lwd = 3,
-  type = "l", lty = 3)
-legend("topright", cex = 1.5, lwd = 2,
-  legend=c(expression(paste(alpha, " = ", 1/sqrt(3), "")), 
-  expression(paste(alpha, " = ", 2/sqrt(3), "")), 
-  expression(paste(alpha, " = ", 3/sqrt(3), ""))),lty=1:3)
-
-par(old.par)
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\''))
-
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#      2-Parameter Covariogram Figures Cachy, Powed Exponential, Matern
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-file_name = "Covariogram2"
-
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 11)
-
-layout(matrix(1:6, ncol = 2, byrow = TRUE))
-old.par = par(mar = c(5,5,4,1))
-
-#-------------------------------------------------------------------------------
-## Cauchy
-#-------------------------------------------------------------------------------
-
-my_cau_fnc <- function(r, theta2, theta3){
-    (1 + (r / theta2)^2)^{-theta3}
-}
-x <- seq(0, 4, 0.01)
-
-plot(x, my_cau_fnc(x, theta2 = 1/2, theta3 = 1), xlab = "r", ylab = "Covariance", 
-  main = "Cauchy", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3)
-lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
-lines(x, my_cau_fnc(x, theta2 = 2, theta3 = 1),type = "l", lty = 3, lwd = 3)
-legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(alpha, " = 0.5, ", phi, " = 1.0", "")), 
-          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
-          expression(paste(alpha, " = 2.0, ", phi, " = 1.0", ""))),
-          lty=1:3)
-          
-plot(x, my_cau_fnc(x, theta2 = 1, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
-  main = "Cauchy", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3, ylim = c(0,1))
-lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
-lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
-lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 2),type = "l", lty = 4, lwd = 3)
-legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(alpha, " = 1.0, ", phi, " = 0.5", "")), 
-          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
-          expression(paste(alpha, " = 1.0, ", phi, " = 1.5", "")),
-          expression(paste(alpha, " = 1.0, ", phi, " = 2.0", ""))),
-          lty=1:4)
-
-#-------------------------------------------------------------------------------
-## Powered Exponential
-#-------------------------------------------------------------------------------
-
-my_pe_fnc <- function(r, theta2, theta3){
-    exp(- (r^theta3) / theta2)
-}
-
-plot(x, my_pe_fnc(x, theta2 = 1, theta3 = 1.5), xlab = "r", ylab = "Covariance", 
-  main = "Powered Exponential", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3, ylim = c(0,1))
-lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
-lines(x, my_pe_fnc(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
-legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(alpha, " = 1.0, ", theta, " = 1.5", "")), 
-          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")), 
-          expression(paste(alpha, " = 3.0, ", theta, " = 1.5", ""))),
-          lty=1:3)
-
-plot(x, my_pe_fnc(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
-  main = "Powered Exponential", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3, ylim = c(0,1))
-lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.0),type = "l", lty = 2, lwd = 3)
-lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
-lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 2.0),type = "l", lty = 4, lwd = 3)
-legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(alpha, " = 2.0, ", theta, " = 0.5", "")), 
-          expression(paste(alpha, " = 2.0, ", theta, " = 1.0", "")), 
-          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")),
-          expression(paste(alpha, " = 2.0, ", theta, " = 2.0", ""))),
-          lty=1:4)
-
-#-------------------------------------------------------------------------------
-## Matern
-#-------------------------------------------------------------------------------
-
-my_mat_fnc_2 <- function(r, theta2, theta3){
-    ifelse(r > 0, 2^{1 - theta3} / gamma(theta3) * ((sqrt(2 * theta3) * r/ theta2) ^ {theta3}) * besselK(x = sqrt(2 * theta3) * r / theta2, theta3), 1)
-}
-
-
-plot(x, my_mat_fnc_2(x, theta2 = 1, theta3 = 1.5), xlab = "r", 
-	ylab = "Covariance", 
-  main = "Mat\uE9rn", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3, ylim = c(0,1))
-lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
-lines(x, my_mat_fnc_2(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
-legend("topright", cex = 1.5, lwd = 2, bg = 'white',
-  legend=c(expression(paste(alpha, " = 1.0, ", nu, " = 1.5", "")), 
-          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
-          expression(paste(alpha, " = 3.0, ", nu, " = 1.5", ""))),
-          lty=1:3)
-
-plot(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
-  main = "Mat\uE9rn", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
-  lwd = 3, ylim = c(0,1))
-lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
-lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 2.5),type = "l", lty = 3, lwd = 3)
-lines(variogramLine(vgm(psill = 1, "Gau",  range = 2 * sqrt(2), nugget = 0), 
-  covariance = TRUE, maxdist = 4), type = "l", lty = 4, lwd = 3)
-legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
-  legend=c(expression(paste(alpha, " = 2.0, ", nu, " = 0.5", "")), 
-          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
-          expression(paste(alpha, " = 2.0, ", nu, " = 2.5", "")),
-          expression(paste(alpha, " = 2.0, ", nu, " = ", infinity, ""))),
-          lty=1:4)
-
-dev.off()
-
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\''))
-
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#      2-Parameter Covariogram Figures Askey and Wendland
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-file_name = "Covariogram3"
-
-pdf(paste0(file_name,'.pdf'), width = 8.5, height = 11)
-
-layout(matrix(1:6, ncol = 2, byrow = TRUE))
-old.par = par(mar = c(5,5,4,1))
 
 x <- seq(0, 4, 0.01)
 
@@ -461,6 +237,214 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
+
+
+
+
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#      Figure - Globally supported autocorrelation models 
+#      1 parameter models: Cosine, Wave, Exponential, Gaussian
+#      2 parameter models: Cachy, Powed Exponential, Matern
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "Covariogram2"
+
+pdf(paste0(file_name,'.pdf'), width = 8, height = 14)
+
+layout(matrix(1:10, ncol = 2, byrow = TRUE))
+old.par = par(mar = c(5,5,4,1))
+
+
+#-------------------------------------------------------------------------------
+## Cosine
+#-------------------------------------------------------------------------------
+
+my_cos_fnc <- function(r, theta2){
+    cos(r / theta2)
+}
+x <- seq(0, 4, 0.01)
+plot(x, my_cos_fnc(x, theta2 = 0.2), xlab = "r", ylab = "Covariance", 
+  main = "Cosine", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3)
+lines(x, my_cos_fnc(x, theta2 = 0.5),type = "l", lty = 2, lwd = 3)
+lines(x, my_cos_fnc(x, theta2 = 1),type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2,bg = 'white',
+  legend=c(expression(paste(alpha, " = 0.2", "")), 
+  expression(paste(alpha, " = 0.5", "")), 
+  expression(paste(alpha, " = 1", ""))),lty=1:3)
+
+#-------------------------------------------------------------------------------
+## Wave
+#-------------------------------------------------------------------------------
+
+my_wave_fnc <- function(r, theta2){
+    theta2 * sin(r / theta2) / r
+}
+x <- seq(0, 4, 0.01)
+plot(x, my_wave_fnc(x, theta2 = 0.1), xlab = "r", ylab = "Covariance", 
+  main = "Wave", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3)
+lines(x, my_wave_fnc(x, theta2 = 0.2),type = "l", lty = 2, lwd = 3)
+lines(x, my_wave_fnc(x, theta2 = 0.5),type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2,bg = 'white',
+  legend=c(expression(paste(alpha, " = 0.1", "")), 
+  expression(paste(alpha, " = 0.2", "")), 
+  expression(paste(alpha, " = 0.5", ""))),lty=1:3)
+
+#-------------------------------------------------------------------------------
+## Exponential
+#-------------------------------------------------------------------------------
+
+plot(variogramLine(vgm(psill = 1, "Exp",  range = 1/3, nugget = 0),
+  covariance = TRUE, maxdist = 4), ylim = c(0, 1), xlab = "r", lwd = 3, 
+  ylab = "Covariance", main = "Exponential", type = "l", cex.main=2, cex.lab = 2,
+  cex.axis = 1.5)
+lines(variogramLine(vgm(psill = 1, "Exp",  range = 2/3, nugget = 0), 
+  covariance = TRUE, maxdist = 4), lwd = 3,
+  type = "l", lty = 2)
+lines(variogramLine(vgm(psill = 1, "Exp",  range = 1, nugget = 0), 
+  covariance = TRUE, maxdist = 4), lwd = 3,
+  type = "l", lty = 3)
+legend("topright", cex = 1.5, lwd = 2,
+  legend=c(expression(paste(alpha, " = 1/3", "")), 
+  expression(paste(alpha, " = 2/3", "")), 
+  expression(paste(alpha, " = 1", ""))),lty=1:3)
+
+#-------------------------------------------------------------------------------
+## Gaussian
+#-------------------------------------------------------------------------------
+
+plot(variogramLine(vgm(psill = 1, "Gau",  range = 1/sqrt(3), nugget = 0),
+  covariance = TRUE, maxdist = 4), ylim = c(0, 1), xlab = "r", lwd = 3, 
+  ylab = "Covariance", main = "Gaussian", type = "l", cex.main=2, cex.lab = 2,
+  cex.axis = 1.5)
+lines(variogramLine(vgm(psill = 1, "Gau",  range = 2/sqrt(3), nugget = 0), 
+  covariance = TRUE, maxdist = 4), lwd = 3,
+  type = "l", lty = 2)
+lines(variogramLine(vgm(psill = 1, "Gau",  range = 3/sqrt(3), nugget = 0), 
+  covariance = TRUE, maxdist = 4), lwd = 3,
+  type = "l", lty = 3)
+legend("topright", cex = 1.5, lwd = 2,
+  legend=c(expression(paste(alpha, " = ", 1/sqrt(3), "")), 
+  expression(paste(alpha, " = ", 2/sqrt(3), "")), 
+  expression(paste(alpha, " = ", 3/sqrt(3), ""))),lty=1:3)
+
+#-------------------------------------------------------------------------------
+## Cauchy
+#-------------------------------------------------------------------------------
+
+my_cau_fnc <- function(r, theta2, theta3){
+    (1 + (r / theta2)^2)^{-theta3}
+}
+x <- seq(0, 4, 0.01)
+
+plot(x, my_cau_fnc(x, theta2 = 1/2, theta3 = 1), xlab = "r", ylab = "Covariance", 
+  main = "Cauchy", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3)
+lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
+lines(x, my_cau_fnc(x, theta2 = 2, theta3 = 1),type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 0.5, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 2.0, ", phi, " = 1.0", ""))),
+          lty=1:3)
+          
+plot(x, my_cau_fnc(x, theta2 = 1, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
+  main = "Cauchy", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1),type = "l", lty = 2, lwd = 3)
+lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
+lines(x, my_cau_fnc(x, theta2 = 1, theta3 = 2),type = "l", lty = 4, lwd = 3)
+legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", phi, " = 0.5", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.0", "")), 
+          expression(paste(alpha, " = 1.0, ", phi, " = 1.5", "")),
+          expression(paste(alpha, " = 1.0, ", phi, " = 2.0", ""))),
+          lty=1:4)
+
+#-------------------------------------------------------------------------------
+## Powered Exponential
+#-------------------------------------------------------------------------------
+
+my_pe_fnc <- function(r, theta2, theta3){
+    exp(- (r^theta3) / theta2)
+}
+
+plot(x, my_pe_fnc(x, theta2 = 1, theta3 = 1.5), xlab = "r", ylab = "Covariance", 
+  main = "Powered Exponential", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
+lines(x, my_pe_fnc(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", theta, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", theta, " = 1.5", ""))),
+          lty=1:3)
+
+plot(x, my_pe_fnc(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
+  main = "Powered Exponential", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.0),type = "l", lty = 2, lwd = 3)
+lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
+lines(x, my_pe_fnc(x, theta2 = 2, theta3 = 2.0),type = "l", lty = 4, lwd = 3)
+legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
+  legend=c(expression(paste(alpha, " = 2.0, ", theta, " = 0.5", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.0", "")), 
+          expression(paste(alpha, " = 2.0, ", theta, " = 1.5", "")),
+          expression(paste(alpha, " = 2.0, ", theta, " = 2.0", ""))),
+          lty=1:4)
+
+#-------------------------------------------------------------------------------
+## Matern
+#-------------------------------------------------------------------------------
+
+my_mat_fnc_2 <- function(r, theta2, theta3){
+    ifelse(r > 0, 2^{1 - theta3} / gamma(theta3) * ((sqrt(2 * theta3) * r/ theta2) ^ {theta3}) * besselK(x = sqrt(2 * theta3) * r / theta2, theta3), 1)
+}
+
+
+plot(x, my_mat_fnc_2(x, theta2 = 1, theta3 = 1.5), xlab = "r", 
+	ylab = "Covariance", 
+  main = "Mat\uE9rn", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
+lines(x, my_mat_fnc_2(x, theta2 = 3, theta3 = 1.5),type = "l", lty = 3, lwd = 3)
+legend("topright", cex = 1.5, lwd = 2, bg = 'white',
+  legend=c(expression(paste(alpha, " = 1.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 3.0, ", nu, " = 1.5", ""))),
+          lty=1:3)
+
+plot(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 0.5), xlab = "r", ylab = "Covariance", 
+  main = "Mat\uE9rn", type = "l", cex.main=2, cex.lab = 2, cex.axis = 1.5, 
+  lwd = 3, ylim = c(0,1))
+lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 1.5),type = "l", lty = 2, lwd = 3)
+lines(x, my_mat_fnc_2(x, theta2 = 2, theta3 = 2.5),type = "l", lty = 3, lwd = 3)
+lines(variogramLine(vgm(psill = 1, "Gau",  range = 2 * sqrt(2), nugget = 0), 
+  covariance = TRUE, maxdist = 4), type = "l", lty = 4, lwd = 3)
+legend("topright", cex = 1.5, lwd = 1.5, bg = 'white',
+  legend=c(expression(paste(alpha, " = 2.0, ", nu, " = 0.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 1.5", "")), 
+          expression(paste(alpha, " = 2.0, ", nu, " = 2.5", "")),
+          expression(paste(alpha, " = 2.0, ", nu, " = ", infinity, ""))),
+          lty=1:4)
+
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
+
 
 
 ################################################################################

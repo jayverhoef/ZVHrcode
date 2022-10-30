@@ -14,12 +14,12 @@ file_name = 'figures/figure9pt1'
 pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
 
 	# Code for creating Figure 9.1
-	x = c(1,1,2,2,5)
-	y = c(4,3,3,2,4)
-	addx = c(2,4,4)
-	addy = c(4,2,4)
-	par(mar = c(5,5,1,1))
-	plot(x, y, pch=16, xlim=c(1,5), ylim=c(1,5), cex=3,
+	x = c(1, 1, 2, 2, 5)
+	y = c(4, 3, 3, 2, 4)
+	addx = c(2, 4, 4)
+	addy = c(4, 2, 4)
+	par(mar = c(5, 5, 1, 1))
+	plot(x, y, pch=16, xlim=c(1, 5), ylim=c(1, 5), cex=3,
 		xlab = 'x-coordinate', ylab = 'y-coordinate', cex.lab = 2, 
 		cex.axis = 1.5)
 	points(addx, addy, cex=3, lwd = 3)
@@ -213,7 +213,7 @@ xy <- data.frame( x = c(0.1, 0.15, 0.30, 0.32, 0.35, 0.40, 0.50,
 new_xy <- data.frame(x = seq(0, 1, by = 0.001), y = rep(0, 1001))
 
 # simulate data
-set.seed(13)
+set.seed(17)
 spcov_params_val <- spcov_params("exponential", de = 1, ie = 0.0001, 
 	range = 0.05)
 simdata_exp1 = sprnorm(spcov_params_val, data = xy, xcoord = x, ycoord = y)
@@ -238,18 +238,19 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 
 	padj = -.4
 	adj = -.2
-	ylim = c(-1,4)
+	xlim = c(0,1)
+	ylim = c(-1.8,4.1)
 	axat = -1:4
 	leg_cex = 1.7
 	layout(matrix(1:4, nrow = 2, byrow = TRUE))
 	par(mar = c(5,5,4,6))
-	plot(D1$x, D1$ysim, pch = 19, ylim = ylim, cex = 2,
+	plot(D1$x, D1$ysim, pch = 19, ylim = ylim, xlim = xlim, cex = 2,
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5)
 	lines(c(0,1),c(0,0), lty = 2, lwd = 2)
 	mtext('A', adj = adj, cex = 3, padj = padj)
 
-	plot(new_xy[,1], predexp$fit[,1], type = 'l', ylim = ylim,
+	plot(new_xy[,1], predexp$fit[,1], type = 'l', ylim = ylim, xlim = xlim,
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)
@@ -261,7 +262,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 				 lty = c(1, 2), lwd = c(2,2), cex = leg_cex)
 	mtext('B', adj = adj, cex = 3, padj = padj)
 
-	plot(new_xy[,1], predsph$fit[,1], type = 'l', ylim = ylim,
+	plot(new_xy[,1], predsph$fit[,1], type = 'l', ylim = ylim, xlim = xlim,
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)
@@ -274,7 +275,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 	mtext('C', adj = adj, cex = 3, padj = padj)
 
 
-	plot(new_xy[,1], predgau$fit[,1], type = 'l', ylim = ylim,
+	plot(new_xy[,1], predgau$fit[,1], type = 'l', ylim = ylim, xlim = xlim,
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)

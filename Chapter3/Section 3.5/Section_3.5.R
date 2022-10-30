@@ -4,6 +4,9 @@ setwd(paste0(SLEDbook_path,sec_path))
 library(ZVHdata)
 library(xtable)
 library(sf)
+library(car)
+library(onewaytests)
+
 data(SO4obs)
 
 #-------------------------------------------------------------------------------
@@ -102,6 +105,7 @@ South & 1.69 & 5.03 & 5.03 & 6.66 \\
 \caption{Standard deviations of the wet sulfate deposition data within eight latitude-longitude rectangular regions.  Sample sizes are given in parentheses.
 \label{tab:so4-regionalsd}}
 \end{table}
+
 #-------------------------------------------------------------------------------
 
 
@@ -146,20 +150,31 @@ system(paste0('rm ','\'',SLEDbook_path,
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#                  Barlett's Homogeneity Test  
+#                   Homogeneity Tests  
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-sd_n = data.frame(
-  sd = unlist(lapply(list(upper_sub1, upper_sub2, upper_sub3, upper_sub4,
-    lower_sub1, lower_sub2, lower_sub3, lower_sub4),
-    function(dt){sd(dt$so4)})),
-  n = unlist(lapply(list(upper_sub1, upper_sub2, upper_sub3, upper_sub4,
-    lower_sub1, lower_sub2, lower_sub3, lower_sub4),
-    function(dt){nrow(dt)}))
-)
-(sum(sd_n$n) - nrow(sd_n))*log(mean(sd_n$sd^2)) -
-  sum((sd_n$n - 1)*log(sd_n$sd^2))
-qchisq(.99,7)
+upper_sub1$region = 'NfarW'
+upper_sub2$region = 'NmidW'
+upper_sub3$region = 'NmidE'
+upper_sub4$region = 'NfarE'
+lower_sub1$region = 'SfarW'
+lower_sub2$region = 'SmidW'
+lower_sub3$region = 'SmidE'
+lower_sub4$region = 'SfarE'
+DF = rbind(upper_sub1, upper_sub2, upper_sub3, upper_sub4,
+	lower_sub1, lower_sub2, lower_sub3, lower_sub4)
+DF = data.frame(xcoord = DF[,1], ycoord = DF[,2], so4 = DF[,3],
+	region = as.factor(DF[,4]))
 
+# Bartlett's Test 
+bartlett.test(so4 ~ region, data = DF)
+# Levene’s Test
+leveneTest(so4 ~ region, data = DF)
+# Brown-Forsythe Test
+bf.test(so4 ~ region, data = DF)
+
+qf(0.99, 7, 189)
+qf(0.99, 7, 190)
+qf(0.99, 7, 104.7)

@@ -1,16 +1,28 @@
 sec_path = 'Rcode/Chapter4/Section 4.2/'
 setwd(paste0(SLEDbook_path,sec_path))
 
-file_name = "toyolsgls"
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                  Toy Figure for OLS and GLS 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = "figures/toyolsgls"
+
 # Create plot of sites for the toy example of Section 4.2 (Figure 4.1)
 xpts <- c(1,1,2,2,5)
 ypts <- c(4,3,3,2,4)
+
 pdf(paste0(file_name,'.pdf'))
   old.par = par(pty="s", mar = c(3,3,1,1))
   plot(xpts, ypts, pch=16, xlim=c(1,5), ylim=c(1,5), xlab="", ylab="",
     cex = 2.5, cex.axis = 1.8)
   par(old.par)
+  
 dev.off()
+
 system(paste0('pdfcrop ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('cp ','\'',SLEDbook_path,
@@ -18,6 +30,14 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#              Compute some results in Section 4.2 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # Compute some results in Section 4.2
 xpts <- matrix(c(1,1,2,2,5),5,1)
@@ -34,7 +54,15 @@ varofolse
 
 (sum(diag(Rmat)) - t(int1) %*% Rmat %*% int1/5)/4
 
-# Create plot of three histograms for the toy example of Section 4.5 (Figure 4.2)
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#              Three histograms for toy example 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+# Create plot of three histograms for the toy example of Section 4.2 (Figure 4.2)
 set.seed(1005)
 hold <- matrix(0,10000,3)
 for(i in 1:10000){
@@ -59,8 +87,10 @@ tdist <- function(x){
   return(y)
 }
 
-file_name = "threehists"
+file_name = "figures/threehists"
+
 pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
+
   old.par = par(mfrow=c(3,1), mar = c(5,5,5,1), lwd = 2)
   hist(hold[,1], breaks=24, xlab="", xlim=c(-3,3), ylim=c(0,.9),
     freq=FALSE, cex.lab = 2, cex.axis = 1.5, cex.main = 2,
@@ -78,7 +108,9 @@ pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
   curve(tdist, from=-10, to=10, add=TRUE)
   mtext('C', adj = -.08, padj = -.3, cex = 3)
   par(old.par)
+  
 dev.off()
+
 system(paste0('pdfcrop ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('cp ','\'',SLEDbook_path,
