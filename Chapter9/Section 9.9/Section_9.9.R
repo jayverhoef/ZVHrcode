@@ -169,9 +169,15 @@ print(
 
 # Code for comparing quality of predictions based on ML and REML estimation (Table 9.6)
 # Set up a small example of n=K^2 sites on a KxK square grid with unit spacing
-K <- 13
-locxy <- data.frame(x = c(matrix(rep(1:K,K),ncol=1,byrow=T), 7, 7),
-	y = c(matrix(rep(1:K,each=K),ncol=1,byrow=T), 7, 1))
+# use an even number for K so that prediction locations are between observed
+# locations
+K <- 12
+	
+# create data.frames for observed and prediction locations
+obsDF <- data.frame(x = matrix(rep(1:K,K),ncol=1,byrow=T),
+	y = matrix(rep(1:K,each=K),ncol=1,byrow=T))
+predDF = data.frame(x = c((K + 1)/2, (K + 1)/2), y = c((K + 1)/2, 0.5))
+xyall = rbind(obsDF[,1:2], predDF[,1:2])
 n <- K^2
 
 # theta^d, where d is distance, is equal to an exponential model with more
@@ -180,25 +186,26 @@ n <- K^2
 spcov_params_val <- spcov_params("exponential", de = 0.9, ie = 0.1, 
 	range = -1/log(0.3))
 
+set.seed(2222)
+
 #number of simulations
-nsim = 500
+nsim = 5000
 # store ml performance at theta = 0.3
+ml03_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 ml03_width = matrix(NA, nrow = nsim, ncol = 2)
 ml03_cover = matrix(NA, nrow = nsim, ncol = 2)
+reml03_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 reml03_width = matrix(NA, nrow = nsim, ncol = 2)
 reml03_cover = matrix(NA, nrow = nsim, ncol = 2)
 for(kk in 1:nsim) {
 	# simulate errors
-	errsim = sprnorm(spcov_params_val, data = locxy, xcoord = x, ycoord = y)
+	errsim = sprnorm(spcov_params_val, data = xyall,
+		xcoord = x, ycoord = y)
 	# constant but unknown mean = 0, simulated values at observed and prediction
 	# locations
 	z = errsim[1:n]
 	zp = errsim[(n + 1):(n + 2)]
-
-	# create a data.frame for observed and prediction locations
-	obsDF = data.frame(x = locxy$x[1:n], y = locxy$y[1:n], z = z)
-	predDF = data.frame(x = locxy$x[(n + 1):(n + 2)], 
-		y = locxy$y[(n + 1):(n + 2)])
+	obsDF$z = z
 
 	# ml prediction at both locations
 	ml_out = splm(z ~ 1, data = obsDF, xcoord = 'x', ycoord = 'y',
@@ -210,17 +217,23 @@ for(kk in 1:nsim) {
 		spcov_type = "exponential", 
 		estmethod = 'reml')
 	reml_pred = predict(reml_out, predDF, se.fit = TRUE)
+	# rmspe
+	ml03_rmspe[kk,] = (ml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
 	ml03_width[kk,] = 2*ml_pred$se.fit*qt(.90, n - p)
 	# coverage
 	ml03_cover[kk,] = ml_pred$fit - ml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < ml_pred$fit + ml_pred$se.fit*qt(.90, n - p)
+	# rmspe
+	reml03_rmspe[kk,] = (reml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
 	reml03_width[kk,] = 2*reml_pred$se.fit*qt(.90, n - p)
 	# coverage
 	reml03_cover[kk,] = reml_pred$fit - reml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < reml_pred$fit + reml_pred$se.fit*qt(.90,n - p)
 }
+sqrt(apply(ml03_rmspe,2,mean))
+sqrt(apply(reml03_rmspe,2,mean))
 apply(ml03_width,2,mean)
 apply(reml03_width,2,mean)
 apply(ml03_cover,2,mean)
@@ -235,24 +248,23 @@ spcov_params_val <- spcov_params("exponential", de = 0.9, ie = 0.1,
 	range = -1/log(0.7))
 
 #number of simulations
-nsim = 500
+nsim = 5000
 # store ml performance at theta = 0.3
+ml07_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 ml07_width = matrix(NA, nrow = nsim, ncol = 2)
 ml07_cover = matrix(NA, nrow = nsim, ncol = 2)
+reml07_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 reml07_width = matrix(NA, nrow = nsim, ncol = 2)
 reml07_cover = matrix(NA, nrow = nsim, ncol = 2)
 for(kk in 1:nsim) {
 	# simulate errors
-	errsim = sprnorm(spcov_params_val, data = locxy, xcoord = x, ycoord = y)
+	errsim = sprnorm(spcov_params_val, data = xyall,
+		xcoord = x, ycoord = y)
 	# constant but unknown mean = 0, simulated values at observed and prediction
 	# locations
 	z = errsim[1:n]
 	zp = errsim[(n + 1):(n + 2)]
-
-	# create a data.frame for observed and prediction locations
-	obsDF = data.frame(x = locxy$x[1:n], y = locxy$y[1:n], z = z)
-	predDF = data.frame(x = locxy$x[(n + 1):(n + 2)], 
-		y = locxy$y[(n + 1):(n + 2)])
+	obsDF$z = z
 
 	# ml prediction at both locations
 	ml_out = splm(z ~ 1, data = obsDF, xcoord = 'x', ycoord = 'y',
@@ -264,17 +276,22 @@ for(kk in 1:nsim) {
 		spcov_type = "exponential", 
 		estmethod = 'reml')
 	reml_pred = predict(reml_out, predDF, se.fit = TRUE)
+	# rmspe
+	ml07_rmspe[kk,] = (ml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
 	ml07_width[kk,] = 2*ml_pred$se.fit*qt(.90, n - p)
 	# coverage
 	ml07_cover[kk,] = ml_pred$fit - ml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < ml_pred$fit + ml_pred$se.fit*qt(.90,n - p)
+	reml07_rmspe[kk,] = (reml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
 	reml07_width[kk,] = 2*reml_pred$se.fit*qt(.90, n - p)
 	# coverage
 	reml07_cover[kk,] = reml_pred$fit - reml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < reml_pred$fit + reml_pred$se.fit*qt(.90,n - p)
 }
+sqrt(apply(ml07_rmspe,2,mean))
+sqrt(apply(reml07_rmspe,2,mean))
 apply(ml07_width,2,mean)
 apply(reml07_width,2,mean)
 apply(ml07_cover,2,mean)
@@ -283,6 +300,8 @@ apply(reml07_cover,2,mean)
 
 # create the table
 ml_vs_repl_pred = rbind(
+	c(sqrt(apply(ml03_rmspe,2,mean)), sqrt(apply(ml07_rmspe,2,mean))),
+	c(sqrt(apply(reml03_rmspe,2,mean)), sqrt(apply(reml07_rmspe,2,mean))),
 	c(apply(ml03_width,2,mean), apply(ml07_width,2,mean)),
   c(apply(reml03_width,2,mean), apply(reml07_width,2,mean)),
 	c(apply(ml03_cover,2,mean), apply(ml07_cover,2,mean)),
@@ -292,7 +311,7 @@ ml_vs_repl_pred = rbind(
 print(
     xtable(ml_vs_repl_pred, 
       align = c('l',rep('l', times = length(ml_vs_repl_pred[1,]))),
-      digits = c(0, rep(2, times = 4))
+      digits = c(0, rep(3, times = 4))
     ),
     sanitize.text.function = identity,
     include.rownames = FALSE,
