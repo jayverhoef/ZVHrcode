@@ -804,7 +804,8 @@ locx <- matrix(rep(1:K,K),ncol=1,byrow=T)
 locy <- matrix(rep(1:K,each=K),ncol=1,byrow=T)
 n <- K^2
 theta <- 0.7
-
+lpx = c(4.5, 1)
+lpy = c(4.5, 4.5)
 # Define a covariance structure on the grid: an exponential covariance function with correlation theta at
 # unit distance
 Gtrue <- matrix(0,n,n)
@@ -888,6 +889,17 @@ for(i in 1:999){
  if(hold[i,2]==maxL){mle[k,2] <- hold[i,4]/n}
  if(hold[i,2]==maxL){mle[k,3] <- (hold[i,4]/n)/log(1/hold[i,1])}
 }
+####
+# use spmodel to check
+xyzdat = data.frame(x = locx, y = locy, z = y1aug[1:64])
+ml_out = splm(z ~ 1, data = xyzdat, xcoord = 'x', ycoord = 'y',
+		spcov_initial = spcov_initial("exponential", ie = 1e-8, 
+		range = 0.3, known = c("ie")),
+		estmethod = 'ml')
+summary(ml_out)
+xypred = data.frame(x = lpx, y = lpy) 
+predict(ml_out, xypred, se.fit = TRUE)
+####
 maxLR <- max(hold[,3])
 for(i in 1:999){
  if(hold[i,3]==maxLR){remle[k,1] <- hold[i,1]}
