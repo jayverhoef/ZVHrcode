@@ -180,18 +180,17 @@ print(
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-tran_locs = data.frame(x = kronecker(seq(1, 3, by = 0.05), rep(1, times = 61)),
-	y = kronecker(rep(1, times = 41), seq(-1.5, 1.5, by = 0.05)))
+tran_locs = data.frame(x = kronecker(seq(1, 3, by = 0.01), rep(1, times = 301)),
+	y = kronecker(rep(1, times = 201), seq(-1.5, 1.5, by = 0.01)))
 ntran = dim(tran_locs)[1]
-locs = rbind(tran_locs, c(1,0), c(0, 0))
-distMat = as.matrix(dist(locs))
 X <- rep(1, times = 2)
+
 
 gau_wts = matrix(NA, nrow = ntran, ncol = 2)
 i = 1
 for(i in 1:ntran) {
-	Rall = exp(-distMat[c(i, ntran + 1, ntran + 2), 
-		c(i, ntran + 1, ntran + 2)]^2/3) + diag(rep(1e-8, times = 3))
+	distMat = as.matrix(dist(rbind(tran_locs[i,], c(1,0),c(0,0))))
+	Rall = exp(-distMat^2/3) + diag(rep(1e-8, times = 3))
 	# observed locations
 	R = Rall[1:2, 1:2]
 	# prediction location
@@ -202,15 +201,16 @@ for(i in 1:ntran) {
 
 file_name = 'figures/screening_shadow'
 
-pdf(paste0(file_name,'.pdf'), width = 7, height = 7)
+pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
 
 	par(mar = c(5,5,1,1))
-	plot(0, 0, pch = 4, cex = 3, lwd = 3, xlim = c(0,3), ylim = c(-1.5, 1.5),
+	plot(0, 0, pch = 19, type = 'n', xlim = c(0,3), ylim = c(-1.5, 1.5),
 		xlab = '', ylab = '', cex.axis = 1.5)
-	points(1, 0, pch = 19, cex = 3)
-	points(tran_locs, pch = 19, col = 'grey80')
-	points(tran_locs[gau_wts[,1] < 0,], pch = 19)
-	points(1, 0, pch = 19, cex = 3)
+	grid(NULL, NULL, col = "gray70", lty = "dotted", lwd = 2)
+	points(tran_locs[gau_wts[,1] < 0,], col = 'grey70', pch = 19, cex = .6)
+	points(0, 0, pch = 1, cex = 2.5, lwd = 3)
+	points(1, 0, pch = 19, cex = 2.5)
+	text(0.11,-.12, label = expression(bold(s[0])), cex = 2.5)
 
 dev.off()
 		
@@ -221,3 +221,5 @@ system(paste0('cp ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
+		
+		
