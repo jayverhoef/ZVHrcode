@@ -1,27 +1,3 @@
-# R code for displaying model-based sampling designs (toy examples) in Figure 10.1
-x <- rep(seq(0.1,0.9,0.2),5)
-y <- rep(seq(0.9,0.1,-0.2),each=5)
-z <- cbind(x,y)
-par(pty="s",bty="n",xaxt="n",yaxt="n",mfrow=c(2,3))
-black1 <- t(matrix(c(z[1,],z[5,],z[13,],z[21,],z[25,]),nrow=2))
-black2 <- t(matrix(c(z[1,],z[3,],z[5,],z[21,],z[25,]),nrow=2))
-black3 <- t(matrix(c(z[2,],z[10,],z[13,],z[16,],z[24,]),nrow=2))
-black4 <- t(matrix(c(z[3,],z[8,],z[13,],z[18,],z[23,]),nrow=2))
-black5 <- t(matrix(c(z[1,],z[2,],z[3,],z[24,],z[25,]),nrow=2))
-black6 <- t(matrix(c(z[1,],z[2,],z[14,],z[19,],z[24,]),nrow=2))
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black1[,1],black1[,2],cex=1.5,pch=16)
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black2[,1],black2[,2],cex=1.5,pch=16)
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black3[,1],black3[,2],cex=1.5,pch=16)
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black4[,1],black4[,2],cex=1.5,pch=16)
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black5[,1],black5[,2],cex=1.5,pch=16)
-plot(z,cex=1.5,axes=F,xlab="",ylab="",pch=1)
-matpoints(black6[,1],black6[,2],cex=1.5,pch=16)
-#
 
 # CPElocations for the "big example" sampling design (output of B_ML.sas with rho=0.5 and nugget=.50):
 0.025 0.965
@@ -126,6 +102,7 @@ matpoints(black6[,1],black6[,2],cex=1.5,pch=16)
 0.965 0.585
 0.835 0.135
 0.155 0.745
+
 
 # R code for plots of the two "big example" sampling designs (CPE-optimal and EK-optimal when rho=0.5 and nugget=0.5)
 # for Figure 10.2:

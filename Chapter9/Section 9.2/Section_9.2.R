@@ -290,9 +290,6 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 	layout(1)
 
 dev.off()
-
-labels = c(expression(y[1]), expression(y[2]), expression(y[3]),
-		expression(y[4]), expression(y[5]))
 		
 system(paste0('pdfcrop ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
