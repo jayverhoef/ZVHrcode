@@ -92,4 +92,4 @@ text3d(rbind(1.05*from, 1.2*to),
        text = c(expression(s[1]), expression(s[2])),
        cex = 3, adj = 1)
 
-
+rgl.postscript('3dplot.pdf', fmt = 'pdf')

@@ -4,6 +4,109 @@ setwd(paste0(SLEDbook_path,sec_path))
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+#           Space-filling designs for Figure 10.4
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+file_name = 'figures/spacefilling_designs'
+pdf(paste0(file_name,'.pdf'), width = 12, height = 4.5)
+
+	layout(matrix(1:3, nrow = 1))
+
+	padj = .9
+	adj = -.05
+	cex_mtext = 4
+	cex_plot = 3.0
+	lwd_border = 2
+
+	# A
+	par(mar = c(1,4,4,1))
+	# maximin design (leftmost plot)
+	S <- c(-.3255,-.3255,.0234,-.3255,.3255,-.1511,-.3255,.0234,.0233,
+				 .0233,.3,.3,-.1511,.3255)
+	cord.pt <- matrix(S,ncol=2,byrow=T)
+	# scale to range from 0 to 1
+	minx = min(cord.pt[,1])
+	maxx = max(cord.pt[,1])
+	miny = min(cord.pt[,2])
+	maxy = max(cord.pt[,2])
+	rang = max(maxx - minx, maxy - miny)
+	cord.pt[,1] = (cord.pt[,1] - minx)/rang
+	cord.pt[,2] = (cord.pt[,2] - miny)/rang
+	plot(x=0:1.1,y=0:1.1,xlim=c(-0.1,1.1),ylim=c(-.1,1.1),type="n",axes=F,xlab="",ylab="")
+	points(x=cord.pt[,1],y=cord.pt[,2], pch=19, cex = cex_plot)
+	# start point of x
+	sx <- c(0,0,1,1)
+	# start point of y
+	sy <- c(0,1,1,0)
+	# end point of x
+	ex <- c(0,1,1,0)
+	# end point of y
+	ey <- c(1,1,0,0)
+	sapply(1:length(sx),function(j) segments(x0=sx[j],
+		x1=ex[j],y0=sy[j],y1=ey[j], lwd = lwd_border))
+	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
+
+	# B
+	# minimax design (center plot)
+	S <- c(.5,.5,.5,1,.5,0,1/3-1/12*sqrt(7),1/4,1/3-1/12*sqrt(7),
+				 3/4,2/3+sqrt(7)/12,1/4,2/3+sqrt(7)/12,3/4)
+	cord.pt <- matrix(S,ncol=2,byrow=T)
+	plot(x=0:1.1,y=0:1.1,xlim=c(-0.1,1.1),ylim=c(-.1,1.1),type="n",axes=F,xlab="",ylab="")
+	points(x=cord.pt[,1],y=cord.pt[,2], pch=19, cex = cex_plot)
+	# start point of x
+	sx <- c(0,0,1,1)
+	# start point of y
+	sy <- c(0,1,1,0)
+	# end point of x
+	ex <- c(0,1,1,0)
+	# end point of y
+	ey <- c(1,1,0,0)
+	sapply(1:length(sx),function(j) segments(x0=sx[j],
+		x1=ex[j],y0=sy[j],y1=ey[j], lwd = lwd_border))
+	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
+
+	# C
+	# Latin hypercube design (rightmost plot)
+	cord.pt <- matrix(c(0,2,1,5,2,0,3,3,4,6,5,1,6,4),ncol=2,byrow=T)
+	# scale to range from 0 to 1
+	minx = min(cord.pt[,1])
+	maxx = max(cord.pt[,1])
+	miny = min(cord.pt[,2])
+	maxy = max(cord.pt[,2])
+	rang = max(maxx - minx, maxy - miny)
+	cord.pt[,1] = (cord.pt[,1] - minx)/rang
+	cord.pt[,2] = (cord.pt[,2] - miny)/rang
+	plot(x=0:1.1,y=0:1.1,xlim=c(-0.1,1.1),ylim=c(-.1,1.1),type="n",axes=F,xlab="",ylab="")
+	points(x=cord.pt[,1],y=cord.pt[,2], pch=19, cex = cex_plot)
+	# start point of x
+	sx <- c(0,0,1,1)
+	# start point of y
+	sy <- c(0,1,1,0)
+	# end point of x
+	ex <- c(0,1,1,0)
+	# end point of y
+	ey <- c(1,1,0,0)
+	sapply(1:length(sx),function(j) segments(x0=sx[j],
+		x1=ex[j],y0=sy[j],y1=ey[j], lwd = lwd_border))
+	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
+
+	layout(1)
+
+dev.off()
+		
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #           Augmented space-filling designs for Figure 10.5
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
