@@ -211,6 +211,7 @@ pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
 	points(0, 0, pch = 1, cex = 2.5, lwd = 3)
 	points(1, 0, pch = 19, cex = 2.5)
 	text(0.11,-.12, label = expression(bold(s[0])), cex = 2.5)
+	text(0.91,-.12, label = expression(bold(s[1])), cex = 2.5)
 
 dev.off()
 		
@@ -221,5 +222,19 @@ system(paste0('cp ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
-		
+
+png(paste0(file_name,'.png'), width = 640, height = 640)
+
+	par(mar = c(5,5,1,1))
+	plot(0, 0, pch = 19, type = 'n', xlim = c(0,3), ylim = c(-1.5, 1.5),
+		xlab = '', ylab = '', cex.axis = 1.5)
+	grid(NULL, NULL, col = "gray70", lty = "dotted", lwd = 2)
+	points(tran_locs[gau_wts[,1] < 0,], col = 'grey70', pch = 19, cex = .6)
+	points(0, 0, pch = 1, cex = 2.5, lwd = 3)
+	points(1, 0, pch = 19, cex = 2.5)
+	text(0.11,-.12, label = expression(bold(s[0])), cex = 2.5)
+	text(0.91,-.12, label = expression(bold(s[1])), cex = 2.5)
+
+dev.off()
+
 		

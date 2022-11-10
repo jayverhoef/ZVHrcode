@@ -9,7 +9,7 @@ setwd(paste0(SLEDbook_path,sec_path))
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-gdim = 5
+gdim = 4
 nsamp = 4
 # grid of spatial locations
 xy = data.frame(x = kronecker(1:gdim, rep(1, times = gdim)),
@@ -350,3 +350,64 @@ for(i in 1:1000) {
 # plot the currently chosen design
 plot(xy[samp$v1,], cex = 2, xlim = c(1,gdim), ylim = c(1,gdim))
 points(xy[samp$v2 - gdim^2,], pch = 19)
+
+
+sample1 = sample(1:gdim^2, nsamp)
+sample2 = sample(gdim^2 + 1:gdim^2, nsamp)
+samp = list(v1 = sample1, v2 = sample2)
+j = 0
+minall = 1e+32
+
+for(i in 1:100000) {
+	j = j + 1
+	samp_new =  sample_jay(samp, 1, TRUE)
+	U = LiZ_ProbNew(samp = samp, samp_new = samp_new, tau_0 = 10/j, 
+		Sig = bigC, Sig_drho = bigC_drho, Sig_drho_c = bigC_drho_c)
+	if(runif(1) < U) samp = samp_new
+	minDet = 1/detFI(samp, bigC, bigC_drho,
+		bigC_drho_c)
+	if(minDet < minall) {
+		minall = minDet
+		bestsamp = samp
+	}
+	samp_new =  sample_jay(samp, 2, TRUE)
+	U = LiZ_ProbNew(samp = samp, samp_new = samp_new, tau_0 = 10/j, 
+		Sig = bigC, Sig_drho = bigC_drho, Sig_drho_c = bigC_drho_c)
+	minDet = 1/detFI(samp, bigC, bigC_drho,
+		bigC_drho_c)
+	if(minDet < minall) {
+		minall = minDet
+		bestsamp = samp
+	}
+	if(runif(1) < U) samp = samp_new	
+	samp_new =  sample_jay(samp, 1, FALSE)
+	U = LiZ_ProbNew(samp = samp, samp_new = samp_new, tau_0 = 10/j, 
+		Sig = bigC, Sig_drho = bigC_drho, Sig_drho_c = bigC_drho_c)
+	minDet = 1/detFI(samp, bigC, bigC_drho,
+		bigC_drho_c)
+	if(minDet < minall) {
+		minall = minDet
+		bestsamp = samp
+	}
+	if(runif(1) < U) samp = samp_new	
+	samp_new =  sample_jay(samp, 2, FALSE)
+	U = LiZ_ProbNew(samp = samp, samp_new = samp_new, tau_0 = 10/j, 
+		Sig = bigC, Sig_drho = bigC_drho, Sig_drho_c = bigC_drho_c)
+	minDet = 1/detFI(samp, bigC, bigC_drho,
+		bigC_drho_c)
+	if(minDet < minall) {
+		minall = minDet
+		bestsamp = samp
+	}
+	if(runif(1) < U) samp = samp_new	
+}
+minall*1e+5
+1/detFI(samp, bigC, bigC_drho,
+		bigC_drho_c)*1e+5
+# plot the currently chosen design
+plot(xy[samp$v1,], cex = 2, xlim = c(1,gdim), ylim = c(1,gdim))
+points(xy[samp$v2 - gdim^2,], pch = 19)
+
+
+plot(xy[bestsamp$v1,], cex = 2, xlim = c(1,gdim), ylim = c(1,gdim))
+points(xy[bestsamp$v2 - gdim^2,], pch = 19)

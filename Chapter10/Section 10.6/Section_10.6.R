@@ -240,9 +240,9 @@ for(i in 1:2) {
 par(mar = c(0,12,0,0))
 plot(0:5, 0:5, type = 'n', xlab = '', xaxt = 'n', ylab ='', yaxt = 'n',
 	bty = 'n', asp = 1)
-for(i in 0:5) {
+for(i in 1:4) {
 	segments(i,0,i,5, lwd = 2, lty = 2)
-	segments(0,i,5,i, lwd = 2, lty = 2)
+	segments(0,i,5,i, lwd = 6)
 }
 	i = 0
 	segments(i,0,i,5, lwd = 2)
