@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: section_spglm.aux
+The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
+Database file #1: spglm.bib
+You've used 11 entries,
+            2777 wiz_defined-function locations,
+            708 strings with 7156 characters,
+and the built_in function-call counts, 5087 in all, are:
+= -- 491
+> -- 214
+< -- 9
++ -- 79
+- -- 66
+* -- 476
+:= -- 893
+add.period$ -- 20
+call.type$ -- 11
+change.case$ -- 69
+chr.to.int$ -- 11
+cite$ -- 11
+duplicate$ -- 224
+empty$ -- 370
+format.name$ -- 105
+if$ -- 980
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 13
+newline$ -- 38
+num.names$ -- 44
+pop$ -- 67
+preamble$ -- 1
+purify$ -- 66
+quote$ -- 0
+skip$ -- 150
+stack$ -- 0
+substring$ -- 354
+swap$ -- 53
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 93
+warning$ -- 0
+while$ -- 51
+width$ -- 0
+write$ -- 126

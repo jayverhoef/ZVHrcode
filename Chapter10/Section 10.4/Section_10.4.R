@@ -10,7 +10,7 @@ setwd(paste0(SLEDbook_path,sec_path))
 #-------------------------------------------------------------------------------
 
 file_name = 'figures/spacefilling_designs'
-pdf(paste0(file_name,'.pdf'), width = 12, height = 4.5)
+pdf(paste0(file_name,'.pdf'), width = 12, height = 4.0)
 
 	layout(matrix(1:3, nrow = 1))
 

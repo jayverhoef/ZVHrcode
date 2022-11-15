@@ -1,0 +1,66 @@
+\begin{thebibliography}{11}
+\newcommand{\enquote}[1]{``#1''}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{Besag(1974)}]{Besag1974SpatialInteractionStatistical192}
+Besag, J. (1974), \enquote{Spatial interaction and the statistical analysis of
+  lattice systems (with discussion),} \textit{Journal of the Royal Statistical
+  Society, Series B}, 36, 192--236.
+
+\bibitem[{Breslow and Clayton(1993)}]{breslow_approximate_1993}
+Breslow, N.~E. and Clayton, D.~G. (1993), \enquote{Approximate inference in
+  generalized linear mixed models,} \textit{Journal of the American statistical
+  Association}, 88, 9--25, publisher: Taylor \& Francis.
+
+\bibitem[{Clayton and Kaldor(1987)}]{clayton_empirical_1987}
+Clayton, D. and Kaldor, J. (1987), \enquote{Empirical {Bayes} {Estimates} of
+  {Age}-{Standardized} {Relative} {Risks} for {Use} in {Disease} {Mapping},}
+  \textit{Biometrics}, 43, 671--681.
+
+\bibitem[{Cressie(1993)}]{Cressie1993StatisticsSpatialData}
+Cressie, N. A.~C. (1993), \textit{Statistics for {Spatial} {Data}, {Revised}
+  {Edition}}, New York: John Wiley \& Sons.
+
+\bibitem[{Diggle et~al.(1998)Diggle, Tawn, and
+  Moyeed}]{DiggleEtAl1998ModelbasedGeostatisticsDisc299}
+Diggle, P.~J., Tawn, J.~A., and Moyeed, R.~A. (1998), \enquote{Model-{Based}
+  {Geostatistics} ({Disc}: {P326}-350),} \textit{Journal of the Royal
+  Statistical Society, Series C: Applied Statistics}, 47, 299--326.
+
+\bibitem[{Gotway and Stroup(1997)}]{GotwayEtAl1997GeneralizedLinearModel157}
+Gotway, C.~A. and Stroup, W.~W. (1997), \enquote{A {Generalized} {Linear}
+  {Model} {Approach} to {Spatial} {Data} {Analysis} and {Prediction},}
+  \textit{Journal of Agricultural, Biological, and Environmental Statistics},
+  2, 157--178.
+
+\bibitem[{Lunn et~al.(2000)Lunn, Thomas, Best, and
+  Spiegelhalter}]{lunn_winbugs-bayesian_2000}
+Lunn, D.~J., Thomas, A., Best, N., and Spiegelhalter, D. (2000),
+  \enquote{{WinBUGS}-a {Bayesian} modelling framework: concepts, structure, and
+  extensibility,} \textit{Statistics and computing}, 10, 325--337, publisher:
+  Springer.
+
+\bibitem[{McCullagh and
+  Nelder(1989)}]{McCullaghEtAl1989GeneralizedLinearModels}
+McCullagh, P. and Nelder, J.~A. (1989), \textit{Generalized {Linear} {Models},
+  2nd {Edition}}, Chapman \& Hall Ltd.
+
+\bibitem[{Nelder and
+  Wedderburn(1972)}]{NelderEtAl1972GeneralizedLinearModels370}
+Nelder, J.~A. and Wedderburn, R. W.~M. (1972), \enquote{Generalized {Linear}
+  {Models},} \textit{Journal of the Royal Statistical Society, Series A:
+  General}, 135, 370--384.
+
+\bibitem[{Wedderburn(1974)}]{wedderburn_quasi-likelihood_1974}
+Wedderburn, R. W.~M. (1974), \enquote{Quasi-{Likelihood} {Functions},
+  {Generalized} {Linear} {Models}, and the {Gauss}-{Newton} {Method},}
+  \textit{Biometrika}, 61, 439--447, publisher: [Oxford University Press,
+  Biometrika Trust].
+
+\bibitem[{Wolfinger and
+  O'Connell(1993)}]{WolfingerEtAl1993GeneralizedLinearMixed233}
+Wolfinger, R. and O'Connell, M. (1993), \enquote{Generalized {Linear} {Mixed}
+  {Models}: {A} {Pseudo}-{Likelihood} {Approach},} \textit{Journal of
+  Statistical Computation and Simulation}, 48, 233--243.
+
+\end{thebibliography}

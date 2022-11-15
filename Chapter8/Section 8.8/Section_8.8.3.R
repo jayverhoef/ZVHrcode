@@ -8,7 +8,7 @@ setwd(paste0(SLEDbook_path,sec_path))
 #-------------------------------------------------------------------------------
 # attach data library
 library(ZVHdata)
-library(sp)
+library(sf)
 library(viridis)
 library(classInt)
 library(spmodel)
@@ -21,11 +21,11 @@ data(SO4obs)
 
 # from Section 3.6, remove the outlers and use sqrt of response
 SO4clean = SO4obs[!(1:length(SO4obs) %in% c(146,153,173)),]
-xy = coordinates(SO4clean)
+xy = st_coordinates(SO4clean)
 # change spatial coordinates to 1000km units, rather than meters
 # we will be making polynomials on the coordinates, and such large values can
 # cause computer overflows and loss of precision
-DF = data.frame(y = sqrt(SO4clean@data$SO4), easting = xy[,1]/1e+6, 
+DF = data.frame(y = sqrt(SO4clean$SO4), easting = xy[,1]/1e+6, 
 	northing = xy[,2]/1e+6)
 
 
@@ -711,3 +711,10 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
+
+
+test = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, 
+	spcov_type = c("exponential","spherical", "gaussian", "rquad"),
+	estmethod = 'ml')
+glances(test)

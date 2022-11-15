@@ -1,0 +1,284 @@
+%cd '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode/Chapter11/Section spglm'
+% bibtex section_spglm
+
+% ------------------------------------------------------------------------------
+%
+% PREAMBLE
+%
+% ------------------------------------------------------------------------------
+
+\documentclass[12pt, titlepage]{article}
+
+
+\usepackage{graphicx, amsmath, amssymb, natbib, setspace, sectsty, verbatim, 
+		mathrsfs, float}
+\usepackage{MnSymbol}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage[usenames, dvipsnames]{color}
+\bibpunct{(}{)}{;}{a}{}{,}
+\setlength{\parindent}{3em}
+%\parskip = 1.5ex
+%\linespread{1.3}
+%\onehalfspacing
+
+\pdfpagewidth 8.5in
+\pdfpageheight 11in
+\setlength{\oddsidemargin}{0.0in} \setlength{\textwidth}{6.5in}
+\setlength{\topmargin}{0.15in} \setlength{\textheight}{8.5in}
+\setlength{\headheight}{0.0in} \setlength{\headsep}{0.0in}
+
+\usepackage{/mnt/ExtraDrive1/Work/shTex/mymacros}
+
+
+% ------------------------------------------------------------------------------
+%
+% BEGIN DOCUMENT
+%
+% ------------------------------------------------------------------------------
+
+\begin{document}
+
+\setcounter{equation}{0}
+\renewcommand{\theequation}{12.\arabic{equation}}
+
+
+% ------------------------------------------------------------------------------
+%
+%                    Section 8.8.1
+%                    Seal trend data
+%
+% ------------------------------------------------------------------------------
+
+{\Large \flushleft \textbf{12.x Spatial Generalized Linear Models}}
+
+\vspace{.3cm}
+
+Generalized linear models have become very popular in recent years.  Many models and analyses for counts, proportions, binary data, etc., have been introduced through the years.  However, \citet{NelderEtAl1972GeneralizedLinearModels370} unified many of the approachs by using the classical linear model framework along with a link function, and \citet{wedderburn_quasi-likelihood_1974} introduced quasi-likelihood estimation methods. A popular textbook has been \citet{McCullaghEtAl1989GeneralizedLinearModels}.
+
+Many types of data are binary, counts, or positive continuous.  Early attempts to model such data relied on transformations to ``near normal'' so that classical linear model methods could be used.  For example, a square root transformation was often used for count data.  However, \citet{NelderEtAl1972GeneralizedLinearModels370} introduced a natural extension to linear models using parameteric distributions such as the Poisson for counts, the Bernoulli for binary data, etc., called the generalized linear model \citep[GLM,][]{McCullaghEtAl1989GeneralizedLinearModels}, which have become very popular and generally preferred to data transformations.  A natural extension of GLMs by allowing latent random effects in the linear mixed model, to create a class of generalized linear mixed model \citep[GLMM,][]{breslow_approximate_1993}.  The latent random effects are generally assumed to be independent and identically distributed from normal distribution.  However, it is also possible to for the latent random effects to be spatially autocorrelated, leading to the spatial generalized linear model \citep[SGLM,][]{GotwayEtAl1997GeneralizedLinearModel157, DiggleEtAl1998ModelbasedGeostatisticsDisc299}, which we review here.
+
+Historically, for areal data, such as the models in Chapter 7, there are equivalent models for discrete data, such as those that are binary or counts.  These have been termed the autologistic, auto-Poisson models, autobinomial, and auto negative binomial, with obvious connections to their nonspatial distributions \citep{Besag1974SpatialInteractionStatistical192, Cressie1993StatisticsSpatialData}.  These models have not been very popular, as the conditional specification does not always lead to a recognizable likelihood, or, indeed, as for the auto-Poisson, that likelihood may not have a closed form under positive autocorrelation.  We will not discuss these models further.
+
+Another class of models are based on a hierarchical constuction, where the mean of any of the distributions in GLMs is allowed to vary by using spatial random effects in the mean structure.  Here, there are three broad methods of analysis.  The most obvious method is to take a Bayesian approach and compute the posterior distribution of all latent spatial variables and parameters.  This has been extremely popular beginning with disease-mapping \citep{clayton_empirical_1987} and the introduction of the \texttt{WinBUGS} software \citep{lunn_winbugs-bayesian_2000}. 
+
+Another approach is the penalized quasi-likelihood models \citep{breslow_approximate_1993, WolfingerEtAl1993GeneralizedLinearMixed233}.  These models have been implemented in popular software such as the \texttt{glmmPQL} function in the \texttt{MASS} package in \texttt{R} and the \texttt{GLIMMIX} package in \texttt{SAS}.
+
+
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%                  12.x.1 Spatially structured dependence
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
+
+A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the random variable $\mathbf{y}$ conditional on parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have joint distribution on the left side of the conditional bar, and multiple parameters and fixed values on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be a Poisson distribution with mean parameter $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
+
+The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$, where it is parameterized so that $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$.  If our linear model is $\boldsymbol{\eta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \mathbf{w}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example because $g^{-1}(\cdot)$ is the exponential function, and hence $\mathbf{w}$ is unconstrained. The negative binomial distribution can also be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.  Now, let us write
+$$
+\mathbf{w} = \mathbf{X}\boldsymbol{\beta} + \mathbf{e},
+$$
+where this model is the same one defined in (1.1), where $\var(\mathbf{e}) = \boldsymbol{\Sigma}_{\boldsymbol{\theta}}$, and we use the subscript to show the dependence of $\boldsymbol{\Sigma}$ on $\boldsymbol{\theta}$.  Thus, we use the notation $[\mathbf{w}|\mathbf{X},\boldsymbol{\beta},\boldsymbol{\theta}]$ to indicate the probability density function $N(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$.  Then, a very general model can be constructed hierarchically as,
+\begin{equation} \label{eq:hsglm}
+[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}].
+\end{equation}
+As a concrete example, suppose that $[\mathbf{y}|\mathbf{w}]$ is Poisson, and $[\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}]$ is multivariate normal, then the joint likelihood is
+$$
+[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = \left(\prod_{i=1}^{n}\frac{\exp(w_{i})^{y_{i}}\exp(-\exp(w_i))}{y_{i}!}\right)\frac{\exp-[(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})^{T}\boldsymbol{\Sigma_{\boldsymbol{\theta}}}^{-1}(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})]}{(2\pi)^{n/2}|\boldsymbol{\Sigma_{\boldsymbol{\theta}}}|^{1/2}},
+$$
+and note the use of $\mu_{i} = g^{-1}(w_{i}) = \exp(w_{i})$.
+
+The joint distribution \ref{eq:hsglm} is the basis for inference, either by
+\begin{itemize}
+\item putting prior distributions on $\boldsymbol{\phi}$, $\boldsymbol{\beta}$, and $\boldsymbol{\theta}$ and computing, or sample from, the joint posterior distribution $[\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}|\mathbf{y},\mathbf{X}]$ using any of a variety of Bayesian methods, or 
+\item approximating \eqref{eq:hsglm} with a quasi-likehood and using iterative fitting algorithms for $\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}$, or
+\item integrating over $\mathbf{w}$ using a Laplace approximation, and integrating over $\boldsymbol{\beta}$ as in REML, and use maximum likelihood to estimate $\boldsymbol{\phi},\boldsymbol{\theta}$ marginally, followed by GLS estimation of $\boldsymbol{\beta}$ and prediction for $\mathbf{w}$.
+\end{itemize}
+
+Below, we will give more details on the Laplace approximation and the marginal maximum likelihood approach.
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%               12.x.2 Exploratory spatial data analysis
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{12.x.2 Exploratory spatial data analysis}}
+
+la te da
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%               12.x.3 Parametric models for the mean structure
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+
+{\large \flushleft \textbf{12.x.3 Parametric models for the mean structure}}
+
+la te da
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%           12.x.4 Parametric models for the covariance structure
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{12.x.4 Parametric models for the covariance structure}}
+
+la te da
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%           Marginal Maximum Likelihood Estimation
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+\vspace{.5cm}
+{\large \flushleft \textbf{12.x.5 Marginal Maximum Likelihood Estimation}}
+\vspace{.5cm}
+
+We would like to marginalize the distribution $[\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ over both $\mathbf{w}$ and $\boldsymbol{\beta}$ to obtain a likelihood of the data and variance/covariance parameters: $[\mathbf{y}|\boldsymbol{\phi},\boldsymbol{\theta}]$.  This is obtained by,
+$$
+	\int_\mathbf{w} \int_{\boldsymbol{\beta}} [\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} d\mathbf{w} =
+		\int_\mathbf{w}  [\by|\mathbf{w},\boldsymbol{\phi}] \int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} d\mathbf{w}.
+$$
+When $[\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ is Gaussian, $\int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta}$ is the likelihood for restricted maximum likelihood estimation (REML) (see Exercise 8.4),
+$$
+[\mathbf{w}|\boldsymbol{\theta}] \equiv \int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} = 
+\frac{1}{C_n}\exp[(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]
+$$
+where $C_n = \sqrt{2\pi^N|\boldsymbol{\Sigma}_{\boldsymbol{\theta}}||\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}|}$ and 
+\begin{equation} \label{eq:betaHat}
+  \hat{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w}.
+\end{equation}
+Thus, we next need,
+$$
+	[\mathbf{y}| \boldsymbol{\phi},\boldsymbol{\theta}] = \int_\mathbf{w}  [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}]d\mathbf{w}
+$$
+Let us denote $\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) = \log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}])$.  Consider,
+$$
+\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w}.
+$$
+Let $\mathbf{g}$ be the gradient vector with $i$th element
+$$
+\mathbf{g}_{i} = \frac{\partial \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i}
+$$
+and the Hessian matrix with $i,j$th element,
+$$
+\mathbf{H}_{i,j} = \frac{\partial^2 \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i\partial w_j}
+$$
+Using the multivariate Taylor series expansion around some point $\mathbf{a}$,
+$$
+\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx \int_\mathbf{w} e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) + \mathbf{g}^{T}(\mathbf{w} -\mathbf{a}) + 1/2(\mathbf{w} - \mathbf{a})^{T}\mathbf{H}(\mathbf{w} - \mathbf{a})} d\mathbf{w},
+$$
+Now, let $\mathbf{a}$ be the value $\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})$ such that $\mathbf{g} = \mathbf{0}$. Then,
+$$
+\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} \int_\bw e^{ -  
+	1/2(\mathbf{w} - \mathbf{a})^{T}\mathbf{H}(\mathbf{w} - \mathbf{a})} d\mathbf{w}.
+$$
+where $\mathbf{H}_\mathbf{a}$ indicates $\mathbf{H}$ evaluated at $\mathbf{a}$. We know from the normalizing constant of a multivariate Gaussian distribution that this integral is $(2\pi)^{N/2}|-\mathbf{H}^{-1}_\mathbf{a}|^{1/2}$, so
+\[
+\int_\mathbf{w} e^{\ell(\mathbf{w})} d\mathbf{w} \approx e^{\ell(\mathbf{a})} (2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2} = [\mathbf{y}|\mathbf{a},\boldsymbol{\phi}][\mathbf{a}|\boldsymbol{\theta}](2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2}.
+\]
+A marginal maximum likelihood estimator for $\boldsymbol{\phi}, \boldsymbol{\theta}$, given $\mathbf{a}$, is
+\begin{equation} \label{eq:m2LLmargMLE}
+\{\hat{\boldsymbol{\phi}}, \hat{\boldsymbol{\theta}} \} = \underset{\boldsymbol{\phi},\boldsymbol{\theta}}{\arg\max} \left[ \log[\mathbf{y}|\mathbf{a},\mathbf{\phi}] +
+	\log[\mathbf{a}|\mathbf{\theta}] - (1/2)\log|-\mathbf{H}_\mathbf{a}(\boldsymbol{\phi},\boldsymbol{\theta})| \right]
+\end{equation}
+where we drop terms that do not contain $\hat{\boldsymbol{\phi}}$ or $\hat{\boldsymbol{\theta}}$, but show the dependence of $\mathbf{H}_\mathbf{a}$ on $\hat{\boldsymbol{\phi}}$ and $\hat{\boldsymbol{\theta}}$.  These results depend on $\mathbf{g} = \mathbf{0}$.  We use Newton-Raphson steps to attain this next, conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.
+
+
+
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%           12.x.6 Gradients and Hessians
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+\vspace{.5cm}
+{\large \flushleft \textbf{12.x.6 Gradients and Hessians}}
+\vspace{.5cm}
+
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%           12.x.7 Newton-Raphson step
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+\vspace{.5cm}
+{\large \flushleft \textbf{12.x.7 Newton-Raphson step}}
+\vspace{.5cm}
+
+
+To obtain variances, use the following result.  For some linear combination $\mathbf{B}\hat{\mathbf{w}}$, where the weights are contained in the matrix $\mathbf{B}$ for predicted random effects $\hat{\mathbf{w}}$, 
+$$
+\var(\mathbf{B}\hat{\mathbf{w}}) = \textrm{E}_{\mathbf{w}}[\var(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})] + \var_{\mathbf{w}}[\textrm{E}(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})]
+$$
+In the case of $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$ we have
+$$
+\var(\hat{\boldsymbol{\beta}}) = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(-\mathbf{H}^{-1})\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1} + (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}
+$$
+\begin{figure}[H]
+  \begin{center}
+	    \includegraphics[width=.8\linewidth]{figures/sglm_likelihood_estimation}
+  \end{center}
+  \caption{la te da \label{Fig:sglm_likelihood_estimation}}
+\end{figure}
+
+Recall from (5.1) that for observed $\mathbf{y}$, the generalized least squares estimator of $\boldsymbol{\beta}$ is $\hat{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}^{-1}\mathbf{y}$  Here, we use $\hat{\mathbf{w}}$ in place of $\mathbf{y}$, $\tilde{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}^{-1}\hat{\mathbf{w}}$.  In (5.2) the variance of $\hat{\boldsymbol{\beta}}$ is $(\mathbf{X}^{T}\boldsymbol{\Sigma}^{-1}\mathbf{X})^{-1}$.  Here, however, the $\mathbf{w}$ are latent and unobserved, so we need to account for estimation of the $\mathbf{w}$.  It is clear from earlier that an estimator of the variance of $\mathbf{w}$ can be obtained from the likelihood as
+
+
+\begin{table}[H] 
+	\caption{La te da  \label{tab:sglm_fe}}
+\begin{center}
+\begin{tabular}{|c|rrr|}
+\hline
+\hline
+effect & bias & CI90$_{c}$ & CI90$_{u}$ \\
+\hline
+$\beta_{0}$ & 0.111 & 0.447 & 0.704 \\ 
+$\beta_{1}$ & -0.042 & 0.892 & 0.222 \\ 
+$\beta_{2}$ & 0.077 & 0.909 & 0.201 \\ 
+$\beta_{3}$ & -0.064 & 0.905 & 0.233 \\ 
+\hline
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                BIBLIOGRAPHY
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\bibliographystyle{consbiol}
+\bibliographystyle{/mnt/ExtraDrive1/Work/shTex/asa}
+\bibliography{spglm.bib}
+%\bibliographystyle{/home/jay/Data/shTex/shTex/asa}
+%\bibliography{/home/jay/Data/shTex/shTex/StatBibTex.bib}
+
+
+
+
+\end{document}
+

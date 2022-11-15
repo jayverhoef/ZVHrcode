@@ -10,7 +10,7 @@ library(xtable)
 
 # attach data library
 library(ZVHdata)
-library(sp)
+library(sf)
 library(viridis)
 library(classInt)
 library(colorspace)
@@ -27,8 +27,10 @@ data(CAKRboundary)
 
 
 # transform some of the variables
-DF = data.frame(MOSSobs@data, easting = MOSSobs@coords[,1]/1e+3,
-	northing = MOSSobs@coords[,2]/1e+3)
+DF = MOSSobs
+DF$easting = st_coordinates(DF)[,1]/1e+3
+DF$northing = st_coordinates(DF)[,2]/1e+3
+DF = st_drop_geometry(DF)
 DF$year = as.factor(DF$year)
 DF$field_dup = as.factor(DF$field_dup)
 DF$dist2road = log(DF$dist2road)
@@ -44,6 +46,7 @@ DF$Pb = log(DF$Pb)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
+# fit the model
 PbOut = splm(Pb ~ year + dist2road + sideroad:dist2road, data = DF,
 	xcoord = 'easting', ycoord = 'northing', spcov_type = 'exponential',
 	partition_factor = ~ year,
@@ -51,30 +54,43 @@ PbOut = splm(Pb ~ year + dist2road + sideroad:dist2road, data = DF,
 	control = list(reltol = 1e-12), estmethod = 'reml')
 summary(PbOut)
 
+# get the estimated covariance parameters for spatial model
 theta_sp = coef(PbOut, type = 'spcov')[1:3]
+# get the estimated variances of the random effectds
 theta_re = coef(PbOut, type = 'randcov')
+# total sample size
 n = dim(DF)[1]
 
-str(DF)
+# create a mask with zeros and ones to force covariance matrix
+# between years to be zero
 part_mask = outer(DF$year == '2001', DF$year == '2001') + 
 	outer(DF$year == '2006', DF$year == '2006')
+# get the spatial distance between all records
 D = as.matrix(dist(DF[,c('easting','northing')]))
 
+# random effects design matrices
 Z1 = model.matrix(~ -1 + sample, data = DF)
 Z2 = model.matrix(~ -1 + sample:field_dup, data = DF)
 Z2 = Z2[,apply(Z2,2,sum) > 0]
 
+# fixed effects design matrix
 X = model.matrix(~ year + dist2road + sideroad:dist2road, data = DF)
-Sigma = theta_sp['de']*exp(-D/theta_sp['range'])*part_mask + 
-	theta_sp['ie']*diag(n) + theta_re[1]*Z1%*%t(Z1) + theta_re[2]*Z2%*%t(Z2)
+# get fitted covariance matrix
+Sigma = covmatrix(PbOut)
 Sigmai = solve(Sigma)
+# Projection matrix
 P = Sigmai - Sigmai %*% X %*% solve(t(X) %*% Sigmai %*% X, t(X)) %*% Sigmai
 
+# derivative of the covariance matrix with respect to partial sill parameter
 dpsill = theta_sp['de']*exp(-D/theta_sp['range'])*part_mask
+# derivative of the covariance matrix with respect to nugget parameter
 dnugg = diag(n)
+# derivative of the covariance matrix with respect to range parameter
 drange = D*exp(-D/theta_sp['range'])*part_mask/theta_sp['range']^2
+# derivative of the covariance matrix with respect to random effects
 dre1 = Z1 %*% t(Z1)
 dre2 = Z2 %*% t(Z2)
+# observed Fisher Information matrix
 I_R = matrix(NA, nrow = 5, ncol = 5)
 I_R[1,1] = I_R[1,1] = 0.5*stats:::Tr(P %*% dpsill %*% P %*% dpsill)
 I_R[1,2] = I_R[2,1] = 0.5*stats:::Tr(P %*% dpsill %*% P %*% dnugg)
@@ -92,68 +108,74 @@ I_R[4,4] = I_R[4,4] = 0.5*stats:::Tr(P %*% dre1 %*% P %*% dre1)
 I_R[4,5] = I_R[5,4] = 0.5*stats:::Tr(P %*% dre1 %*% P %*% dre2)
 I_R[5,5] = I_R[5,5] = 0.5*stats:::Tr(P %*% dre1 %*% P %*% dre2)
 
-I_R
+# create one covariance parameter vector
 theta = c(theta_sp, theta_re)
+# estimated covariance matrix of covariance parameters
 theta_cov = solve(I_R)
 
+# cholesky decomposition of estimated covariance matrix of 
+# covariance parameters to be used to simulate values
 tcov_chol = chol(theta_cov)
 
+
+
 # prepare fixed quantities for predictions in strata
-	DFp = MOSSpreds@data
-	DFp$easting = MOSSpreds@coords[,1]/1000
-	DFp$northing = MOSSpreds@coords[,2]/1000
-	DFp$dist2road = log(DFp$dist2road)
-	DFp01 = DFp
-	DFp06 = DFp
-	DFp01[,'year'] = 2001
-	DFp06[,'year'] = 2006
-	DFpy = rbind(DFp01,DFp06)
-	DFpy$year = as.factor(DFpy$year)
+DFp = MOSSpreds
+DFp$easting = st_coordinates(DFp)[,1]/1e+3
+DFp$northing = st_coordinates(DFp)[,2]/1e+3
+DFp = st_drop_geometry(DFp)
+DFp$dist2road = log(DFp$dist2road)
+DFp01 = DFp
+DFp06 = DFp
+DFp01[,'year'] = 2001
+DFp06[,'year'] = 2006
+DFpy = rbind(DFp01,DFp06)
+DFpy$year = as.factor(DFpy$year)
 	
-	#strata1
-	DFp1 = DFpy[DFpy$strat == 1,]
-	DF1 = rbind(DF[,c('easting','northing','year')],
-		DFp1[,c('easting','northing','year')])
-	D1 = as.matrix(dist(DF1[,c('easting','northing')]))
-	part_mask1 = outer(DF1$year == '2001', DF1$year == '2001') + 
-		outer(DF1$year == '2006', DF1$year == '2006')
-	n1 = dim(D1)[1]
+#strata1
+DFp1 = DFpy[DFpy$strat == 1,]
+DF1 = rbind(DF[,c('easting','northing','year')],
+	DFp1[,c('easting','northing','year')])
+D1 = as.matrix(dist(DF1[,c('easting','northing')]))
+part_mask1 = outer(DF1$year == '2001', DF1$year == '2001') + 
+	outer(DF1$year == '2006', DF1$year == '2006')
+n1 = dim(D1)[1]
 
-	#strata2
-	DFp2 = DFpy[DFpy$strat == 2,]
-	DF2 = rbind(DF[,c('easting','northing','year')],
-		DFp2[,c('easting','northing','year')])
-	D2 = as.matrix(dist(DF2[,c('easting','northing')]))
-	part_mask2 = outer(DF2$year == '2001', DF2$year == '2001') + 
-		outer(DF2$year == '2006', DF2$year == '2006')
-	n2 = dim(D2)[1]
+#strata2
+DFp2 = DFpy[DFpy$strat == 2,]
+DF2 = rbind(DF[,c('easting','northing','year')],
+	DFp2[,c('easting','northing','year')])
+D2 = as.matrix(dist(DF2[,c('easting','northing')]))
+part_mask2 = outer(DF2$year == '2001', DF2$year == '2001') + 
+	outer(DF2$year == '2006', DF2$year == '2006')
+n2 = dim(D2)[1]
 
-	#strata3
-	DFp3 = DFpy[DFpy$strat == 3,]
-	DF3 = rbind(DF[,c('easting','northing','year')],
-		DFp3[,c('easting','northing','year')])
-	D3 = as.matrix(dist(DF3[,c('easting','northing')]))
-	part_mask3 = outer(DF3$year == '2001', DF3$year == '2001') + 
-		outer(DF3$year == '2006', DF3$year == '2006')
-	n3 = dim(D3)[1]
+#strata3
+DFp3 = DFpy[DFpy$strat == 3,]
+DF3 = rbind(DF[,c('easting','northing','year')],
+	DFp3[,c('easting','northing','year')])
+D3 = as.matrix(dist(DF3[,c('easting','northing')]))
+part_mask3 = outer(DF3$year == '2001', DF3$year == '2001') + 
+	outer(DF3$year == '2006', DF3$year == '2006')
+n3 = dim(D3)[1]
 
-	#strata4
-	DFp4 = DFpy[DFpy$strat == 4,]
-	DF4 = rbind(DF[,c('easting','northing','year')],
-		DFp4[,c('easting','northing','year')])
-	D4 = as.matrix(dist(DF4[,c('easting','northing')]))
-	part_mask4 = outer(DF4$year == '2001', DF4$year == '2001') + 
-		outer(DF4$year == '2006', DF4$year == '2006')
-	n4 = dim(D4)[1]
+#strata4
+DFp4 = DFpy[DFpy$strat == 4,]
+DF4 = rbind(DF[,c('easting','northing','year')],
+	DFp4[,c('easting','northing','year')])
+D4 = as.matrix(dist(DF4[,c('easting','northing')]))
+part_mask4 = outer(DF4$year == '2001', DF4$year == '2001') + 
+	outer(DF4$year == '2006', DF4$year == '2006')
+n4 = dim(D4)[1]
 
-	#strata5
-	DFp5 = DFpy[DFpy$strat == 5,]
-	DF5 = rbind(DF[,c('easting','northing','year')],
-		DFp5[,c('easting','northing','year')])
-	D5 = as.matrix(dist(DF5[,c('easting','northing')]))
-	part_mask5 = outer(DF5$year == '2001', DF5$year == '2001') + 
-		outer(DF5$year == '2006', DF5$year == '2006')
-	n5 = dim(D5)[1]
+#strata5
+DFp5 = DFpy[DFpy$strat == 5,]
+DF5 = rbind(DF[,c('easting','northing','year')],
+	DFp5[,c('easting','northing','year')])
+D5 = as.matrix(dist(DF5[,c('easting','northing')]))
+part_mask5 = outer(DF5$year == '2001', DF5$year == '2001') + 
+	outer(DF5$year == '2006', DF5$year == '2006')
+n5 = dim(D5)[1]
 
 #iterations start here
 set.seed(9001)
@@ -258,7 +280,6 @@ for(k in 1:nsim) {
 
 }
 
-junk = chol(Sigp_k4)
 Sigp_k1[1:5,1:5]
 plot(strat4_all[6,], type = 'l')
 
