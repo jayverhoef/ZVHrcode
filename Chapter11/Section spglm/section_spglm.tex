@@ -76,7 +76,7 @@ Another approach is the penalized quasi-likelihood models \citep{breslow_approxi
 
 {\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
 
-A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the random variable $\mathbf{y}$ conditional on parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have joint distribution on the left side of the conditional bar, and multiple parameters and fixed values on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be a Poisson distribution with mean parameter $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
+A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the random variable $\mathbf{y}$ conditional on parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameters and fixed values on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be a Poisson distribution with mean parameter $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
 
 The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$, where it is parameterized so that $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$.  If our linear model is $\boldsymbol{\eta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \mathbf{w}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example because $g^{-1}(\cdot)$ is the exponential function, and hence $\mathbf{w}$ is unconstrained. The negative binomial distribution can also be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.  Now, let us write
 $$
@@ -94,7 +94,7 @@ and note the use of $\mu_{i} = g^{-1}(w_{i}) = \exp(w_{i})$.
 
 The joint distribution \ref{eq:hsglm} is the basis for inference, either by
 \begin{itemize}
-\item putting prior distributions on $\boldsymbol{\phi}$, $\boldsymbol{\beta}$, and $\boldsymbol{\theta}$ and computing, or sample from, the joint posterior distribution $[\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}|\mathbf{y},\mathbf{X}]$ using any of a variety of Bayesian methods, or 
+\item putting prior distributions on $\boldsymbol{\phi}$, $\boldsymbol{\beta}$, and $\boldsymbol{\theta}$ and computing, or sampling from, the joint posterior distribution $[\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}|\mathbf{y},\mathbf{X}]$ using any of a variety of Bayesian methods, or 
 \item approximating \eqref{eq:hsglm} with a quasi-likehood and using iterative fitting algorithms for $\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}$, or
 \item integrating over $\mathbf{w}$ using a Laplace approximation, and integrating over $\boldsymbol{\beta}$ as in REML, and use maximum likelihood to estimate $\boldsymbol{\phi},\boldsymbol{\theta}$ marginally, followed by GLS estimation of $\boldsymbol{\beta}$ and prediction for $\mathbf{w}$.
 \end{itemize}
@@ -147,7 +147,7 @@ la te da
 % ------------------------------------------------------------------------------
 
 \vspace{.5cm}
-{\large \flushleft \textbf{12.x.5 Marginal Maximum Likelihood Estimation}}
+{\large \flushleft \textbf{12.x.5 Marginal MLE for Covariance Parameters}}
 \vspace{.5cm}
 
 We would like to marginalize the distribution $[\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ over both $\mathbf{w}$ and $\boldsymbol{\beta}$ to obtain a likelihood of the data and variance/covariance parameters: $[\mathbf{y}|\boldsymbol{\phi},\boldsymbol{\theta}]$.  This is obtained by,
@@ -213,11 +213,32 @@ $$
 \frac{\partial [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]}{\partial \mathbf{w}} = -\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\boldsymbol{X}\hat{\boldsymbol{\beta}}
 $$
 so the gradient will be,
-\[
+$$
 \mathbf{g} = \mathbf{d} - \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}\hat{\boldsymbol{\beta}}
+$$
+For example, if $f(y_i;w_i,\bphi)$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$, then $d[i] = y_i - \mu_{i}n_i$.  For the Hessian, let $\mathbf{D}$ be a diagonal matrix with $i$th component,
+$$
+\mathbf{D}[i,i] \equiv \frac{\partial^2\log(f(y_i;w_i,\boldsymbol{\phi}))}{\partial w_i^2}.
+$$
+because all second partials are 0 when $i \neq j$ (due to conditional independence). Next, notice that
+$$
+\frac{\partial^2 [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})] }{\partial \mathbf{w} \partial \mathbf{w}^{T}} =
+	-\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\blambda}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}
+$$
+and so
+\begin{equation} \label{eq:Hdef}
+\mathbf{H} = \mathbf{D} -\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1} + 
+	\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}
+\end{equation}
+For example, if $f(y_i;w_i,\boldsymbol{\phi})$ is binomial with the logit link function, then $\mathbf{D}[i,i] = -\mu_i n_i/(1 + \exp(w_i))$.
+
+Conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\lambda}$, a Newton-Raphson update is,
+\[
+\mathbf{w}^{[k+1]} = \mathbf{w}^{[k]} - \mathbf{H}^{-1}\mathbf{g}
 \]
-For example, if $f(y_i;w_i,\bphi)$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$, then $d[i] = y_i - \hat{\mu}_{i}n_i$,
-where $\hat{\mu}_i = \exp({w_i})/(1 + \exp({w_i}))$.  
+and upon convergence we set $\mathbf{a} = \mathbf{w}$ in eqref{eq:m2LLmargMLE} for any update of the likelihood.  Notice that this makes the marginally MLE doubly iterative, as we solve for $\mathbf{a}$ while optimizing for $\boldsymbol{\phi}$ and $\boldsymbol{\lambda}$.
+
+
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------

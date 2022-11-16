@@ -247,10 +247,11 @@ set.seed(1007)
 
 betas = c(-.5, .5, -.5, .5)
 gammas = c(1, 1, 0.0001)
-niter = 10
+niter = 2000
 store = vector(mode='list', length = niter)
+start_time = Sys.time()
 for(iter in 1:niter) {
-	
+	cat("\r", "iteration: ", iter)
 	sim_data = simSGLM_wExpl(200, autocor_fun = rho_exp, 
 		betas = betas, gammas = gammas, 
 		type = 'random', pred = TRUE)
@@ -314,7 +315,8 @@ for(iter in 1:niter) {
 	)
 
 }
-
+cat("\n")
+end_time = Sys.time()
 save(store,file = 'store.rda')
 
 i = 1
@@ -323,18 +325,25 @@ cover_cor = rep(0, times = 4)
 cover_cor2 = rep(0, times = 4)
 cover_uncor = rep(0, times = 4)
 avevar_cor = rep(0, times = 4)
+pred_bias = 0
+cover_pred = 0
 
 for(i in 1:length(store)) {
 	bias = bias + store[[i]]$betahat - store[[i]]$True
+	pred_bias = pred_bias + store[[i]]$bias_pred[1]
 	avevar_cor = avevar_cor + store[[i]]$SE_corrected^2
 	cover_cor = cover_cor + store[[i]]$CI90_corr
 	cover_cor2 = cover_cor2 + store[[i]]$CI90_corr2
 	cover_uncor = cover_uncor + store[[i]]$CI90_uncorr
+	cover_pred = cover_pred + store[[i]]$cover_pred[1]
+
 }
 sglm_fe = data.frame(bias =  bias/niter,
 	cover_corrected = cover_cor/niter,
 	cover_corr2 = cover_cor2/niter,
-	cover_uncorr = cover_uncor/niter)
+	cover_uncorr = cover_uncor/niter,
+	pred_bias = pred_bias/niter,
+	cover_pred = cover_pred/niter)
 
 print(
     xtable(sglm_fe, 
