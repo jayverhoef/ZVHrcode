@@ -1,4 +1,5 @@
-est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
+pred_w = function(theta, y, X, Hdist, autocor_fun,stepsize, 
+	Xp, dist_op, dist_pp)
 {
 # after optimizing for covariance parameters, we need betahat and w's
 # we just need one pass through the likelihood function to obtain them
@@ -24,9 +25,12 @@ est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
 	Constant1 = covbeta  %*% t(SigiX)
 	Constant2 = -CovMati + SigiX %*% covbeta %*% t(SigiX)
 	
-	# loop to get the maximum value, where the gradient will be flat
-	# (g is all zeros)
-	for(i in 1:30) {
+	wdiffmax = 1e+32
+	niter = 0
+#	browser()
+#	for(i in 1:30) {
+	while(wdiffmax > 1e-10 & niter < 50) {
+		niter = niter + 1
 		betahat = Constant1 %*% w
 		# compute the d vector
 		d = -exp(w) + y
@@ -35,35 +39,32 @@ est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
 		# Next, compute H
 		H = diag(as.vector(-exp(w))) + Constant2
 		# update w
-		w = w - shrink*solve(H, g)
+		wnew = w - stepsize*solve(H, g)
+		wdiffmax = max(abs(wnew - w))
+		w = wnew
 	}
 
-	# Now we need the variance covariance matrix of estimated betas
-	# The covbeta above does not account for the fact that w's are latent
-	# and unobserved. We need to take into account the variance of w's, 
-	# which we have from Newton Raphson as (-H)^(-1)
 	mHi = solve(-H)
-	# kriging predictor using w and H
-	xyobs = sim_data[sim_data$obspred == 'obs',c('xcoord','ycoord')]
-	xypred = sim_data[sim_data$obspred == 'pred',c('xcoord','ycoord')]
-	nobs = dim(xyobs)[1]
-	npred = dim(xypred)[1]
-	Dist_op = sqrt((outer(xyobs[,1], rep(1, times = npred)) - 
-		outer(rep(1, times = nobs),xypred[,1]))^2 +
-		(outer(xyobs[,2], rep(1, times = npred)) - 
-		outer(rep(1, times = nobs),xypred[,2]))^2 )
+	# Then the variance of (X'Sig^{-1}X)^{-1}X'Sig^{-1}w is given below
+	covbetaHM = covbeta %*% t(SigiX) %*% mHi %*% SigiX %*% covbeta
+	
+	npred = dim(Xp)[1]
+	nobs = dim(X)[1]
 	R_op = gam_1*autocor_fun(Dist_op,gam_2)
-	Xp = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'pred',])
+	R_pp = gam_1*autocor_fun(Dist_pp,gam_2) + + gam_0*diag(npred)
 
 	wtsMat = (Xp %*% Constant1 + t(R_op) %*% CovMati %*% 
 		(diag(nobs) - X %*% Constant1))
 	w_pred = wtsMat %*% w
-	plot(sim_data[sim_data$obspred == 'pred','w_true'], w_pred, pch = 19)
-	w_se = sqrt(diag(wtsMat %*% mHi %*% t(wtsMat)))
-	w_pred - 1.645*w_se < sim_data[sim_data$obspred == 'pred','w_true'] &
-		w_pred + 1.645*w_se > sim_data[sim_data$obspred == 'pred','w_true']
+		d1 = (Xp - t(R_op) %*% CovMati %*% X)
+	w_se = sqrt(diag(d1 %*% solve(t(X) %*% CovMati %*% X) %*% t(d1) -
+		t(R_op) %*% CovMati %*% R_op + R_pp + 
+		wtsMat %*% mHi %*% t(wtsMat)))
+
 	# return a list of estimated w and beta, 
-	# and covariance matrix of w and beta
+	# and covariance matrix of w and beta, and predictions and 
+	# prediction standard errors
 	list(w = w, betahat = betahat, cov_w = mHi, covbetaHM = covbetaHM,
-		covbeta = covbeta)
+		covbeta = covbeta, covbeta2 = covbetaHM + covbeta,
+		w_pred = w_pred, w_se = w_se)
 }

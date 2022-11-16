@@ -1,4 +1,5 @@
-logLik_Laplace = function(theta, y, X, Hdist, autocor_fun, shrink = 1)
+logLik_Laplace = function(theta, y, X, Hdist, autocor_fun, stepsize = 1,
+	w_start = NULL)
 {
 	if(max(theta) > 10) return(1e+30)
 	gam_1 = exp(theta[1])
@@ -7,8 +8,11 @@ logLik_Laplace = function(theta, y, X, Hdist, autocor_fun, shrink = 1)
 	gam_0 = 0.0001
 	n = length(y)
 	# starting values for w
-	w = rep(0, times = n)
-
+	if(is.null(w_start)) {
+		w = rep(0, times = n) } else {
+		w = w_start
+	}
+	
 	# covariance matrix
 	CovMat = gam_1*autocor_fun(Hdist,gam_2) + gam_0*diag(n)
 	# inverse of covariance matrix
@@ -37,7 +41,7 @@ logLik_Laplace = function(theta, y, X, Hdist, autocor_fun, shrink = 1)
 		# Next, compute H
 		H = diag(as.vector(-exp(w))) + Constant2
 		# update w
-		wnew = w - shrink*solve(H, g)
+		wnew = w - stepsize*solve(H, g)
 		wdiffmax = max(abs(wnew - w))
 		w = wnew
 	}

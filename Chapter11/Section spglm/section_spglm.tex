@@ -200,8 +200,24 @@ A marginal maximum likelihood estimator for $\boldsymbol{\phi}, \boldsymbol{\the
 \end{equation}
 where we drop terms that do not contain $\hat{\boldsymbol{\phi}}$ or $\hat{\boldsymbol{\theta}}$, but show the dependence of $\mathbf{H}_\mathbf{a}$ on $\hat{\boldsymbol{\phi}}$ and $\hat{\boldsymbol{\theta}}$.  These results depend on $\mathbf{g} = \mathbf{0}$.  We use Newton-Raphson steps to attain this next, conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.
 
-
-
+Note that, assuming conditional independence of $\mathbf{y}$ on $\mathbf{w}$,
+$$
+\log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\lambda}]) = \sum_{i = 1}^N \log(f(y_i;w_i,\boldsymbol{\phi})) - \frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}}) + C
+$$
+where $C$ are terms that do not contain $\mathbf{w}$. Let $\mathbf{d}$ be the vector with $i$th component,
+$$
+\mathbf{d}[i] \equiv \frac{\partial\log(f(y_i;w_i,\boldsymbol{\phi}))}{\partial w_i}.
+$$
+Next, note that
+$$
+\frac{\partial [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]}{\partial \mathbf{w}} = -\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\boldsymbol{X}\hat{\boldsymbol{\beta}}
+$$
+so the gradient will be,
+\[
+\mathbf{g} = \mathbf{d} - \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}\hat{\boldsymbol{\beta}}
+\]
+For example, if $f(y_i;w_i,\bphi)$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$, then $d[i] = y_i - \hat{\mu}_{i}n_i$,
+where $\hat{\mu}_i = \exp({w_i})/(1 + \exp({w_i}))$.  
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -219,13 +235,13 @@ where we drop terms that do not contain $\hat{\boldsymbol{\phi}}$ or $\hat{\bold
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%           12.x.7 Newton-Raphson step
+%           12.x.7 Estimation and Prediction
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
 \vspace{.5cm}
-{\large \flushleft \textbf{12.x.7 Newton-Raphson step}}
+{\large \flushleft \textbf{12.x.7 Estimation of Fixed Effects and Prediction}}
 \vspace{.5cm}
 
 
@@ -233,7 +249,11 @@ To obtain variances, use the following result.  For some linear combination $\ma
 $$
 \var(\mathbf{B}\hat{\mathbf{w}}) = \textrm{E}_{\mathbf{w}}[\var(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})] + \var_{\mathbf{w}}[\textrm{E}(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})]
 $$
-In the case of $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$ we have
+For our models, note that $\var(\mathbf{w}) = \boldsymbol{\Sigma_{\boldsymbol{\theta}}}$, we assume unbiasedness, $\textrm{E}(\hat{\mathbf{w}}|\mathbf{w}) = \mathbf{w}$, and, marginally, $\var(\hat{\mathbf{w}}) = -\mathbf{H}^{-1}$, which does not depend on $\mathbf{w}$.  Hence,
+$$
+\var(\mathbf{B}\hat{\mathbf{w}}) = \mathbf{B}(-\mathbf{H}^{-1})\mathbf{B}^{T} + \mathbf{B}\boldsymbol{\Sigma_{\boldsymbol{\theta}}}\mathbf{B}^{T}
+$$ 
+For the estimation of fixed effects, then, $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$ we have
 $$
 \var(\hat{\boldsymbol{\beta}}) = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(-\mathbf{H}^{-1})\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1} + (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}
 $$

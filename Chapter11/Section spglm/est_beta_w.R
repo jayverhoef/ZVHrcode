@@ -1,4 +1,4 @@
-est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
+est_beta_w = function(theta, y, X, Hdist, autocor_fun, stepsize)
 {
 # after optimizing for covariance parameters, we need betahat and w's
 # we just need one pass through the likelihood function to obtain them
@@ -24,9 +24,12 @@ est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
 	Constant1 = covbeta  %*% t(SigiX)
 	Constant2 = -CovMati + SigiX %*% covbeta %*% t(SigiX)
 	
-	# loop to get the maximum value, where the gradient will be flat
-	# (g is all zeros)
-	for(i in 1:30) {
+	wdiffmax = 1e+32
+	niter = 0
+#	browser()
+#	for(i in 1:30) {
+	while(wdiffmax > 1e-10 & niter < 50) {
+		niter = niter + 1
 		betahat = Constant1 %*% w
 		# compute the d vector
 		d = -exp(w) + y
@@ -35,7 +38,9 @@ est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
 		# Next, compute H
 		H = diag(as.vector(-exp(w))) + Constant2
 		# update w
-		w = w - shrink*solve(H, g)
+		wnew = w - stepsize*solve(H, g)
+		wdiffmax = max(abs(wnew - w))
+		w = wnew
 	}
 
 	# Now we need the variance covariance matrix of estimated betas
@@ -49,5 +54,5 @@ est_beta_w = function(theta, y, X, Hdist, autocor_fun, shrink)
 	# return a list of estimated w and beta, 
 	# and covariance matrix of w and beta
 	list(w = w, betahat = betahat, cov_w = mHi, covbetaHM = covbetaHM,
-		covbeta = covbeta)
+		covbeta = covbeta, covbeta2 = covbetaHM + covbeta)
 }

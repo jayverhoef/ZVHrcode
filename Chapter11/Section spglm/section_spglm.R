@@ -30,16 +30,47 @@ set.seed(1009)
 # gammas[1] is partial sill
 # gammas[2] is range
 # gammas[3] is nugget
-betas = c(-.5, .5, -.5, .5)
+#betas = c(-.5, .5, -.5, .5)
 betas = c(2, 0, 0, 0)
 gammas = c(1, 1, 0.0001)
 sim_data = simSGLM_wExpl(20^2, autocor_fun = rho_exp, betas = betas,
 	gammas = gammas, type = 'grid', pred = FALSE)
 
+layout(matrix(1:4, nrow = 1), widths = rep(c(3,1), times = 2))
+
+cip = classIntervals(sim_data[,'y'], 9, style = 'fisher')
+palp = viridis(9)
+cip_colors = findColours(cip, palp)
+par(mar = c(5,5,5,1))
+plot(sim_data$xcoord, sim_data$ycoord, col = cip_colors, pch = 15, 
+	cex = cex_plot, cex.lab = 2, cex.axis = 1.5, xlab = 'x-coordinate',
+	ylab = 'y-coordinate')
+mtext('A', cex = mtext_cex, adj = adj, padj = padj)
+par(mar = c(0,0,0,0))
+plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
+  xlab = '', ylab = '', bty = 'n')
+addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+  breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = "1.0")
+
+cip = classIntervals(sim_data$w_true, 9, style = 'fisher')
+palp = viridis(9)
+cip_colors = findColours(cip, palp)
+par(mar = c(5,5,5,1))
+plot(sim_data$xcoord, sim_data$ycoord, col = cip_colors, pch = 15, 
+	cex = cex_plot, cex.lab = 2, cex.axis = 1.5, xlab = 'x-coordinate',
+	ylab = 'y-coordinate')
+mtext('B', cex = mtext_cex, adj = adj, padj = padj)
+par(mar = c(0,0,0,0))
+plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
+  xlab = '', ylab = '', bty = 'n')
+addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+  breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = "1.2")
+
+layout(1)
 
 # create design matrix for observed data
-X = model.matrix(~ x_1*x_2, data = sim_data[sim_data$obspred == 'obs',])
 X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
+#X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
 # get observed values
 y = sim_data[sim_data$obspred == 'obs','y']
 # get distances among observed data locations
@@ -59,7 +90,7 @@ theta = log(c(1,1))
 # optimize for covariance parameters
 # undebug(logLik_Laplace)
 optout = optim(theta, logLik_Laplace, method = 'BFGS',
-	y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, shrink = 0.1)
+	y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, stepsize = 0.1)
 # covariance parameters
 exp(optout$par)
 # set theta as the optimized parameters on log scale
@@ -74,8 +105,7 @@ theta = optout$par
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-
-est_beta_w_out = est_beta_w(optout$par, y, X, Hdist, rho_exp, shrink = 0.1)
+est_beta_w_out = est_beta_w(optout$par, y, X, Hdist, rho_exp, stepsize = 0.1)
 est_beta_w_out$betahat
 
 #-------------------------------------------------------------------------------
@@ -101,11 +131,12 @@ for(i in 1:length(theta1)) {
 		llgrid[iter,1] = theta1[i]
 		llgrid[iter,2] = theta2[j]
 		llgrid[iter,3] = logLik_Laplace(theta = c(theta1[i],theta2[j]), 
-			y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, shrink = .1)
+			y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, stepsize = .1)
 	}
 }
 
-save(store,file = 'llgrid.rda')
+save(llgrid, file = 'llgrid.rda')
+#load('llgrid.rda', verbose = TRUE)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -214,31 +245,53 @@ system(paste0('rm ','\'',SLEDbook_path,
 #set seed so reproducible
 set.seed(1007)
 
-niter = 2000
+betas = c(-.5, .5, -.5, .5)
+gammas = c(1, 1, 0.0001)
+niter = 10
 store = vector(mode='list', length = niter)
 for(iter in 1:niter) {
 	
-	sim_data = simSGLM_wExpl(200, betas = c(-.5, .5, -.5, .5),
-		gammas = c(1, 1, 0.0001))
+	sim_data = simSGLM_wExpl(200, autocor_fun = rho_exp, 
+		betas = betas, gammas = gammas, 
+		type = 'random', pred = TRUE)
+	xyobs = sim_data[sim_data$obspred == 'obs',c('xcoord','ycoord')]
+	xypred = sim_data[sim_data$obspred == 'pred',c('xcoord','ycoord')]
+	npred = dim(xypred)[1]
+	nobs = dim(xyobs)[1]
 
 	# create design matrix for observed data
 	X = model.matrix(~ x_1*x_2, data = sim_data[sim_data$obspred == 'obs',])
+	Xp = model.matrix(~ x_1*x_2, data = sim_data[sim_data$obspred == 'pred',])
+
 	# get observed values
 	y = sim_data[sim_data$obspred == 'obs','y']
 	# get distances among observed data locations
-	Hdist = as.matrix(dist(sim_data[sim_data$obspred == 
-		'obs',c('xcoord', 'ycoord')]))
+	Hdist = as.matrix(dist(xyobs))
+	Dist_op = sqrt((outer(xyobs[,1], rep(1, times = npred)) - 
+		outer(rep(1, times = nobs),xypred[,1]))^2 +
+		(outer(xyobs[,2], rep(1, times = npred)) - 
+		outer(rep(1, times = nobs),xypred[,2]))^2 )
+	Dist_pp = as.matrix(dist(xypred))
 
-	#initial value for optim
+	# starting values for spatial random effects
+	m1 = glm(y ~ x_1*x_2, data = sim_data[sim_data$obspred == 'obs',], 
+		family="poisson")
+	# use signed values of log of absolute values of residuals
+	w_start = ((resid(m1) < 0)*-1 + (resid(m1) > 0)*1)*log(abs(resid(m1)))
+	#initial covariance parameters values for optim
 	theta = log(c(1,1))
 	# undebug(logLik_Laplace)
 	# optimize for covariance parameters
-	optout = optim(theta, logLik_Laplace, shrink = 0.1, # method = 'BFGS',
-		y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp)
+	optout = optim(theta, logLik_Laplace, stepsize = .2, # method = 'BFGS',
+		y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, w_start = w_start)
 
-	est_beta_w_out = est_beta_w(optout$par, y, X, Hdist, rho_exp, shrink = 0.1)
-	est_beta_w_out$betahat
-
+  pred_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 0.1, 
+		Xp = Xp, dist_op = dist_op, dist_pp = dist_pp)
+	est_beta_w_out = pred_out
+  w_true = sim_data$w_true[sim_data$obspred == 'pred']
+  bias_pred = mean(pred_out$w_pred - w_true)
+  cover_pred = sum(pred_out$w_pred - 1.645*pred_out$w_se < w_true & 
+		w_true < pred_out$w_pred + 1.645*pred_out$w_se)/100
 	# compare standard errors when using only covbeta versus the corrected one
 	store[[iter]] = data.frame(True = betas, betahat = est_beta_w_out$betahat, 
 		SE_corrected = sqrt(diag(est_beta_w_out$covbetaHM)), 
@@ -250,8 +303,15 @@ for(iter in 1:niter) {
 		CI90_uncorr = est_beta_w_out$betahat - 
 			1.645*sqrt(diag(est_beta_w_out$covbeta)) < betas & 
 			betas < est_beta_w_out$betahat + 
-			1.645*sqrt(diag(est_beta_w_out$covbeta))
-			)
+			1.645*sqrt(diag(est_beta_w_out$covbeta)),
+		SE_corr2 = sqrt(diag(est_beta_w_out$covbeta2)),
+		CI90_corr2 = est_beta_w_out$betahat - 
+			1.645*sqrt(diag(est_beta_w_out$covbeta2)) < betas & 
+			betas < est_beta_w_out$betahat + 
+			1.645*sqrt(diag(est_beta_w_out$covbeta2)),
+		bias_pred = bias_pred,
+		cover_pred = cover_pred
+	)
 
 }
 
@@ -260,6 +320,7 @@ save(store,file = 'store.rda')
 i = 1
 bias = rep(0, times = 4)
 cover_cor = rep(0, times = 4)
+cover_cor2 = rep(0, times = 4)
 cover_uncor = rep(0, times = 4)
 avevar_cor = rep(0, times = 4)
 
@@ -267,10 +328,12 @@ for(i in 1:length(store)) {
 	bias = bias + store[[i]]$betahat - store[[i]]$True
 	avevar_cor = avevar_cor + store[[i]]$SE_corrected^2
 	cover_cor = cover_cor + store[[i]]$CI90_corr
+	cover_cor2 = cover_cor2 + store[[i]]$CI90_corr2
 	cover_uncor = cover_uncor + store[[i]]$CI90_uncorr
 }
 sglm_fe = data.frame(bias =  bias/niter,
 	cover_corrected = cover_cor/niter,
+	cover_corr2 = cover_cor2/niter,
 	cover_uncorr = cover_uncor/niter)
 
 print(
@@ -314,11 +377,79 @@ layout(1)
 
 est_beta_w_out$w
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#   Testing Estimation
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+	stepsize = 1
+	gam_1 = exp(theta[1])
+	gam_2 = exp(theta[2])
+	# set the nugget effect to a small value
+	gam_0 = 0.00001
+	n = length(y)
+	# starting values for w
+	w = rep(0, times = n)
+
+	# covariance matrix
+	CovMat = gam_1*autocor_fun(Hdist,gam_2) + gam_0*diag(n)
+	# inverse of covariance matrix
+	CovMati = solve(CovMat)
+	# covariance matrix of fixed effects
+	covbeta = solve(t(X) %*% CovMati %*% X)
+	# inverse covariance matrix times X
+	SigiX = CovMati %*% X
+	
+	# define constants used outside of Newton-Raphson looping
+	Constant1 = covbeta  %*% t(SigiX)
+	Constant2 = -CovMati + SigiX %*% covbeta %*% t(SigiX)
+	
+	# loop to get the maximum value, where the gradient will be flat
+	# (g is all zeros)
+	for(i in 1:30) {
+		betahat = Constant1 %*% w
+		# compute the d vector
+		d = -exp(w) + y
+		# and then the gradient vector
+		g = d - CovMati %*% w + CovMati %*% X %*% betahat
+		# Next, compute H
+		H = diag(as.vector(-exp(w))) + Constant2
+		# update w
+		w = w - stepsize*solve(H, g)
+	}
+
+	# Now we need the variance covariance matrix of estimated betas
+	# The covbeta above does not account for the fact that w's are latent
+	# and unobserved. We need to take into account the variance of w's, 
+	# which we have from Newton Raphson as (-H)^(-1)
+	mHi = solve(-H)
+	# Then the variance of (X'Sig^{-1}X)^{-1}X'Sig^{-1}w is given below
+	covbetaHM = covbeta %*% t(SigiX) %*% mHi %*% SigiX %*% covbeta
+
+data.frame(True = betas, betahat = betahat, 
+	SE_corrected = sqrt(diag(covbetaHM)), 
+	CI90_corr = betahat - 
+	1.645*sqrt(diag(covbetaHM)) < betas & 
+		betas < betahat + 
+		1.645*sqrt(diag(covbetaHM)),
+	SE_uncorr = sqrt(diag(covbeta)),
+	CI90_uncorr = betahat - 
+		1.645*sqrt(diag(covbeta)) < betas & 
+		betas < betahat + 
+		1.645*sqrt(diag(covbeta)),
+	SE_corr2 = sqrt(diag(covbeta + covbetaHM)),
+	CI90_uncorr = betahat - 
+		1.645*sqrt(diag(covbeta + covbetaHM)) < betas & 
+		betas < betahat + 
+		1.645*sqrt(diag(covbeta + covbetaHM))
+)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#   Prediction
+#   Testing Prediction
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------

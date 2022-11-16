@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  14 NOV 2022 19:46
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  15 NOV 2022 21:54
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -336,14 +336,14 @@ LaTeX Font Info:    Trying to load font information for U+rsfs on input line 79
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 ) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
-<figures/sglm_likelihood_estimation.pdf, id=30, 754.82pt x 652.4375pt>
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4]
+<figures/sglm_likelihood_estimation.pdf, id=33, 754.82pt x 652.4375pt>
 File: figures/sglm_likelihood_estimation.pdf Graphic file (type pdf)
 <use figures/sglm_likelihood_estimation.pdf>
 Package pdftex.def Info: figures/sglm_likelihood_estimation.pdf  used on input 
-line 242.
+line 262.
 (pdftex.def)             Requested size: 375.80542pt x 324.83414pt.
- [4] (./section_spglm.bbl [5 <./figures/SGLM_likelihood_estimation.pdf>]) [6] (
+ [5 <./figures/SGLM_likelihood_estimation.pdf>] (./section_spglm.bbl [6]) [7] (
 ./section_spglm.aux) ) 
 Here is how much of TeX's memory you used:
  5635 strings out of 481239
@@ -371,10 +371,10 @@ r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share
 /texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf
 -dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texmf/fonts/type1/p
 ublic/cm-super/sfrm1200.pfb>
-Output written on section_spglm.pdf (6 pages, 219513 bytes).
+Output written on section_spglm.pdf (7 pages, 223302 bytes).
 PDF statistics:
- 102 PDF objects out of 1000 (max. 8388607)
- 76 compressed objects within 1 object stream
+ 107 PDF objects out of 1000 (max. 8388607)
+ 80 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 
