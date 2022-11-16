@@ -317,6 +317,7 @@ for(iter in 1:niter) {
 }
 cat("\n")
 end_time = Sys.time()
+difftime(end_time, start_time)
 save(store,file = 'store.rda')
 
 i = 1
@@ -348,7 +349,7 @@ sglm_fe = data.frame(bias =  bias/niter,
 print(
     xtable(sglm_fe, 
       align = c('l',rep('l', times = length(sglm_fe[1,]))),
-      digits = c(0, rep(3, times = 3))
+      digits = c(0, rep(3, times = 6))
     ),
     sanitize.text.function = identity,
     include.rownames = FALSE,
