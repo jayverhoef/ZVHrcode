@@ -17,34 +17,33 @@ logLik_Laplace = function(theta, y, X, Hdist, autocor_fun, stepsize = 1,
 	CovMat = gam_1*autocor_fun(Hdist,gam_2) + gam_0*diag(n)
 	# inverse of covariance matrix
 	CovMati = solve(CovMat)
-	# covariance matrix of fixed effects
-	covbeta = solve(t(X) %*% CovMati %*% X)
 	# inverse covariance matrix times X
 	SigiX = CovMati %*% X
+	# covariance matrix of fixed effects
+	covbeta = solve(t(X) %*% SigiX)
 	
-	# define constants used outside of Newton-Raphson looping
-	Constant1 = covbeta  %*% t(SigiX)
-	Constant2 = -CovMati + SigiX %*% covbeta %*% t(SigiX)
-	# loop to get the maximum value, where the gradient will be flat
-	# (g is all zeros)
+	# compute spatial projection matrix
+	mPtheta = CovMati - SigiX %*% covbeta %*% t(SigiX)
+	
 	wdiffmax = 1e+32
 	niter = 0
 #	browser()
 #	for(i in 1:30) {
 	while(wdiffmax > 1e-10 & niter < 50) {
 		niter = niter + 1
-		betahat = Constant1 %*% w
-		# compute the d vector
-		d = -exp(w) + y
-		# and then the gradient vector
-		g = d - CovMati %*% w + CovMati %*% X %*% betahat
+		# the gradient vector
+		g = -exp(w) + y - mPtheta %*% w
 		# Next, compute H
-		H = diag(as.vector(-exp(w))) + Constant2
+		H = diag(as.vector(-exp(w))) - mPtheta
 		# update w
 		wnew = w - stepsize*solve(H, g)
 		wdiffmax = max(abs(wnew - w))
 		w = wnew
 	}
+
+	wts_beta = covbeta %*% t(SigiX)
+	# estimation of fixed effects
+	betahat =  wts_beta %*% w
 
 	#now compute the -2*likelihood using Laplace approximation
 	Likelihood =

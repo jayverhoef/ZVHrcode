@@ -3,44 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: section_spglm.aux
 The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
 Database file #1: spglm.bib
-You've used 11 entries,
+You've used 14 entries,
             2777 wiz_defined-function locations,
-            708 strings with 7156 characters,
-and the built_in function-call counts, 5087 in all, are:
-= -- 491
-> -- 214
-< -- 9
-+ -- 79
-- -- 66
-* -- 476
-:= -- 893
-add.period$ -- 20
-call.type$ -- 11
-change.case$ -- 69
-chr.to.int$ -- 11
-cite$ -- 11
-duplicate$ -- 224
-empty$ -- 370
-format.name$ -- 105
-if$ -- 980
+            731 strings with 7782 characters,
+and the built_in function-call counts, 6528 in all, are:
+= -- 638
+> -- 272
+< -- 11
++ -- 100
+- -- 84
+* -- 613
+:= -- 1144
+add.period$ -- 26
+call.type$ -- 14
+change.case$ -- 89
+chr.to.int$ -- 14
+cite$ -- 14
+duplicate$ -- 287
+empty$ -- 472
+format.name$ -- 132
+if$ -- 1259
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 13
-newline$ -- 38
-num.names$ -- 44
-pop$ -- 67
+missing$ -- 16
+newline$ -- 47
+num.names$ -- 56
+pop$ -- 81
 preamble$ -- 1
-purify$ -- 66
+purify$ -- 84
 quote$ -- 0
-skip$ -- 150
+skip$ -- 189
 stack$ -- 0
-substring$ -- 354
-swap$ -- 53
+substring$ -- 469
+swap$ -- 67
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 93
+type$ -- 120
 warning$ -- 0
-while$ -- 51
+while$ -- 66
 width$ -- 0
-write$ -- 126
+write$ -- 161

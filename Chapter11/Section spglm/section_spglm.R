@@ -6,6 +6,7 @@ source('autocorr_functions.R')
 source('logLik_Laplace.R')
 source('est_beta_w.R')
 source('addBreakColorLegend.R')
+source('mginv.R')
 
 library(viridis)
 library(classInt)
@@ -283,18 +284,21 @@ for(iter in 1:niter) {
 	theta = log(c(1,1))
 	# undebug(logLik_Laplace)
 	# optimize for covariance parameters
-	optout = optim(theta, logLik_Laplace, stepsize = .2, # method = 'BFGS',
-		y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, w_start = w_start)
+	optout = optim(theta, logLik_Laplace, stepsize = 1, # method = 'BFGS',
+		y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp)
 
-  pred_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 0.1, 
+  pred_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 1, 
 		Xp = Xp, dist_op = dist_op, dist_pp = dist_pp)
 	est_beta_w_out = pred_out
   w_true = sim_data$w_true[sim_data$obspred == 'pred']
   bias_pred = mean(pred_out$w_pred - w_true)
   cover_pred = sum(pred_out$w_pred - 1.645*pred_out$w_se < w_true & 
 		w_true < pred_out$w_pred + 1.645*pred_out$w_se)/100
+	cbind(w_true, pred_out$w_pred, pred_out$w_se)
+	plot(w_true, pred_out$w_pred)
 	# compare standard errors when using only covbeta versus the corrected one
-	store[[iter]] = data.frame(True = betas, betahat = est_beta_w_out$betahat, 
+#	store[[iter]] = 
+	data.frame(True = betas, betahat = est_beta_w_out$betahat, 
 		SE_corrected = sqrt(diag(est_beta_w_out$covbetaHM)), 
 		CI90_corr = est_beta_w_out$betahat - 
 		1.645*sqrt(diag(est_beta_w_out$covbetaHM)) < betas & 
@@ -318,7 +322,8 @@ for(iter in 1:niter) {
 cat("\n")
 end_time = Sys.time()
 difftime(end_time, start_time)
-save(store,file = 'store.rda')
+save(store,file = 'store.r)da')
+# load('store.rda')
 
 i = 1
 bias = rep(0, times = 4)

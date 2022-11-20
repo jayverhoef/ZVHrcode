@@ -1,4 +1,4 @@
-\begin{thebibliography}{11}
+\begin{thebibliography}{14}
 \newcommand{\enquote}[1]{``#1''}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
@@ -7,10 +7,20 @@ Besag, J. (1974), \enquote{Spatial interaction and the statistical analysis of
   lattice systems (with discussion),} \textit{Journal of the Royal Statistical
   Society, Series B}, 36, 192--236.
 
+\bibitem[{Bonat and Ribeiro~Jr(2016)}]{bonat_practical_2016}
+Bonat, W.~H. and Ribeiro~Jr, P.~J. (2016), \enquote{Practical likelihood
+  analysis for spatial generalized linear mixed models,}
+  \textit{Environmetrics}, 27, 83--89, publisher: Wiley Online Library.
+
 \bibitem[{Breslow and Clayton(1993)}]{breslow_approximate_1993}
 Breslow, N.~E. and Clayton, D.~G. (1993), \enquote{Approximate inference in
   generalized linear mixed models,} \textit{Journal of the American statistical
   Association}, 88, 9--25, publisher: Taylor \& Francis.
+
+\bibitem[{Christensen(2004)}]{christensen_monte_2004}
+Christensen, O.~F. (2004), \enquote{Monte {Carlo} maximum likelihood in
+  model-based geostatistics,} \textit{Journal of computational and graphical
+  statistics}, 13, 702--718, publisher: Taylor \& Francis.
 
 \bibitem[{Clayton and Kaldor(1987)}]{clayton_empirical_1987}
 Clayton, D. and Kaldor, J. (1987), \enquote{Empirical {Bayes} {Estimates} of
@@ -26,6 +36,13 @@ Cressie, N. A.~C. (1993), \textit{Statistics for {Spatial} {Data}, {Revised}
 Diggle, P.~J., Tawn, J.~A., and Moyeed, R.~A. (1998), \enquote{Model-{Based}
   {Geostatistics} ({Disc}: {P326}-350),} \textit{Journal of the Royal
   Statistical Society, Series C: Applied Statistics}, 47, 299--326.
+
+\bibitem[{Evangelou et~al.(2011)Evangelou, Zhu, and
+  Smith}]{evangelou_estimation_2011}
+Evangelou, E., Zhu, Z., and Smith, R.~L. (2011), \enquote{Estimation and
+  prediction for spatial generalized linear mixed models using high order
+  {Laplace} approximation,} \textit{Journal of Statistical Planning and
+  Inference}, 141, 3564--3577.
 
 \bibitem[{Gotway and Stroup(1997)}]{GotwayEtAl1997GeneralizedLinearModel157}
 Gotway, C.~A. and Stroup, W.~W. (1997), \enquote{A {Generalized} {Linear}

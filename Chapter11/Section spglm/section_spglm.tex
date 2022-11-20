@@ -64,6 +64,9 @@ Another class of models are based on a hierarchical constuction, where the mean 
 
 Another approach is the penalized quasi-likelihood models \citep{breslow_approximate_1993, WolfingerEtAl1993GeneralizedLinearMixed233}.  These models have been implemented in popular software such as the \texttt{glmmPQL} function in the \texttt{MASS} package in \texttt{R} and the \texttt{GLIMMIX} package in \texttt{SAS}.
 
+A third approach is to take a likelihood approach and attempt to estimate covariance parameter, and perhaps fixed effects simultaneously, while integrating out over all spatial random effects.   This can be done using Markov chain Monte Carlo methods \citep[e.g.,][]{christensen_monte_2004} or more directly using a Laplace approximation \citep[e.g.,][]{evangelou_estimation_2011, bonat_practical_2016}.  Here, we will follow \citet{bonat_practical_2016}, and improve their methods.
+
+
 
 
 % ------------------------------------------------------------------------------
@@ -76,9 +79,11 @@ Another approach is the penalized quasi-likelihood models \citep{breslow_approxi
 
 {\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
 
-A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the random variable $\mathbf{y}$ conditional on parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameters and fixed values on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be a Poisson distribution with mean parameter $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
+A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the vector of random variables $\mathbf{y}$ conditional on a vector of parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameter and fixed value vectors on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be the product of independent Poisson distributions with mean parameters contained in the vector $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models (Chapter 6), or may contain the variance and autocorrelation parameters from Chapter 7.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent spatial random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
 
-The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$, where it is parameterized so that $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$.  If our linear model is $\boldsymbol{\eta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \mathbf{w}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example because $g^{-1}(\cdot)$ is the exponential function, and hence $\mathbf{w}$ is unconstrained. The negative binomial distribution can also be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.  Now, let us write
+The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$, where it is parameterized so that $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$.  If our linear model is $\boldsymbol{\eta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \mathbf{w}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example because, recall that the mean of a Poisson distribution must be postive, and $g^{-1}(\cdot)$ is the exponential function, and hence $\boldsymbol{\mu} = g^{-1}(\mathbf{w})$ is always positive and $\mathbf{w}$ is unconstrained on the real line, as it must be for a multivariate normal distribution. For an example with extra parameters for $\mathbf{y}$, consider the negative binomial distribution, which can be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.  
+
+Now, let us write
 $$
 \mathbf{w} = \mathbf{X}\boldsymbol{\beta} + \mathbf{e},
 $$
@@ -150,123 +155,110 @@ la te da
 {\large \flushleft \textbf{12.x.5 Marginal MLE for Covariance Parameters}}
 \vspace{.5cm}
 
-We would like to marginalize the distribution $[\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ over both $\mathbf{w}$ and $\boldsymbol{\beta}$ to obtain a likelihood of the data and variance/covariance parameters: $[\mathbf{y}|\boldsymbol{\phi},\boldsymbol{\theta}]$.  This is obtained by,
+We would like to marginalize the distribution $[\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ over both $\mathbf{w}$ and $\boldsymbol{\beta}$ to obtain a distribution of the only the data and variance/covariance parameters,
 $$
-	\int_\mathbf{w} \int_{\boldsymbol{\beta}} [\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} d\mathbf{w} =
+	[\mathbf{y}|\boldsymbol{\phi},\boldsymbol{\theta}] = \int_\mathbf{w} \int_{\boldsymbol{\beta}} [\mathbf{w}, \mathbf{y}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} d\mathbf{w} =
 		\int_\mathbf{w}  [\by|\mathbf{w},\boldsymbol{\phi}] \int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} d\mathbf{w}.
 $$
 When $[\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}]$ is Gaussian, $\int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta}$ is the likelihood for restricted maximum likelihood estimation (REML) (see Exercise 8.4),
 $$
 [\mathbf{w}|\boldsymbol{\theta}] \equiv \int_{\boldsymbol{\beta}} [\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta}] d\boldsymbol{\beta} = 
-\frac{1}{C_n}\exp[(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]
+\frac{1}{C_n}\exp[(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})],
 $$
 where $C_n = \sqrt{2\pi^N|\boldsymbol{\Sigma}_{\boldsymbol{\theta}}||\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}|}$ and 
-\begin{equation} \label{eq:betaHat}
-  \hat{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w}.
-\end{equation}
-Thus, we next need,
+$\hat{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w},$
+and so we only need,
 $$
-	[\mathbf{y}| \boldsymbol{\phi},\boldsymbol{\theta}] = \int_\mathbf{w}  [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}]d\mathbf{w}
+	[\mathbf{y}| \boldsymbol{\phi},\boldsymbol{\theta}] = \int_\mathbf{w}  [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}]d\mathbf{w}.
 $$
-Let us denote $\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) = \log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}])$.  Consider,
+Let us denote $\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) = \log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}])$, and consider $\int e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w}$. Let $\mathbf{g}$ be the gradient vector with $i$th element
 $$
-\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w}.
+g_{i} = \frac{\partial \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i},
 $$
-Let $\mathbf{g}$ be the gradient vector with $i$th element
+and let $\mathbf{H}$ be the Hessian matrix with $i,j$th element,
 $$
-\mathbf{g}_{i} = \frac{\partial \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i}
-$$
-and the Hessian matrix with $i,j$th element,
-$$
-\mathbf{H}_{i,j} = \frac{\partial^2 \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i\partial w_j}
+H_{i,j} = \frac{\partial^2 \ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})}{\partial w_i\partial w_j}.
 $$
 Using the multivariate Taylor series expansion around some point $\mathbf{a}$,
 $$
-\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx \int_\mathbf{w} e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) + \mathbf{g}^{T}(\mathbf{w} -\mathbf{a}) + 1/2(\mathbf{w} - \mathbf{a})^{T}\mathbf{H}(\mathbf{w} - \mathbf{a})} d\mathbf{w},
+\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx \int_\mathbf{w} e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta}) + \mathbf{g}^{T}(\mathbf{w} -\mathbf{a}) + 1/2(\mathbf{w} - \mathbf{a})^{T}\mathbf{H}(\mathbf{w} - \mathbf{a})} d\mathbf{w}.
 $$
-Now, let $\mathbf{a}$ be the value $\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})$ such that $\mathbf{g} = \mathbf{0}$. Then,
+Now, if $\mathbf{a}$ is a value for $\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})$ such that $\mathbf{g} = \mathbf{0}$, then
 $$
 \int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} \int_\bw e^{ -  
-	1/2(\mathbf{w} - \mathbf{a})^{T}\mathbf{H}(\mathbf{w} - \mathbf{a})} d\mathbf{w}.
+	1/2(\mathbf{w} - \mathbf{a})^{T}(-\mathbf{H})(\mathbf{w} - \mathbf{a})} d\mathbf{w}.
 $$
-where $\mathbf{H}_\mathbf{a}$ indicates $\mathbf{H}$ evaluated at $\mathbf{a}$. We know from the normalizing constant of a multivariate Gaussian distribution that this integral is $(2\pi)^{N/2}|-\mathbf{H}^{-1}_\mathbf{a}|^{1/2}$, so
+Let $\mathbf{H}_\mathbf{a}$ indicate $\mathbf{H}$ evaluated at $\mathbf{a}$. We know from the normalizing constant of a multivariate Gaussian distribution that 
+$$
+\int_\bw e^{-1/2(\mathbf{w} - \mathbf{a})^{T}(-\mathbf{H}_{\mathbf{a}})(\mathbf{w} - \mathbf{a})} d\mathbf{w} = (2\pi)^{N/2}|-\mathbf{H}^{-1}_\mathbf{a}|^{1/2},
+$$
+so
 \[
-\int_\mathbf{w} e^{\ell(\mathbf{w})} d\mathbf{w} \approx e^{\ell(\mathbf{a})} (2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2} = [\mathbf{y}|\mathbf{a},\boldsymbol{\phi}][\mathbf{a}|\boldsymbol{\theta}](2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2}.
+\int_\mathbf{w} e^{\ell(\mathbf{w};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} d\mathbf{w} \approx e^{\ell(\mathbf{a};\mathbf{y},\boldsymbol{\phi},\boldsymbol{\theta})} (2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2} = [\mathbf{y}|\mathbf{a},\boldsymbol{\phi}][\mathbf{a}|\boldsymbol{\theta}](2\pi)^{N/2}|-\mathbf{H}_\mathbf{a}|^{-1/2}.
 \]
 A marginal maximum likelihood estimator for $\boldsymbol{\phi}, \boldsymbol{\theta}$, given $\mathbf{a}$, is
 \begin{equation} \label{eq:m2LLmargMLE}
 \{\hat{\boldsymbol{\phi}}, \hat{\boldsymbol{\theta}} \} = \underset{\boldsymbol{\phi},\boldsymbol{\theta}}{\arg\max} \left[ \log[\mathbf{y}|\mathbf{a},\mathbf{\phi}] +
-	\log[\mathbf{a}|\mathbf{\theta}] - (1/2)\log|-\mathbf{H}_\mathbf{a}(\boldsymbol{\phi},\boldsymbol{\theta})| \right]
+	\log[\mathbf{a}|\mathbf{\theta}] - (1/2)\log(|-\mathbf{H}_\mathbf{a}(\boldsymbol{\phi},\boldsymbol{\theta})|) \right]
 \end{equation}
-where we drop terms that do not contain $\hat{\boldsymbol{\phi}}$ or $\hat{\boldsymbol{\theta}}$, but show the dependence of $\mathbf{H}_\mathbf{a}$ on $\hat{\boldsymbol{\phi}}$ and $\hat{\boldsymbol{\theta}}$.  These results depend on $\mathbf{g} = \mathbf{0}$.  We use Newton-Raphson steps to attain this next, conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.
+where we drop terms that do not contain $\boldsymbol{\phi}$ or $\boldsymbol{\theta}$ and also show the dependence of $\mathbf{H}_\mathbf{a}$ on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.  The result \eqref{eq:m2LLmargMLE} depends on finding $\mathbf{a}$ so that $\mathbf{g} = \mathbf{0}$.  To acheive this, we use Newton-Raphson, conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, which we describe next.
 
-Note that, assuming conditional independence of $\mathbf{y}$ on $\mathbf{w}$,
-$$
-\log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\lambda}]) = \sum_{i = 1}^N \log(f(y_i;w_i,\boldsymbol{\phi})) - \frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}}) + C
-$$
+Assuming conditional independence of $\mathbf{y}$ on $\mathbf{w}$,
+\begin{equation} \label{eq:ll_plus_C}
+\log([\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\theta}]) = \sum_{i = 1}^N \log[y_i|w_i,\boldsymbol{\phi}] - \frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}}) + C,
+\end{equation}
 where $C$ are terms that do not contain $\mathbf{w}$. Let $\mathbf{d}$ be the vector with $i$th component,
 $$
-\mathbf{d}[i] \equiv \frac{\partial\log(f(y_i;w_i,\boldsymbol{\phi}))}{\partial w_i}.
+d_{i} \equiv \frac{\partial\log[y_i|w_i,\boldsymbol{\phi}]}{\partial w_i},
 $$
-Next, note that
+and
 $$
-\frac{\partial [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]}{\partial \mathbf{w}} = -\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\boldsymbol{X}\hat{\boldsymbol{\beta}}
+\frac{\partial [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})]}{\partial \mathbf{w}} = -\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\boldsymbol{X}\hat{\boldsymbol{\beta}},
 $$
-so the gradient will be,
+so the gradient of \eqref{eq:ll_plus_C} is
 $$
-\mathbf{g} = \mathbf{d} - \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}\hat{\boldsymbol{\beta}}
+\mathbf{g} = \mathbf{d} - \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}\hat{\boldsymbol{\beta}}.
 $$
-For example, if $f(y_i;w_i,\bphi)$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$, then $d[i] = y_i - \mu_{i}n_i$.  For the Hessian, let $\mathbf{D}$ be a diagonal matrix with $i$th component,
+For example, if $[y_i|w_i]$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$ with sample size $n_{i}$, then $d_{i} = y_i - \mu_{i}n_i$.  If $[y_i|w_i]$ is Poisson with log link function, then $d_{i} = y_{i} - \exp(w_{i})$. For the Hessian, let $\mathbf{D}$ be a diagonal matrix with $i$th component,
 $$
-\mathbf{D}[i,i] \equiv \frac{\partial^2\log(f(y_i;w_i,\boldsymbol{\phi}))}{\partial w_i^2}.
+D_{i,i} \equiv \frac{\partial^2\log[y_i|w_i,\boldsymbol{\phi}]}{\partial w_i^2},
 $$
-because all second partials are 0 when $i \neq j$ (due to conditional independence). Next, notice that
+where all off-diagonal elements are zero because all second partials are 0 when $i \neq j$, due to conditional independence. Next, notice that
 $$
-\frac{\partial^2 [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})] }{\partial \mathbf{w} \partial \mathbf{w}^{T}} =
-	-\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1} + \boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\blambda}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}
+\frac{\partial^2 [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})] }{\partial \mathbf{w} \partial \mathbf{w}^{T}} =
+	-\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1} + \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\btheta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}
 $$
-and so
+and so the Hessian of \eqref{eq:ll_plus_C} is
 \begin{equation} \label{eq:Hdef}
-\mathbf{H} = \mathbf{D} -\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1} + 
-	\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\lambda}}^{-1}
+\mathbf{H} = \mathbf{D} -\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1} + 
+	\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}.
 \end{equation}
-For example, if $f(y_i;w_i,\boldsymbol{\phi})$ is binomial with the logit link function, then $\mathbf{D}[i,i] = -\mu_i n_i/(1 + \exp(w_i))$.
+For example, if $[y_i|w_i]$ is binomial with the logit link function and sample size $n_{i}$, then $\mathbf{D}_{i,i} = -\mu_i n_i/(1 + \exp(w_i))$, and if $[y_i|w_i]$ is Poisson with the log link function, then $\mathbf{D}_{i,i} = \exp(w_i)$.
 
-Conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\lambda}$, a Newton-Raphson update is,
+Conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, a Newton-Raphson update is,
 \[
 \mathbf{w}^{[k+1]} = \mathbf{w}^{[k]} - \mathbf{H}^{-1}\mathbf{g}
 \]
-and upon convergence we set $\mathbf{a} = \mathbf{w}$ in eqref{eq:m2LLmargMLE} for any update of the likelihood.  Notice that this makes the marginally MLE doubly iterative, as we solve for $\mathbf{a}$ while optimizing for $\boldsymbol{\phi}$ and $\boldsymbol{\lambda}$.
+and upon convergence we set $\mathbf{a} = \mathbf{w}$ in \eqref{eq:m2LLmargMLE} for any evaluation of the likelihood for given $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.  Notice that this makes the marginal MLE doubly iterative, as we solve for $\mathbf{a}$ while optimizing for $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.
 
 
-
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-%           12.x.6 Gradients and Hessians
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-
-\vspace{.5cm}
-{\large \flushleft \textbf{12.x.6 Gradients and Hessians}}
-\vspace{.5cm}
 
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%           12.x.7 Estimation and Prediction
+%           12.x.6 Estimation of Fixed Effects and Prediction
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
 \vspace{.5cm}
-{\large \flushleft \textbf{12.x.7 Estimation of Fixed Effects and Prediction}}
+{\large \flushleft \textbf{12.x.6 Estimation of Fixed Effects and Prediction}}
 \vspace{.5cm}
 
+In order to estimate $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, it was necessary to optimize the likelihood for $\mathbf{w}$, which we called $\mathbf{a}$, using Newton-Raphson, for each evaluation of the likelihood.  Upon convergence in estimating $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, we also have optimized values for $\mathbf{w}$, and let us denote them as $\hat{\mathbf{w}} = \mathbf{a}$.  Also, recall that, in contrast to \citet{bonat_practical_2016}, we integrated over $\boldsymbol{\beta}$, so an estimator is needed.
 
-To obtain variances, use the following result.  For some linear combination $\mathbf{B}\hat{\mathbf{w}}$, where the weights are contained in the matrix $\mathbf{B}$ for predicted random effects $\hat{\mathbf{w}}$, 
+An obvious estimator of $\boldsymbol{\beta}$ is to consider $\hat{\mathbf{w}}$ as if they were observed data, and then use the generalized least squares estimator $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$.  To obtain variances, use the following result.  For some linear combination $\mathbf{B}\hat{\mathbf{w}}$, where the weights are contained in the matrix $\mathbf{B}$ for predicted random effects $\hat{\mathbf{w}}$, 
 $$
 \var(\mathbf{B}\hat{\mathbf{w}}) = \textrm{E}_{\mathbf{w}}[\var(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})] + \var_{\mathbf{w}}[\textrm{E}(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})]
 $$
