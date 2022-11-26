@@ -1,0 +1,123 @@
+Poisson                 package:stats                  R Documentation
+
+_T_h_e _P_o_i_s_s_o_n _D_i_s_t_r_i_b_u_t_i_o_n
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     Density, distribution function, quantile function and random
+     generation for the Poisson distribution with parameter ‘lambda’.
+
+_U_s_a_g_e:
+
+     dpois(x, lambda, log = FALSE)
+     ppois(q, lambda, lower.tail = TRUE, log.p = FALSE)
+     qpois(p, lambda, lower.tail = TRUE, log.p = FALSE)
+     rpois(n, lambda)
+     
+_A_r_g_u_m_e_n_t_s:
+
+       x: vector of (non-negative integer) quantiles.
+
+       q: vector of quantiles.
+
+       p: vector of probabilities.
+
+       n: number of random values to return.
+
+  lambda: vector of (non-negative) means.
+
+log, log.p: logical; if TRUE, probabilities p are given as log(p).
+
+lower.tail: logical; if TRUE (default), probabilities are P[X <= x],
+          otherwise, P[X > x].
+
+_D_e_t_a_i_l_s:
+
+     The Poisson distribution has density
+
+                       p(x) = lambda^x exp(-lambda)/x!                  
+     
+     for x = 0, 1, 2, ... .  The mean and variance are E(X) = Var(X) =
+     lambda.
+
+     Note that lambda = 0 is really a limit case (setting 0^0 = 1)
+     resulting in a point mass at 0, see also the example.
+
+     If an element of ‘x’ is not integer, the result of ‘dpois’ is
+     zero, with a warning.  p(x) is computed using Loader's algorithm,
+     see the reference in ‘dbinom’.
+
+     The quantile is right continuous: ‘qpois(p, lambda)’ is the
+     smallest integer x such that P(X <= x) >= p.
+
+     Setting ‘lower.tail = FALSE’ allows to get much more precise
+     results when the default, ‘lower.tail = TRUE’ would return 1, see
+     the example below.
+
+_V_a_l_u_e:
+
+     ‘dpois’ gives the (log) density, ‘ppois’ gives the (log)
+     distribution function, ‘qpois’ gives the quantile function, and
+     ‘rpois’ generates random deviates.
+
+     Invalid ‘lambda’ will result in return value ‘NaN’, with a
+     warning.
+
+     The length of the result is determined by ‘n’ for ‘rpois’, and is
+     the maximum of the lengths of the numerical arguments for the
+     other functions.
+
+     The numerical arguments other than ‘n’ are recycled to the length
+     of the result.  Only the first elements of the logical arguments
+     are used.
+
+     ‘rpois’ returns a vector of type integer unless generated values
+     exceed the maximum representable integer when ‘double’ values are
+     returned since R version 4.0.0.
+
+_S_o_u_r_c_e:
+
+     ‘dpois’ uses C code contributed by Catherine Loader (see
+     ‘dbinom’).
+
+     ‘ppois’ uses ‘pgamma’.
+
+     ‘qpois’ uses the Cornish-Fisher Expansion to include a skewness
+     correction to a normal approximation, followed by a search.
+
+     ‘rpois’ uses
+
+     Ahrens, J. H. and Dieter, U. (1982).  Computer generation of
+     Poisson deviates from modified normal distributions.  _ACM
+     Transactions on Mathematical Software_, *8*, 163-179.
+
+_S_e_e _A_l_s_o:
+
+     Distributions for other standard distributions, including ‘dbinom’
+     for the binomial and ‘dnbinom’ for the negative binomial
+     distribution.
+
+     ‘poisson.test’.
+
+_E_x_a_m_p_l_e_s:
+
+     require(graphics)
+     
+     -log(dpois(0:7, lambda = 1) * gamma(1+ 0:7)) # == 1
+     Ni <- rpois(50, lambda = 4); table(factor(Ni, 0:max(Ni)))
+     
+     1 - ppois(10*(15:25), lambda = 100)  # becomes 0 (cancellation)
+         ppois(10*(15:25), lambda = 100, lower.tail = FALSE)  # no cancellation
+     
+     par(mfrow = c(2, 1))
+     x <- seq(-0.01, 5, 0.01)
+     plot(x, ppois(x, 1), type = "s", ylab = "F(x)", main = "Poisson(1) CDF")
+     plot(x, pbinom(x, 100, 0.01), type = "s", ylab = "F(x)",
+          main = "Binomial(100, 0.01) CDF")
+     
+     ## The (limit) case  lambda = 0 :
+     stopifnot(identical(dpois(0,0), 1),
+               identical(ppois(0,0), 1),
+               identical(qpois(1,0), 0))
+     
+

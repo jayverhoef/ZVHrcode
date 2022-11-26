@@ -4,13 +4,15 @@ setwd(paste0(SLEDbook_path,sec_path))
 source('simSGLM_wExpl.R')
 source('autocorr_functions.R')
 source('logLik_Laplace.R')
-source('pred_w.R')
+source('logLik_LaplaceSMW.R')
+source('est_beta_w.R')
 source('addBreakColorLegend.R')
 source('mginv.R')
 
 library(viridis)
 library(classInt)
 library(xtable)
+library(pdist)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -21,7 +23,7 @@ library(xtable)
 #-------------------------------------------------------------------------------
 
 #set seed so reproducible
-set.seed(1011)
+set.seed(1012)
 
 # simulate data from spatial generalized linear model
 # betas[1] is overall mean (on log scale)
@@ -36,6 +38,23 @@ betas = c(2, 0, 0, 0)
 gammas = c(1, 1, 0.0001)
 sim_data = simSGLM_wExpl(20^2, autocor_fun = rho_exp, betas = betas,
 	gammas = gammas, type = 'grid', pred = FALSE)
+xyobs = sim_data[sim_data$obspred == 'obs',c('xcoord','ycoord')]
+xypred = sim_data[sim_data$obspred == 'pred',c('xcoord','ycoord')]
+npred = dim(xypred)[1]
+nobs = dim(xyobs)[1]
+
+epikern = function(dist, gam_2) 1 - (dist/gam_2)^2*(dist < gam_2)
+
+set.seed(2021)
+nknots = 80
+knots = kmeans(xyobs, nknots)$centers
+dist_ok = as.matrix(pdist(xyobs, knots))
+
+# create design matrix for observed data
+X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
+
+# get observed values
+y = sim_data[sim_data$obspred == 'obs','y']
 
 layout(matrix(1:4, nrow = 1), widths = rep(c(3,1), times = 2))
 
@@ -66,23 +85,15 @@ par(mar = c(5,5,5,1))
 plot(sim_data$xcoord, sim_data$ycoord, col = cip_colors, pch = 15, 
 	cex = cex_plot, cex.lab = 2, cex.axis = 1.5, xlab = 'x-coordinate',
 	ylab = 'y-coordinate')
+points(knots, pch = 19, cex = 2, col = 'white')
 mtext('B', cex = mtext_cex, adj = adj, padj = padj)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
 addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = "1.2")
-
 layout(1)
 
-# create design matrix for observed data
-X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
-#X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
-# get observed values
-y = sim_data[sim_data$obspred == 'obs','y']
-# get distances among observed data locations
-Hdist = as.matrix(dist(sim_data[sim_data$obspred == 
-	'obs',c('xcoord', 'ycoord')]))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -96,12 +107,15 @@ Hdist = as.matrix(dist(sim_data[sim_data$obspred ==
 theta = log(c(1,1))
 # optimize for covariance parameters
 # undebug(logLik_Laplace)
-optout = optim(theta, logLik_Laplace, method = 'BFGS',
-	y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp)
+optout = optim(theta, logLik_LaplaceSMW, # method = 'BFGS',
+	y = y, X = X, dist_ok = dist_ok, kernel_fun = epikern, stepsize = 1)
 # covariance parameters
 exp(optout$par)
 # set theta as the optimized parameters on log scale
 theta = optout$par
+
+logLik_LaplaceSMW(theta + .1, y = y, X = X, dist_ok = dist_ok, 
+	kernel_fun = epikern, stepsize = 1)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -112,7 +126,7 @@ theta = optout$par
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-pred_w_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 1)
+pred_w_out = pred_wSMW(optout$par, y, X, dist_ok, epikern, stepsize = 1)
 pred_w_out$betahat
 
 #-------------------------------------------------------------------------------
@@ -138,7 +152,7 @@ for(i in 1:length(theta1)) {
 		llgrid[iter,1] = theta1[i]
 		llgrid[iter,2] = theta2[j]
 		llgrid[iter,3] = logLik_Laplace(theta = c(theta1[i],theta2[j]), 
-			y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, stepsize = .2)
+			y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, stepsize = 1)
 	}
 }
 
@@ -250,12 +264,11 @@ system(paste0('rm ','\'',SLEDbook_path,
 #-------------------------------------------------------------------------------
 
 #set seed so reproducible
-set.seed(1008)
+set.seed(1007)
 
 betas = c(-.5, .5, -.5, .5)
 gammas = c(1, 1, 0.0001)
 niter = 2000
-stepsize = .2
 store = vector(mode='list', length = niter)
 start_time = Sys.time()
 for(iter in 1:niter) {
@@ -282,14 +295,19 @@ for(iter in 1:niter) {
 		outer(rep(1, times = nobs),xypred[,2]))^2 )
 	Dist_pp = as.matrix(dist(xypred))
 
+	# starting values for spatial random effects
+	m1 = glm(y ~ x_1*x_2, data = sim_data[sim_data$obspred == 'obs',], 
+		family="poisson")
+	# use signed values of log of absolute values of residuals
+	w_start = ((resid(m1) < 0)*-1 + (resid(m1) > 0)*1)*log(abs(resid(m1)))
 	#initial covariance parameters values for optim
 	theta = log(c(1,1))
 	# undebug(logLik_Laplace)
 	# optimize for covariance parameters
-	optout = optim(theta, logLik_Laplace, stepsize = stepsize, # method = 'BFGS',
+	optout = optim(theta, logLik_Laplace, stepsize = 1, # method = 'BFGS',
 		y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp)
 
-  pred_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = stepsize, 
+  pred_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 1, 
 		Xp = Xp, dist_op = dist_op, dist_pp = dist_pp)
 	est_beta_w_out = pred_out
   w_true = sim_data$w_true[sim_data$obspred == 'pred']
@@ -299,7 +317,7 @@ for(iter in 1:niter) {
 	cbind(w_true, pred_out$w_pred, pred_out$w_se)
 	plot(w_true, pred_out$w_pred)
 	# compare standard errors when using only covbeta versus the corrected one
-	store[[iter]] = 
+#	store[[iter]] = 
 	data.frame(True = betas, betahat = est_beta_w_out$betahat, 
 		SE_corrected = sqrt(diag(est_beta_w_out$covbetaHM)), 
 		CI90_corr = est_beta_w_out$betahat - 
@@ -319,13 +337,13 @@ for(iter in 1:niter) {
 		bias_pred = bias_pred,
 		cover_pred = cover_pred
 	)
-	exp(optout$par)
+exp(optout$par)
 
 }
 cat("\n")
 end_time = Sys.time()
 difftime(end_time, start_time)
-#  save(store,file = 'store.rda')
+#  save(store,file = 'store.r)da')
 #  load('store.rda')
 
 i = 1

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  20 NOV 2022 12:18
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  22 NOV 2022 21:04
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -317,123 +317,66 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
+LaTeX Font Info:    Trying to load font information for U+msa on input line 80.
 
-Package natbib Warning: Citation `NelderEtAl1972GeneralizedLinearModels370' on 
-page 1 undefined on input line 57.
-
-
-Package natbib Warning: Citation `wedderburn_quasi-likelihood_1974' on page 1 u
-ndefined on input line 57.
-
-
-Package natbib Warning: Citation `McCullaghEtAl1989GeneralizedLinearModels' on 
-page 1 undefined on input line 57.
-
-
-Package natbib Warning: Citation `NelderEtAl1972GeneralizedLinearModels370' on 
-page 1 undefined on input line 59.
-
-
-Package natbib Warning: Citation `McCullaghEtAl1989GeneralizedLinearModels' on 
-page 1 undefined on input line 59.
-
-
-Package natbib Warning: Citation `breslow_approximate_1993' on page 1 undefined
- on input line 59.
-
-
-Package natbib Warning: Citation `GotwayEtAl1997GeneralizedLinearModel157' on p
-age 1 undefined on input line 59.
-
-
-Package natbib Warning: Citation `DiggleEtAl1998ModelbasedGeostatisticsDisc299'
- on page 1 undefined on input line 59.
-
-
-Package natbib Warning: Citation `Besag1974SpatialInteractionStatistical192' on
- page 1 undefined on input line 61.
-
-
-Package natbib Warning: Citation `Cressie1993StatisticsSpatialData' on page 1 u
-ndefined on input line 61.
-
-
-Package natbib Warning: Citation `clayton_empirical_1987' on page 1 undefined o
-n input line 63.
-
-
-Package natbib Warning: Citation `lunn_winbugs-bayesian_2000' on page 1 undefin
-ed on input line 63.
-
-
-Package natbib Warning: Citation `breslow_approximate_1993' on page 1 undefined
- on input line 65.
-
-
-Package natbib Warning: Citation `WolfingerEtAl1993GeneralizedLinearMixed233' o
-n page 1 undefined on input line 65.
-
-
-Package natbib Warning: Citation `christensen_monte_2004' on page 1 undefined o
-n input line 67.
-
-
-Package natbib Warning: Citation `evangelou_estimation_2011' on page 1 undefine
-d on input line 67.
-
-
-Package natbib Warning: Citation `bonat_practical_2016' on page 1 undefined on 
-input line 67.
-
-
-Package natbib Warning: Citation `bonat_practical_2016' on page 1 undefined on 
-input line 67.
-
-LaTeX Font Info:    Trying to load font information for U+msa on input line 82.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 82.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 80.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Trying to load font information for U+rsfs on input line 82
+LaTeX Font Info:    Trying to load font information for U+rsfs on input line 80
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 ) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
-
-LaTeX Warning: Reference `eq:m2LLmargMLE' on page 4 undefined on input line 204
-.
-
-
-LaTeX Warning: Reference `eq:ll_plus_C' on page 4 undefined on input line 218.
-
-Runaway definition?
-->
-./section_spglm.tex:229: TeX capacity exceeded, sorry [main memory size=5000000
-].
-\bm@add ...mand #1}\xdef \bm@command {\the \toks@ 
-                                                  }\endgroup \bm@expand 
-l.229 ...\boldsymbol{\Sigma}_{\boldsymbol{\btheta}
-                                                  }^{-1}\mathbf{X})^{-1}\mat...
-If you really absolutely need more capacity,
-you can ask a wizard to enlarge me.
-
- 
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5]
+<figures/sglm_likelihood_estimation.pdf, id=37, 754.82pt x 652.4375pt>
+File: figures/sglm_likelihood_estimation.pdf Graphic file (type pdf)
+<use figures/sglm_likelihood_estimation.pdf>
+Package pdftex.def Info: figures/sglm_likelihood_estimation.pdf  used on input 
+line 283.
+(pdftex.def)             Requested size: 375.80542pt x 324.83414pt.
+ [6] [7 <./figures/SGLM_likelihood_estimation.pdf>] [8] (./section_spglm.bbl [9
+]) [10] (./section_spglm.aux) ) 
 Here is how much of TeX's memory you used:
- 5579 strings out of 481239
- 71683 string characters out of 5920377
- 5000001 words of memory out of 5000000
- 20760 multiletter control sequences out of 15000+600000
- 550875 words of font info for 87 fonts, out of 8000000 for 9000
+ 5653 strings out of 481239
+ 74017 string characters out of 5920377
+ 287261 words of memory out of 5000000
+ 20823 multiletter control sequences out of 15000+600000
+ 551748 words of font info for 91 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 33i,7n,61p,1668b,177s stack positions out of 5000i,500n,10000p,200000b,80000s
-./section_spglm.tex:229:  ==> Fatal error occurred, no output PDF file produced
-!
+ 30i,12n,31p,1668b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/m
+nsymbol/MnSymbolS.enc}{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.e
+nc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolE.enc}{/usr/
+share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolD.enc}{/usr/share/tex
+live/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolF.enc}{/usr/share/texlive/texm
+f-dist/fonts/enc/dvips/mnsymbol/MnSymbolC.enc}</usr/share/texlive/texmf-dist/fo
+nts/type1/public/mnsymbol/MnSymbol12.pfb></usr/share/texlive/texmf-dist/fonts/t
+ype1/public/mnsymbol/MnSymbol8.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmbx6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmbx8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+mi12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pf
+b></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texmf/fonts/type1/public/c
+m-super/sfrm1200.pfb>
+Output written on section_spglm.pdf (10 pages, 257668 bytes).
+PDF statistics:
+ 123 PDF objects out of 1000 (max. 8388607)
+ 92 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+

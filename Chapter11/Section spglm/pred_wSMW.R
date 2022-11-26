@@ -1,4 +1,4 @@
-pred_wSMW = function(theta, y, X, Hdist, autocor_fun,stepsize, 
+pred_wSMW = function(theta, y, X, dist_ok, kernel_fun, stepsize, 
 	Xp = NULL, dist_op = NULL, dist_pp = NULL)
 {
 # after optimizing for covariance parameters, we need betahat and w's
@@ -13,7 +13,8 @@ pred_wSMW = function(theta, y, X, Hdist, autocor_fun,stepsize,
 	w = rep(0, times = n)
 
 	# covariance matrix
-	CovMat = gam_1*autocor_fun(Hdist,gam_2) + gam_0*diag(n)
+	Z_ok = kernel_fun(dist_ok, gam_2)
+	CovMat = gam_1*Z_ok %*% t(Z_ok) + gam_0*diag(n)
 	# inverse of covariance matrix
 	CovMati = solve(CovMat)
 	# covariance matrix of fixed effects
