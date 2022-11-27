@@ -21,3 +21,9 @@ rho_rat = function(H,gamma_2)
 {
 	1/(1+(H/gamma_2)^2)
 }
+
+# Epanechnikov kernel function
+kern_epi = function(H, gamma_2)
+{
+	(1 - (H/gamma_2)^2)*(H/gamma_2 < 1)
+}

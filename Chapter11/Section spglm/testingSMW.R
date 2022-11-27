@@ -43,7 +43,6 @@ xypred = sim_data[sim_data$obspred == 'pred',c('xcoord','ycoord')]
 npred = dim(xypred)[1]
 nobs = dim(xyobs)[1]
 
-epikern = function(dist, gam_2) 1 - (dist/gam_2)^2*(dist < gam_2)
 
 set.seed(2021)
 nknots = 80
@@ -107,15 +106,55 @@ layout(1)
 theta = log(c(1,1))
 # optimize for covariance parameters
 # undebug(logLik_Laplace)
-optout = optim(theta, logLik_LaplaceSMW, # method = 'BFGS',
+optout = optim(theta, logLik_LaplaceRB, # method = 'BFGS',
 	y = y, X = X, dist_ok = dist_ok, kernel_fun = epikern, stepsize = 1)
 # covariance parameters
 exp(optout$par)
 # set theta as the optimized parameters on log scale
 theta = optout$par
 
-logLik_LaplaceSMW(theta + .1, y = y, X = X, dist_ok = dist_ok, 
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#   Test Speed
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+betas = c(2, 0, 0, 0)
+gammas = c(1, 1, 0.0001)
+sim_data = simSGLM_wExpl(500^2, autocor_fun = kern_epi, betas = betas,
+	gammas = gammas, loc_type = 'grid', pred = FALSE, 
+	autocorr_type = 'radialbasis', nknots = 80)
+xyobs = sim_data[sim_data$obspred == 'obs',c('xcoord','ycoord')]
+xypred = sim_data[sim_data$obspred == 'pred',c('xcoord','ycoord')]
+npred = dim(xypred)[1]
+nobs = dim(xyobs)[1]
+
+nknots = 40
+knots = kmeans(xyobs, nknots)$centers
+dist_ok = as.matrix(pdist(xyobs, knots))
+
+# create design matrix for observed data
+X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
+
+# get observed values
+y = sim_data[sim_data$obspred == 'obs','y']
+
+theta = c(0,0)
+start_time = Sys.time()
+logLik_LaplaceRB(theta, y = y, X = X, dist_ok = dist_ok, 
 	kernel_fun = epikern, stepsize = 1)
+end_time = Sys.time()
+difftime(end_time, start_time)
+
+start_time = Sys.time()
+logLik_LaplaceSMW(theta, y = y, X = X, dist_ok = dist_ok, 
+	kernel_fun = kern_epi, stepsize = .0001)
+end_time = Sys.time()
+difftime(end_time, start_time)
+
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------

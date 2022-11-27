@@ -1,8 +1,8 @@
-simSGLM_wExpl = function(n, autocor_fun, betas, gammas, pred = TRUE, type = 'random')
+simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
+	autocorr_type = 'covariance', autocor_fun = rho_exp,
+	nknots = NULL)
 {
-	# set sample size
-	# n = 200
-	if(type == 'grid') {
+	if(loc_type == 'grid') {
 		ndim = round(sqrt(n),0)
 		xycoord = data.frame(x = kronecker(((1:ndim) - 0.5)/ndim, 
 			rep(1, times = ndim)), y = kronecker(rep(1, times = ndim), 
@@ -18,7 +18,7 @@ simSGLM_wExpl = function(n, autocor_fun, betas, gammas, pred = TRUE, type = 'ran
 			nall = n + dim(pgrid)[1]
 		}
 	}
-	if(type == 'random') {
+	if(loc_type == 'random') {
 		# set mindist to a small number
 		mindist = 1e-32
 		# simulate coordinates while minimum distance is too small
@@ -54,21 +54,30 @@ simSGLM_wExpl = function(n, autocor_fun, betas, gammas, pred = TRUE, type = 'ran
 	# choose some true covariance parameters for simulation
 	# gammas = c(1, 1, 0.0001)
 
-	# create true covariance matrix
-	Hdist = as.matrix(dist(xycoord))
-	Sig_true = gammas[1]*autocor_fun(Hdist,gammas[2]) + 
-			gammas[3]*diag(nall)
-	# check the correlation matrix
-	cor_true = (1/sqrt(diag(Sig_true)))*t((1/sqrt(diag(Sig_true)))*Sig_true)
-	cor_true[1:5,1:5]
-
-	# cholesky of true covariance matrix
-	Sig_chol = t(chol(Sig_true))
-	# create true w's for simulating data
-	w_true = X %*% betas + Sig_chol %*% rnorm(nall)
-	# simulate y conditional on w's
-	y = rpois(nall, lambda = exp(w_true))
-
+	if(autocorr_type == 'covariance') {
+		# create true covariance matrix
+		Hdist = as.matrix(dist(xycoord))
+		Sig_true = gammas[1]*autocor_fun(Hdist,gammas[2]) + 
+				gammas[3]*diag(nall)
+		# check the correlation matrix
+		cor_true = (1/sqrt(diag(Sig_true)))*t((1/sqrt(diag(Sig_true)))*Sig_true)
+		cor_true[1:5,1:5]
+		# cholesky of true covariance matrix
+		Sig_chol = t(chol(Sig_true))
+		# create true w's for simulating data
+		w_true = X %*% betas + Sig_chol %*% rnorm(nall)
+		# simulate y conditional on w's
+		y = rpois(nall, lambda = exp(w_true))
+	}
+	if(autocorr_type == 'radialbasis') {
+		knots = kmeans(xycoord, nknots)$centers
+		# distance between observed locations and knots
+		Z_dist = as.matrix(pdist(xycoord, knots))
+		# create w values as linear combination of kernel distances
+		w_true = gammas[1]*kern_epi(Z_dist, gammas[2]) %*% rnorm(nknots) + 0.0001
+		# simulate y conditional on w's
+		y = rpois(nall, lambda = exp(w_true))
+	}
 	obspred = rep('obs', times = nall)
 	if(pred == TRUE) obspred = c(rep('obs', times = n), 
 		rep('pred', times = nall - n))

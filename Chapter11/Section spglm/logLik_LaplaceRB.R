@@ -1,5 +1,5 @@
 logLik_LaplaceRB = function(theta, y, X, dist_ok, kernel_fun, stepsize = 1,
-	w_start = NULL)
+	maxiter = 50)
 {
 	if(max(theta) > 10) return(1e+30)
 	gam_1 = exp(theta[1])
@@ -8,10 +8,7 @@ logLik_LaplaceRB = function(theta, y, X, dist_ok, kernel_fun, stepsize = 1,
 	gam_0 = 0.0001
 	n = length(y)
 	# starting values for w
-	if(is.null(w_start)) {
-		w = rep(0, times = n) } else {
-		w = w_start
-	}
+	w = rep(0, times = n) 
 	
 	# covariance matrix
 	Z_ok = kernel_fun(dist_ok, gam_2)
@@ -32,7 +29,7 @@ logLik_LaplaceRB = function(theta, y, X, dist_ok, kernel_fun, stepsize = 1,
 	niter = 0
 #	browser()
 #	for(i in 1:30) {
-	while(wdiffmax > 1e-8 & niter < 50) {
+	while(wdiffmax > 1e-8 & niter < maxiter) {
 		niter = niter + 1
 		# the gradient vector
 		g =  y - exp(w) - mPtheta %*% w
@@ -62,7 +59,3 @@ logLik_LaplaceRB = function(theta, y, X, dist_ok, kernel_fun, stepsize = 1,
 	return(as.numeric(Likelihood))
 }
 
-SMWx = function(AinvX, AinvU, Cinv, U, X)
-{
-	AinvX - AinvU %*% solve((Cinv + t(AinvU) %*% U), t(AinvU) %*% X)
-}
