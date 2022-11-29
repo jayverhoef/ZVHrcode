@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter5/Section 5.6/'
+sec_path = 'Rcode/Chapter5/Section 5.5/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(sp)
@@ -14,19 +14,20 @@ source('distGeoAni.R')
 #-------------------------------------------------------------------------------
 
 #create systematic grid of points
-xy = pointSimSyst(nrow = 40, ncol = 40, lower.x.lim = 0, upper.x.lim = 1, 
-    lower.y.lim = 0, upper.y.lim = 1) 
-   
+xy = data.frame(
+	x = (kronecker(1:40, rep(1, times = 40)) - 0.5)/40, 
+	y = (kronecker(rep(1, times = 40), 1:40) - 0.5)/40 )
+	
 #create distance matrix 
-dismat = distGeoAni(xy$x, xy$y, xy$x, xy$y, rotate = 90, range = .5, minorp = 1)
+dismat = as.matrix(dist(xy))
 #create covariance matrix
-covmat = corModelExponential(dismat) + diag(rep(0.000001, times = 40*40))
+covmat = exp(-dismat/0.5) + diag(rep(0.000001, times = 40*40))
 #eigen decomposition
 eig_covmat = eigen(covmat)
 
 #make a plot of eigenvalue, and map eigenvectors spatially
 # make coordinates for image plot
-x = (1:40)/40 - .05
+x = ((1:40) - .5)/40
 y = x
 # pick a set of 25 eigenvectors to plot
 evecset = c(1, 2, 3, 4, 5,
@@ -36,7 +37,7 @@ evecset = c(1, 2, 3, 4, 5,
 	1596, 1597, 1598, 1599, 1600 )
 # number of color classes
 nbrks = 20
-file_name = "Eigval_bg"
+file_name = "figures/Eigval_bg"
 pdf(file = paste0(file_name,'.pdf'), width = 10, height = 10)
   oldpar = par(mar = c(5,5,1,1))
   plot(sqrt(eig_covmat$values), pch = 19, cex = 1, cex.axis = 1.5, cex.lab = 2,
