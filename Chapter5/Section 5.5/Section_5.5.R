@@ -5,10 +5,7 @@ library(sp)
 library(viridis)
 library(classInt)
 library(spmodel)
-
-source('pointSimSyst.R')
-source('corModels.R')
-source('distGeoAni.R')
+library(xtable)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -47,10 +44,10 @@ nbrks = 20
 
 file_name = "figures/Eigval_bg"
 
-pdf(file = paste0(file_name,'.pdf'), width = 10, height = 10)
+pdf(file = paste0(file_name,'.pdf'), width = 8, height = 8)
   oldpar = par(mar = c(5,5,1,1))
-  plot(sqrt(eig_covmat$values), pch = 19, cex = 1, cex.axis = 1.5, cex.lab = 2,
-  xlab = 'index', ylab = 'Square Root of Eigenvalue')
+  plot(sqrt(eig_covmat$values), pch = 19, cex = 2, cex.axis = 2, cex.lab = 2.5,
+  xlab = 'Index', ylab = 'Square Root of Eigenvalue')
   par(oldpar)
 dev.off()
 

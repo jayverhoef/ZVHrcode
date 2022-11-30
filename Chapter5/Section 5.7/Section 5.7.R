@@ -1,7 +1,6 @@
 sec_path = 'Rcode/Chapter5/Section 5.7/'
 setwd(paste0(SLEDbook_path,sec_path))
 
-library(spmodel)
 library(xtable)
 
 #-------------------------------------------------------------------------------
