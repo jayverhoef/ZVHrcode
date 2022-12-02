@@ -152,7 +152,7 @@ datawcar = data.frame(as.data.frame(xy), z = SigmaWCAR.chol%*%rnorm(400,0,1))
 # simulate WCAR dataset
 datasma = data.frame(as.data.frame(xy), z = SigmaSMA.chol%*%rnorm(400,0,1))
 
-file_name = "SimAutoreg"
+file_name = "figures/SimAutoreg"
 
 pdf(paste0(file_name,'.pdf'), width = 8, height = 11)   
 

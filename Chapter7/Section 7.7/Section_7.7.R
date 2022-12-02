@@ -159,7 +159,7 @@ for(i in 1:dim(nborpairsusa)[1]){
 }
 
 
-file_name = "MargCorrSMA"
+file_name = "figures/MargCorrSMA"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 11)   
 

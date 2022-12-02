@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter5/Section 5.5/'
+sec_path = 'Rcode/Chapter5/Section 5.6/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 #-------------------------------------------------------------------------------

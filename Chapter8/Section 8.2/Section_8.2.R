@@ -4,9 +4,363 @@ setwd(paste0(SLEDbook_path,sec_path))
 
 library(xtable)
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                 ML and REML Estimation Comparison
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+# Set up a small example of n=K^2 sites on a KxK square grid with unit spacing
+K <- 8
+locxy <- cbind(rep(1:K,K), rep(1:K, each = K))
+n <- K^2
+theta <- 0.5
+
+# Define a covariance structure on the grid: an exponential covariance function with correlation theta at
+# unit distance
+d = as.matrix(dist(cbind(locxy)))
+Gtrue = theta^d
+
+# Set up the model matrix: I, constant but unknown mean; II, row effects; III, row and column effects
+int1 <- matrix(1, n, 1)
+
+X1 <- int1
+p1 <- 1
+# row effects
+X2 <- diag(K)%x%matrix(1,K,1)
+p2 <- 8
+# column effects
+Xa <- diag(K)%x%matrix(1,K,1)
+Xb <- matrix(1,K,1)%x%diag(K)
+Xb <- Xb[,1:K-1]
+X3 <- cbind(Xa,Xb)
+p3 <- 15
+
+# Create the orthogonal projection matrix onto the column space of X
+P1 <- X1 %*% solve(t(X1) %*% X1) %*% t(X1)
+
+# Simulate response from an SLM, with true intercept equal to 1, and evaluate the log-liklihood function at 
+# values of theta from 0.001 to 0.999 (by 0.001).
+mle1 <- matrix(0, 100, 2)
+remle1 <- matrix(0, 100, 2)
+hybrid1 <- matrix(0, 100, 2)
+count1 <- 0
+mle2 <- matrix(0, 100, 2)
+remle2 <- matrix(0, 100, 2)
+hybrid2 <- matrix(0, 100, 2)
+count2 <- 0
+mle3 <- matrix(0, 100, 4)
+remle3 <- matrix(0, 100, 4)
+hybrid3 <- matrix(0, 100, 2)
+count3 <- 0
+Gilist = vector('list', length = 999)
+Gdlist = vector('list', length = 999)
+for(m in 1:999) Gilist[[m]] = solve((m/1000)^d)
+for(m in 1:999) Gdlist[[m]] = -0.5*log(det((m/1000)^d))
+tcholGtrue = t(chol(Gtrue))
+
+set.seed(406)
+for(k in 1:100){
+	cat("\r", "iteration: ", k)
+	y1 <- int1 + tcholGtrue %*% rnorm(n)
+	Qlist = lapply(Gilist,function(Ginv){Ginv - Ginv %*% X1 %*% solve(t(X1) %*% 
+		Ginv %*% X1) %*% t(X1) %*% Ginv})
+	s2est = unlist(lapply(Qlist, function(Q){t(y1) %*% Q %*% y1}))
+	Lvec =
+		unlist(lapply(Qlist, function(Q){-(n/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(Gdlist)
+	LRvec = 
+		unlist(lapply(Qlist, function(Q){-((n - p1)/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(lapply(Gilist, function(Ginv){-0.5*log(det(t(X1) %*% Ginv %*% X1))})) + 
+		unlist(Gdlist)
+	mle1[k,1] = which(Lvec == max(Lvec))/1000
+	mle1[k,2] = s2est[which(Lvec == max(Lvec))]/n
+	mle1[k,3] = width[which(Lvec == max(Lvec))]/n
+	remle1[k,1] = which(LRvec == max(LRvec))/1000
+	remle1[k,2] = s2est[which(LRvec == max(LRvec))]/(n - p1)
+	hybrid1[k,] = remle1[k,]
+	if(remle1[k,1]==0.999){
+		hybrid1[k,1] <- mle1[k,1] 
+		hybrid1[k,2] <- mle1[k,2] 
+		count1 <- count1+1
+	}
+
+}
+
+set.seed(407)
+for(k in 1:100){
+	cat("\r", "iteration: ", k)
+	y1 <- int1 + tcholGtrue %*% rnorm(n)
+	Qlist = lapply(Gilist,function(Ginv){Ginv - Ginv %*% X2 %*% solve(t(X2) %*% 
+		Ginv %*% X2) %*% t(X2) %*% Ginv})
+	s2est = unlist(lapply(Qlist, function(Q){t(y1) %*% Q %*% y1}))
+	Lvec =
+		unlist(lapply(Qlist, function(Q){-(n/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(Gdlist)
+	LRvec = 
+		unlist(lapply(Qlist, function(Q){-((n - p2)/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(lapply(Gilist, function(Ginv){-0.5*log(det(t(X2) %*% Ginv %*% X2))})) + 
+		unlist(Gdlist)
+	mle2[k,1] = which(Lvec == max(Lvec))/1000
+	mle2[k,2] = s2est[which(Lvec == max(Lvec))]/n
+	remle2[k,1] = which(LRvec == max(LRvec))/1000
+	remle2[k,2] = s2est[which(LRvec == max(LRvec))]/(n - p2)
+	hybrid2[k,] = remle2[k,]
+	if(remle2[k,1]==0.999){
+		hybrid2[k,1] <- mle2[k,1] 
+		hybrid2[k,2] <- mle2[k,2] 
+		count2 <- count2+1
+	}
+}
+
+set.seed(408)
+for(k in 1:100){
+	cat("\r", "iteration: ", k)
+	y1 <- int1 + tcholGtrue %*% rnorm(n)
+	Qlist = lapply(Gilist,function(Ginv){Ginv - Ginv %*% X3 %*% solve(t(X3) %*% 
+		Ginv %*% X3) %*% t(X3) %*% Ginv})
+	s2est = unlist(lapply(Qlist, function(Q){t(y1) %*% Q %*% y1}))
+	Lvec =
+		unlist(lapply(Qlist, function(Q){-(n/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(Gdlist)
+	LRvec = 
+		unlist(lapply(Qlist, function(Q){-((n - p3)/2)*log(t(y1) %*% Q %*% y1)})) + 
+		unlist(lapply(Gilist, function(Ginv){-0.5*log(det(t(X3) %*% Ginv %*% X3))})) + 
+		unlist(Gdlist)
+	mle3[k,1] = which(Lvec == max(Lvec))/1000
+	mle3[k,2] = s2est[which(Lvec == max(Lvec))]/n
+	remle3[k,1] = which(LRvec == max(LRvec))/1000
+	remle3[k,2] = s2est[which(LRvec == max(LRvec))]/(n - p3)
+	hybrid3[k,] = remle3[k,]
+	if(remle3[k,1]==0.999){
+		hybrid3[k,1] <- mle3[k,1] 
+		hybrid3[k,2] <- mle3[k,2] 
+		count3 <- count3 + 1
+	}
+}
+
+
+rbind(
+	c(mean(mle1[,2] - 1.0),
+		mean(remle1[,2] - 1.0),
+		mean(hybrid1[,2] - 1.0),
+		mean(mle1[,1] - 0.5),
+		mean(remle1[,1] - 0.5),
+		mean(hybrid1[,1] - 0.5)
+	),
+	c(mean(mle2[,2] - 1.0),
+		mean(remle2[,2] - 1.0),
+		mean(hybrid2[,2] - 1.0),
+		mean(mle2[,1] - 0.5),
+		mean(remle2[,1] - 0.5),
+		mean(hybrid2[,1] - 0.5)
+	),
+	c(mean(mle3[,2] - 1.0),
+		mean(remle3[,2] - 1.0),
+		mean(hybrid3[,2] - 1.0),
+		mean(mle3[,1] - 0.5),
+		mean(remle3[,1] - 0.5),
+		mean(hybrid3[,1] - 0.5)
+	)
+)
+
+rbind(
+	c(
+		mean((mle1[,2] - 1.0)^2),
+		mean((remle1[,2] - 1.0)^2),
+		mean((hybrid1[,2] - 1.0)^2),
+		mean((mle1[,1] - 0.5)^2),
+		mean((remle1[,1] - 0.5)^2),
+		mean((hybrid1[,1] - 0.5)^2)
+	),
+	c(
+		mean((mle2[,2] - 1.0)^2),
+		mean((remle2[,2] - 1.0)^2),
+		mean((hybrid2[,2] - 1.0)^2),
+		mean((mle2[,1] - 0.5)^2),
+		mean((remle2[,1] - 0.5)^2),
+		mean((hybrid2[,1] - 0.5)^2)
+	),
+	c(
+		mean((mle3[,2] - 1.0)^2),
+		mean((remle3[,2] - 1.0)^2),
+		mean((hybrid3[,2] - 1.0)^2),
+		mean((mle3[,1] - 0.5)^2),
+		mean((remle3[,1] - 0.5)^2),
+		mean((hybrid3[,1] - 0.5)^2)
+	)
+)
+
+library(spmodel)
+
+# Set up a small example of n=K^2 sites on a KxK square grid with unit spacing
+K <- 12
+locxy <- cbind(rep(1:K,K), rep(1:K, each = K))
+n <- K^2
+theta <- 0.5
+
+# Define a covariance structure on the grid: an exponential covariance function with correlation theta at
+# unit distance
+d = as.matrix(dist(cbind(locxy)))
+Gtrue = theta^d
+tcholGtrue = t(chol(Gtrue))
+
+# ----------------------------- Intercept Only ---------------------------------
+
+mle1 <- matrix(0, 1000, 4)
+remle1 <- matrix(0, 1000, 4)
+set.seed(506)
+for(k in 1:1000){
+	cat("\r", "iteration: ", k)
+	# simulate data, all true regression coefficients are zero
+	y1 <- 0 + tcholGtrue %*% rnorm(n)
+	# create data.frame for spmodel
+	DF = data.frame(y = y1, xcoord = locxy[,1], ycoord = locxy[,2])
+	# ------- ML ESTIMATION
+	# fit model using spmodel, holding nugget effect at zero
+	fitout = splm(y ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'ml')
+	# estimated range parameter
+	mle1[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	# estimated variance parameter
+	mle1[k,2] = coef(fitout, type = 'spcov')['de']
+	# average estimated 90% confidebce interval width
+	mle1[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	# 90% confidebce interval coverage (of true zero value)
+	mle1[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+	# ------- REML ESTIMATION
+	fitout = splm(y ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'reml')
+	remle1[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	remle1[k,2] = coef(fitout, type = 'spcov')['de']
+	remle1[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	remle1[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+}
+
+mean(mle1[,2] - 1.0)
+mean(remle1[,2] - 1.0)
+mean(mle1[,1] - 0.5)
+mean(remle1[,1] - 0.5)
+	
+mean((mle1[,2] - 1.0)^2)
+mean((remle1[,2] - 1.0)^2)
+mean((mle1[,1] - 0.5)^2)
+mean((remle1[,1] - 0.5)^2)
+
+mean(mle1[,3])
+mean(remle1[,3])
+mean(mle1[,4])
+mean(remle1[,4])
+
+# ----------------------------- Row Effects ------------------------------------
+
+mle2 <- matrix(0, 1000, 4)
+remle2 <- matrix(0, 1000, 4)
+set.seed(507)
+for(k in 1:1000){
+	cat("\r", "iteration: ", k)
+	# simulate data, all true regression coefficients are zero
+	y1 <- 0 + tcholGtrue %*% rnorm(n)
+	# create data.frame for spmodel
+	DF = data.frame(y = y1, xcoord = locxy[,1], ycoord = locxy[,2])
+	# ------- ML ESTIMATION
+	# fit model using spmodel, holding nugget effect at zero
+	fitout = splm(y ~ I(as.factor(xcoord)), data = DF, 
+		xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'ml')
+	# estimated range parameter
+	mle2[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	# estimated variance parameter
+	mle2[k,2] = coef(fitout, type = 'spcov')['de']
+	# average estimated 90% confidebce interval width
+	mle2[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	# 90% confidebce interval coverage (of true zero value)
+	mle2[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+	# ------- REML ESTIMATION
+	fitout = splm(y ~ I(as.factor(xcoord)), data = DF, 
+		xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'reml')
+	remle2[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	remle2[k,2] = coef(fitout, type = 'spcov')['de']
+	remle2[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	remle2[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+}
+
+mean(mle2[,2] - 1.0)
+mean(remle2[,2] - 1.0)
+mean(mle2[,1] - 0.5)
+mean(remle2[,1] - 0.5)
+	
+mean((mle2[,2] - 1.0)^2)
+mean((remle2[,2] - 1.0)^2)
+mean((mle2[,1] - 0.5)^2)
+mean((remle2[,1] - 0.5)^2)
+
+mean(mle2[,3])
+mean(remle2[,3])
+mean(mle2[,4])
+mean(remle2[,4])
+
+# ---------------------- Row and Column Effects --------------------------------
+
+mle3 <- matrix(0, 1000, 4)
+remle3 <- matrix(0, 1000, 4)
+set.seed(508)
+for(k in 1:1000){
+	cat("\r", "iteration: ", k)
+	# simulate data, all true regression coefficients are zero
+	y1 <- 0 + tcholGtrue %*% rnorm(n)
+	# create data.frame for spmodel
+	DF = data.frame(y = y1, xcoord = locxy[,1], ycoord = locxy[,2])
+	# ------- ML ESTIMATION
+	# fit model using spmodel, holding nugget effect at zero
+	fitout = splm(y ~ I(as.factor(xcoord)) + I(as.factor(ycoord)), data = DF, 
+		xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'ml')
+	# estimated range parameter
+	mle3[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	# estimated variance parameter
+	mle3[k,2] = coef(fitout, type = 'spcov')['de']
+	# average estimated 90% confidebce interval width
+	mle3[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	# 90% confidebce interval coverage (of true zero value)
+	mle3[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+	# ------- REML ESTIMATION
+	fitout = splm(y ~ I(as.factor(xcoord)) + I(as.factor(ycoord)), data = DF, 
+		xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'reml')
+	remle3[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	remle3[k,2] = coef(fitout, type = 'spcov')['de']
+	remle3[k,3] = mean(summary(fitout)$coefficients$fixed[,'Std_Error']*2*1.645)
+	remle3[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
+}
+
+mean(mle3[,2] - 1.0)
+mean(remle3[,2] - 1.0)
+mean(mle3[,1] - 0.5)
+mean(remle3[,1] - 0.5)
+	
+mean((mle3[,2] - 1.0)^2)
+mean((remle3[,2] - 1.0)^2)
+mean((mle3[,1] - 0.5)^2)
+mean((remle3[,1] - 0.5)^2)
+
+mean(mle3[,3])
+mean(remle3[,3])
+mean(mle3[,4])
+mean(remle3[,4])
+
 ################################################################################
 #-------------------------------------------------------------------------------
-#              ML versus REML for Chapter 8
+#          ML versus REML for Chapter 8 Jay's Investigations
 #-------------------------------------------------------------------------------
 ################################################################################
 

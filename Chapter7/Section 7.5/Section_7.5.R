@@ -81,7 +81,7 @@ for(i in 1:dim(nborpairs6)[1]){
 	}
 }
 
-file_name = "MargCorrBinaryWts"
+file_name = "figures/MargCorrBinaryWts"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 11)   
 
@@ -197,7 +197,7 @@ for(i in 1:dim(nborpairs6)[1]){
 	}
 }
 
-file_name = "MargCorrRowStandWts"
+file_name = "figures/MargCorrRowStandWts"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 11)   
 
@@ -311,7 +311,7 @@ for(i in 1:dim(nborpairsusa)[1]){
 	}
 }
 
-file_name = "MargCorrUSA"
+file_name = "figures/MargCorrUSA"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 11)   
 

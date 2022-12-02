@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter6/Section 6.5/figures/'
+sec_path = 'Rcode/Chapter6/Section 6.5/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(gstat)
@@ -9,7 +9,7 @@ library(gstat)
 #-------------------------------------------------------------------------------
 ################################################################################
 
-file_name = "Semivariograms"
+file_name = "figures/Semivariograms"
 
 pdf(paste0(file_name,'.pdf'), width = 11, height = 8.5)
 

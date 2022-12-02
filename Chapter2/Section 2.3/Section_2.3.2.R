@@ -15,8 +15,8 @@ library(xtable)
 file_name = "figures/toy5box"
 pdf(paste0(file_name,'.pdf'), height = 7, width = 7)
 
-		x <- c(2.5,1.5,2.5,3.5,3.5)
-		y <- c(3.5,2.5,2.5,2.5,1.5)
+		x <- c(2.5, 1.5, 2.5, 3.5, 3.5)
+		y <- c(3.5, 2.5, 2.5, 2.5, 1.5)
 		labs = c(1,2,3,4,5)
 		par(mar = c(5,5,5,1))
 		plot(c(1,4),c(1,4),type = 'n',xlab="",ylab="",xaxt = 'n', yaxt = 'n',
