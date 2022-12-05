@@ -3,6 +3,7 @@ sec_path = 'Rcode/Chapter8/Section 8.2/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(xtable)
+library(spmodel)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ P1 <- X1 %*% solve(t(X1) %*% X1) %*% t(X1)
 # Simulate response from an SLM, with true intercept equal to 1, and evaluate the log-liklihood function at 
 # values of theta from 0.001 to 0.999 (by 0.001).
 mle1 <- matrix(0, 100, 2)
-remle1 <- matrix(0, 100, 2)
+remle1 <- matrix(0, 100, 4)
 hybrid1 <- matrix(0, 100, 2)
 count1 <- 0
 mle2 <- matrix(0, 100, 2)
@@ -77,16 +78,20 @@ for(k in 1:100){
 		unlist(Gdlist)
 	mle1[k,1] = which(Lvec == max(Lvec))/1000
 	mle1[k,2] = s2est[which(Lvec == max(Lvec))]/n
-	mle1[k,3] = width[which(Lvec == max(Lvec))]/n
 	remle1[k,1] = which(LRvec == max(LRvec))/1000
 	remle1[k,2] = s2est[which(LRvec == max(LRvec))]/(n - p1)
-	hybrid1[k,] = remle1[k,]
+	DF = data.frame(y = y1, xcoord = locxy[,1], ycoord = locxy[,2])
+	fitout = splm(y ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,
+		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
+		estmethod = 'reml')
+	remle1[k,3] = exp(-1/coef(fitout, type = 'spcov')['range'])
+	remle1[k,4] = coef(fitout, type = 'spcov')['de']
+	hybrid1[k,] = remle1[k,1:2]
 	if(remle1[k,1]==0.999){
 		hybrid1[k,1] <- mle1[k,1] 
 		hybrid1[k,2] <- mle1[k,2] 
 		count1 <- count1+1
 	}
-
 }
 
 set.seed(407)
@@ -143,13 +148,13 @@ for(k in 1:100){
 
 
 rbind(
-	c(mean(mle1[,2] - 1.0),
-		mean(remle1[,2] - 1.0),
+	round(c(mean(mle1[,2] - 1.0),
+		mean(remle1[,4] - 1.0),
 		mean(hybrid1[,2] - 1.0),
 		mean(mle1[,1] - 0.5),
-		mean(remle1[,1] - 0.5),
+		mean(remle1[,2] - 0.5),
 		mean(hybrid1[,1] - 0.5)
-	),
+	), 2),
 	c(mean(mle2[,2] - 1.0),
 		mean(remle2[,2] - 1.0),
 		mean(hybrid2[,2] - 1.0),
@@ -167,14 +172,14 @@ rbind(
 )
 
 rbind(
-	c(
+	round(c(
 		mean((mle1[,2] - 1.0)^2),
-		mean((remle1[,2] - 1.0)^2),
+		mean((remle1[,4] - 1.0)^2),
 		mean((hybrid1[,2] - 1.0)^2),
 		mean((mle1[,1] - 0.5)^2),
-		mean((remle1[,1] - 0.5)^2),
+		mean((remle1[,3] - 0.5)^2),
 		mean((hybrid1[,1] - 0.5)^2)
-	),
+	), 3),
 	c(
 		mean((mle2[,2] - 1.0)^2),
 		mean((remle2[,2] - 1.0)^2),
@@ -241,26 +246,25 @@ for(k in 1:1000){
 	remle1[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
 }
 
-mean(mle1[,2] - 1.0)
-mean(remle1[,2] - 1.0)
-mean(mle1[,1] - 0.5)
-mean(remle1[,1] - 0.5)
-	
-mean((mle1[,2] - 1.0)^2)
-mean((remle1[,2] - 1.0)^2)
-mean((mle1[,1] - 0.5)^2)
-mean((remle1[,1] - 0.5)^2)
-
-mean(mle1[,3])
-mean(remle1[,3])
-mean(mle1[,4])
+round(c(mean(mle1[,2] - 1.0),
+mean(remle1[,2] - 1.0),
+mean(mle1[,1] - 0.5),
+mean(remle1[,1] - 0.5),
+mean((mle1[,2] - 1.0)^2),
+mean((remle1[,2] - 1.0)^2),
+mean((mle1[,1] - 0.5)^2),
+mean((remle1[,1] - 0.5)^2),
+mean(mle1[,3]),
+mean(remle1[,3]),
+mean(mle1[,4]),
 mean(remle1[,4])
+),3)
 
 # ----------------------------- Row Effects ------------------------------------
 
 mle2 <- matrix(0, 1000, 4)
 remle2 <- matrix(0, 1000, 4)
-set.seed(507)
+set.seed(607)
 for(k in 1:1000){
 	cat("\r", "iteration: ", k)
 	# simulate data, all true regression coefficients are zero
@@ -292,20 +296,19 @@ for(k in 1:1000){
 	remle2[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
 }
 
-mean(mle2[,2] - 1.0)
-mean(remle2[,2] - 1.0)
-mean(mle2[,1] - 0.5)
-mean(remle2[,1] - 0.5)
-	
-mean((mle2[,2] - 1.0)^2)
-mean((remle2[,2] - 1.0)^2)
-mean((mle2[,1] - 0.5)^2)
-mean((remle2[,1] - 0.5)^2)
-
-mean(mle2[,3])
-mean(remle2[,3])
-mean(mle2[,4])
+round(c(mean(mle2[,2] - 1.0),
+mean(remle2[,2] - 1.0),
+mean(mle2[,1] - 0.5),
+mean(remle2[,1] - 0.5),
+mean((mle2[,2] - 1.0)^2),
+mean((remle2[,2] - 1.0)^2),
+mean((mle2[,1] - 0.5)^2),
+mean((remle2[,1] - 0.5)^2),
+mean(mle2[,3]),
+mean(remle2[,3]),
+mean(mle2[,4]),
 mean(remle2[,4])
+),3)
 
 # ---------------------- Row and Column Effects --------------------------------
 
@@ -343,20 +346,19 @@ for(k in 1:1000){
 	remle3[k,4] = mean(summary(fitout)$coefficients$fixed[,'p'] > 0.1)
 }
 
-mean(mle3[,2] - 1.0)
-mean(remle3[,2] - 1.0)
-mean(mle3[,1] - 0.5)
-mean(remle3[,1] - 0.5)
-	
-mean((mle3[,2] - 1.0)^2)
-mean((remle3[,2] - 1.0)^2)
-mean((mle3[,1] - 0.5)^2)
-mean((remle3[,1] - 0.5)^2)
-
-mean(mle3[,3])
-mean(remle3[,3])
-mean(mle3[,4])
+round(c(mean(mle3[,2] - 1.0),
+mean(remle3[,2] - 1.0),
+mean(mle3[,1] - 0.5),
+mean(remle3[,1] - 0.5),
+mean((mle3[,2] - 1.0)^2),
+mean((remle3[,2] - 1.0)^2),
+mean((mle3[,1] - 0.5)^2),
+mean((remle3[,1] - 0.5)^2),
+mean(mle3[,3]),
+mean(remle3[,3]),
+mean(mle3[,4]),
 mean(remle3[,4])
+),3)
 
 ################################################################################
 #-------------------------------------------------------------------------------

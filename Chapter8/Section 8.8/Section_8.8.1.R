@@ -6,205 +6,145 @@ setwd(paste0(SLEDbook_path,sec_path))
 #                         Get the Data
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-
 # attach data library
 library(ZVHdata)
-library(sp)
+library(sf)
 library(viridis)
 library(classInt)
-library(colorspace)
-library(spdep)
-library(Matrix)
-library(xtable)
 library(spmodel)
-library(vioplot)
 library(numDeriv)
-source('addBreakColorLegend.R')
-
+library(xtable)
+#library(colorspace)
 # load data for graphics and analysis
-data(sealPolys)
-seals_sf = st_as_sf(sealPolys)
-seals_sf$stockname = as.factor(as.character(seals_sf$stockname))
+data(SO4obs)
 
-################################################################################
-#-------------------------------------------------------------------------------
-#                    Create Neighborhood Matrices
-#-------------------------------------------------------------------------------
-################################################################################
 
-nTot = length(sealPolys)
-nObs = sum(!is.na(sealPolys$Estimate))
-nMiss = nTot - nObs
-
-# a function to create matrix from lists and numbers of neighbors
-Neighmat <- function(adj, num, n)
-{
-	N.mat <- matrix( 0, nrow = n, ncol = n )
-	k <- 1
-	for (i in 1:n){
-		if(num[i] > 0) {
-				N.mat[i,adj[[i]]] <- 1
-			}
-		}
-	N.mat
-}
-
-# use spdep to find touching neighors, and then add rest manually
-Nlist = poly2nb(sealPolys, snap = 2000)
-Nlist[[79]] = as.integer(c(211, 463))
-Nlist[[211]] = as.integer(c(Nlist[[211]]), 79)
-Nlist[[463]] = as.integer(c(Nlist[[463]]), 79)
-Nlist[[130]] = as.integer(302)
-Nlist[[302]] = as.integer(c(Nlist[[302]],130))
-Nlist[[325]] = as.integer(c(326, 353))
-Nlist[[326]] = as.integer(c(Nlist[[326]],325))
-Nlist[[353]] = as.integer(c(Nlist[[353]],325))
-Nlist[[435]] = as.integer(437)
-Nlist[[437]] = as.integer(c(Nlist[[437]],435))
-Nlist[[436]] = as.integer(c(86, 88))
-Nlist[[86]] = as.integer(c(Nlist[[86]],436))
-Nlist[[88]] = as.integer(c(Nlist[[88]],436))
-Nlist[[437]] = as.integer(87)
-Nlist[[87]] = as.integer(c(Nlist[[87]],437))
-Nlist[[438]] = as.integer(436)
-Nlist[[436]] = as.integer(c(Nlist[[436]],438))
-Nlist[[439]] = as.integer(346)
-Nlist[[346]] = as.integer(c(Nlist[[346]],439))
-Nlist[[443]] = as.integer(281)
-Nlist[[281]] = as.integer(c(Nlist[[281]],443))
-Nlist[[463]] = as.integer(79)
-attr(Nlist,'polyid') = as.factor(as.character(sealPolys@data$polyid))
-attr(Nlist,'stockid') = as.factor(as.character(sealPolys@data$stockid))
-num = lapply(Nlist, function(x) length(x))
-num = unlist(num)
-Nmat = Neighmat(Nlist, num, length(num))
-Nmat1 = pmax(Nmat,t(Nmat))
-Nmat2 = (((Nmat1 %*% Nmat1 > 0)*1 + Nmat1) > 0)*1 - diag(dim(Nmat1)[1])
-Nmat3 = (((Nmat2 %*% Nmat1 > 0)*1 + Nmat2) > 0)*1 - diag(dim(Nmat1)[1])
-Nmat4 = (((Nmat3 %*% Nmat1 > 0)*1 + Nmat3) > 0)*1 - diag(dim(Nmat1)[1])
-Nmat5 = (((Nmat4 %*% Nmat1 > 0)*1 + Nmat4) > 0)*1 - diag(dim(Nmat1)[1])
-Nmat6 = (((Nmat5 %*% Nmat1 > 0)*1 + Nmat5) > 0)*1 - diag(dim(Nmat1)[1])
-
-polycentroids = st_coordinates(st_centroid(seals_sf$geometry))
-rownames(polycentroids) = rownames(seals_sf)
-distMat = as.matrix(dist(polycentroids))/1000
+# from Section 3.6, remove the outlers and use sqrt of response
+SO4clean = SO4obs[!(1:dim(SO4obs)[1] %in% c(146,153,173)),]
+xy = st_coordinates(SO4clean)
+xyo = st_coordinates(SO4obs)
+# change spatial coordinates to 1000km units, rather than meters
+# we will be making polynomials on the coordinates, and such large values can
+# cause computer overflows and loss of precision
+DF = data.frame(y = sqrt(SO4clean$SO4), easting = xy[,1]/1e+6, 
+	northing = xy[,2]/1e+6)
+# original data that includes outliers
+DFo = data.frame(y = sqrt(SO4obs$SO4), easting = xyo[,1]/1e+6, 
+	northing = xyo[,2]/1e+6)
 
 
 ################################################################################
 #-------------------------------------------------------------------------------
-#                  CAR and SAR Likelihoods
+#         Fit Models as Series of Polynomials, Order 0 to 5
+#         Covariance Structure is Independence and Exponential Model
+#         Spatial Fitting Methods are MLE and REMLE
 #-------------------------------------------------------------------------------
 ################################################################################
 
-# reproduce parts of Figure 5 in Ver Hoef et al. 2018
-# investigate CAR versus SAR, and row-standardized versus binary weights
+# Independence Models
+lm_0 = splm(y ~ 1, data = DF, estmethod = 'ml',
+	xcoord = easting, ycoord = northing, spcov_type = "none")
+lm_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DF, 
+	spcov_type = "none", estmethod = 'ml')
+lm_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF, 
+	spcov_type = "none", estmethod = 'ml')
+lm_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DF, 
+	spcov_type = "none", estmethod = 'ml')
+lm_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DF, 
+	spcov_type = "none", estmethod = 'ml')
+lm_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DF, 
+	spcov_type = "none", estmethod = 'ml')
 
-formulas = c(Estimate ~ 1, Estimate ~ stockname)
-Ws = list(Nmat1, Nmat2, Nmat4)
-formlabs = c('m','X')
-Wlabs = c('1','2','4')
-mods = c('car','sar')
-rowstand = c(TRUE, FALSE)
-store_results = matrix(nrow = 24, ncol = 7)
-ii = 0
-for(i in 1:2) {
-	for(j in 1:3) {
-		for(k in 1:2) {
-			for(m in 1:2) {
-				spfit = spautor( data = seals_sf, estmethod = 'ml', 
-						control = list(reltol = 1e-7),
-						formulas[[i]], 
-						W = Ws[[j]], 
-						spcov_type = mods[k],
-						row_st = rowstand[m] )
-				ii = ii + 1
-				store_results[ii,1] = 3*(i - 1) + j
-				store_results[ii,2] = i
-				store_results[ii,3] = j
-				store_results[ii,4] = k
-				store_results[ii,5] = m
-				store_results[ii,6] = -2*logLik(spfit)
-				store_results[ii,7] = AIC(spfit)
-			}
-		}
-	}
-}
-# fix AIC results
-store_results[1:12,7] = store_results[1:12,6] + 6
-store_results[13:24,7] = store_results[13:24,6] + 14
-store_results[1:12,1] = store_results[1:12,1] + 1
-store_results[13:24,1] = store_results[13:24,1] + 2
-lmout_m = splm(Estimate ~ 1, data = seals_sf, spcov_type = 'none', 
-	estmeth = 'ml')
-lmout_X = splm(Estimate ~ stockname, data = seals_sf, spcov_type = 'none', 
-	estmeth = 'ml')
-store_jitter = store_results
-store_jitter[,1] = store_jitter[,1] + ((1:4) - 2.5)/10
+# Spatial Exponential Models Estimated with ML and REMLE
+sp_ml_0 = splm(y ~ 1, data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
 
-file_name = "Seals_m2LL_AIC"
-pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
+# Spatial Exponential Models Estimated with ML and REMLE
+sp_reml_0 = splm(y ~ 1, data = DF, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
 
-	layout(matrix(1:2, nrow = 1))
-	labs = c('m0', 'm1','m2', 'm4', 'X0','X1', 'X2', 'X4')
-	sar_col = '#4daf4a'
-	car_col = '#e41a1c'
-	padj = 0
-	adj = -.2
-	cex_mtext = 3.2
-	cex_all = 1.8
-	par(mar = c(5,5,4,1))
-	plot(store_jitter[,c(1,6)], xlim = c(.9, max(store_jitter[,1]) + .1),
-		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
-			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
-		type = 'n', xlab = '', xaxt = 'n',
-		ylab = expression("-2"*italic(L)(bold(theta)~";"~bold(y))), cex.lab = 2, cex.axis = 1.5)
-	points(1, -2*logLik(lmout_m), pch = 19, cex = cex_all)
-	points(5, -2*logLik(lmout_X), pch = 19, cex = cex_all)
-	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
-	points(store_jitter[ind,1],store_jitter[ind,6], col = car_col, 
-		pch = 15, cex = cex_all)
-	ind = store_jitter[,4] == 1 & store_jitter[,5] == 2
-	points(store_jitter[ind,1],store_jitter[ind,6], col = car_col, 
-		pch = 19, cex = cex_all)
-	ind = store_jitter[,4] == 2 & store_jitter[,5] == 1
-	points(store_jitter[ind,1],store_jitter[ind,6], col = sar_col, 
-		pch = 15, cex = cex_all)
-	ind = store_jitter[,4] == 2 & store_jitter[,5] == 2
-	points(store_jitter[ind,1],store_jitter[ind,6], col = sar_col, 
-		pch = 19, cex = cex_all)
-	axis(1, at = 1:8, labels = labs, las = 1, cex.axis = 1.5)
-	legend(4.3,-338, legend = 
-		c('Independence','CAR unstandardized','CAR row-standard',
-			'SAR unstandardized','SAR row-standard'),
-		pch = c(19, 19, 15, 19, 15), col = c('black',car_col, car_col,
-			sar_col, sar_col), cex = 1.3)
-	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
+# loglikelihood
+m2ll_indep = c(-2*logLik(lm_0), -2*logLik(lm_1), -2*logLik(lm_2),
+	-2*logLik(lm_3), -2*logLik(lm_4), -2*logLik(lm_5))
+m2ll_spatial = c(-2*logLik(sp_ml_0), -2*logLik(sp_ml_1), -2*logLik(sp_ml_2),
+	-2*logLik(sp_ml_3), -2*logLik(sp_ml_4), -2*logLik(sp_ml_5))
 
-	par(mar = c(5,5,4,1))
-	plot(store_jitter[,c(1,6)], xlim = c(1, max(store_jitter[,1])),
-		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
-			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
-		type = 'n', xlab = '', xaxt = 'n',
-		ylab = 'AIC', cex.lab = 2, cex.axis = 1.5)
-	points(1, AIC(lmout_m), pch = 19, cex = cex_all)
-	points(5, AIC(lmout_X), pch = 19, cex = cex_all)
-	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
-	points(store_jitter[ind,1],store_jitter[ind,7], col = car_col, 
-		pch = 15, cex = cex_all)
-	ind = store_jitter[,4] == 1 & store_jitter[,5] == 2
-	points(store_jitter[ind,1],store_jitter[ind,7], col = car_col, 
-		pch = 19, cex = cex_all)
-	ind = store_jitter[,4] == 2 & store_jitter[,5] == 1
-	points(store_jitter[ind,1],store_jitter[ind,7], col = sar_col, 
-		pch = 15, cex = cex_all)
-	ind = store_jitter[,4] == 2 & store_jitter[,5] == 2
-	points(store_jitter[ind,1],store_jitter[ind,7], col = sar_col, 
-		pch = 19, cex = cex_all)
-	axis(1, at = 1:8, labels = labs, las = 1, cex.axis = 1.5)
-	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
-	
-	layout(1)
+# AIC
+AIC_indep = c(AIC(lm_0), AIC(lm_1), AIC(lm_2), 
+	AIC(lm_3), AIC(lm_4), AIC(lm_5))
+AIC_spatial = c(AIC(sp_ml_0), AIC(sp_ml_1), AIC(sp_ml_2), 
+	AIC(sp_ml_3), AIC(sp_ml_4), AIC(sp_ml_5))
 
+# BIC
+BIC_indep = 
+	c(-2*logLik(lm_0) + (length(coef(lm_0)) + 1)*log(dim(DF)[1]), 
+	-2*logLik(lm_1) + (length(coef(lm_1)) + 1)*log(dim(DF)[1]), 
+	-2*logLik(lm_2) + (length(coef(lm_2)) + 1)*log(dim(DF)[1]), 
+	-2*logLik(lm_3) + (length(coef(lm_3)) + 1)*log(dim(DF)[1]),  
+	-2*logLik(lm_4) + (length(coef(lm_4)) + 1)*log(dim(DF)[1]), 
+	-2*logLik(lm_5) + (length(coef(lm_5)) + 1)*log(dim(DF)[1]) )
+BIC_spatial = 
+	c(-2*logLik(sp_ml_0) + (length(coef(sp_ml_0)) + 3)*log(dim(DF)[1]), 
+	-2*logLik(sp_ml_1) + (length(coef(sp_ml_1)) + 3)*log(dim(DF)[1]),  
+	-2*logLik(sp_ml_2) + (length(coef(sp_ml_2)) + 3)*log(dim(DF)[1]), 
+	-2*logLik(sp_ml_3) + (length(coef(sp_ml_3)) + 3)*log(dim(DF)[1]),  
+	-2*logLik(sp_ml_4) + (length(coef(sp_ml_4)) + 3)*log(dim(DF)[1]),  
+	-2*logLik(sp_ml_5) + (length(coef(sp_ml_5)) + 3)*log(dim(DF)[1]) )
+		
+# plot them
+file_name = "figures/SO4_AIC"
+pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
+	old.par = par(mar = c(5,5,1,1))
+	plot(0:5, AIC_indep, ylim = c(230, 500), type = 'l', lwd = 3, 
+		xlab = 'Order of Polynomial', ylab = '-2loglikelihood or AIC or BIC', cex.axis = 1.5, cex.lab = 2)
+	points(0:5, AIC_indep, pch = 19, cex = 3)
+	lines(0:5, m2ll_indep,lty = 1, lwd = 3)
+	points(0:5, m2ll_indep, pch = 17, cex = 3)
+	lines(0:5, BIC_indep,lty = 1, lwd = 3)
+	points(0:5, BIC_indep, pch = 15, cex = 3)
+	lines(0:5, AIC_spatial,lty = 2, lwd = 3)
+	points(0:5, AIC_spatial, pch = 21, cex = 3)
+	lines(0:5, m2ll_spatial,lty = 2, lwd = 3)
+	points(0:5, m2ll_spatial, pch = 24, cex = 3)
+	lines(0:5, BIC_spatial,lty = 2, lwd = 3)
+	points(0:5, BIC_spatial, pch = 22, cex = 3)
+	legend(2.9, 500, legend = 
+		c('Indep m2LL','Indep AIC','Indep BIC',
+		'Spatial m2LL', 'Spatial AIC', 'Spatial BIC'), lty = c(1,1,1,2,2,2), 
+		lwd = 2, pch = c(17, 19, 15, 24, 21, 22), cex = 2)
+	par(old.par)
 dev.off()
 
 system(paste0('pdfcrop ','\'',SLEDbook_path,
@@ -215,151 +155,335 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
 
+################################################################################
+#-------------------------------------------------------------------------------
+#         Fit Models as Series of Polynomials, Order 0 to 5
+#         Covariance Structure is Independence and Exponential Model
+#         Spatial Fitting Methods are MLE and REMLE
+#         Original data without outliers removed
+#-------------------------------------------------------------------------------
+################################################################################
+
+# Independence Models
+lm_0 = splm(y ~ 1, data = DFo, estmethod = 'ml',
+	xcoord = easting, ycoord = northing, spcov_type = "none")
+lm_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DFo, 
+	spcov_type = "none", estmethod = 'ml')
+lm_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DFo, 
+	spcov_type = "none", estmethod = 'ml')
+lm_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DFo, 
+	spcov_type = "none", estmethod = 'ml')
+lm_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DFo, 
+	spcov_type = "none", estmethod = 'ml')
+lm_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DFo, 
+	spcov_type = "none", estmethod = 'ml')
+
+# Spatial Exponential Models Estimated with ML and REMLE
+sp_ml_0 = splm(y ~ 1, data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+sp_ml_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'ml')
+
+# Spatial Exponential Models Estimated with ML and REMLE
+sp_reml_0 = splm(y ~ 1, data = DFo, 
+	xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_1 = splm(y ~ poly(easting, northing, degree = 1, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_2 = splm(y ~ poly(easting, northing, degree = 2, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_4 = splm(y ~ poly(easting, northing, degree = 4, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_5 = splm(y ~ poly(easting, northing, degree = 5, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+
+# loglikelihood
+m2ll_indep = c(-2*logLik(lm_0), -2*logLik(lm_1), -2*logLik(lm_2),
+	-2*logLik(lm_3), -2*logLik(lm_4), -2*logLik(lm_5))
+m2ll_spatial = c(-2*logLik(sp_ml_0), -2*logLik(sp_ml_1), -2*logLik(sp_ml_2),
+	-2*logLik(sp_ml_3), -2*logLik(sp_ml_4), -2*logLik(sp_ml_5))
+
+# AIC
+AIC_indep = c(AIC(lm_0), AIC(lm_1), AIC(lm_2), 
+	AIC(lm_3), AIC(lm_4), AIC(lm_5))
+AIC_spatial = c(AIC(sp_ml_0), AIC(sp_ml_1), AIC(sp_ml_2), 
+	AIC(sp_ml_3), AIC(sp_ml_4), AIC(sp_ml_5))
+
+# BIC
+BIC_indep = 
+	c(-2*logLik(lm_0) + (length(coef(lm_0)) + 1)*log(dim(DFo)[1]), 
+	-2*logLik(lm_1) + (length(coef(lm_1)) + 1)*log(dim(DFo)[1]), 
+	-2*logLik(lm_2) + (length(coef(lm_2)) + 1)*log(dim(DFo)[1]), 
+	-2*logLik(lm_3) + (length(coef(lm_3)) + 1)*log(dim(DFo)[1]),  
+	-2*logLik(lm_4) + (length(coef(lm_4)) + 1)*log(dim(DFo)[1]), 
+	-2*logLik(lm_5) + (length(coef(lm_5)) + 1)*log(dim(DFo)[1]) )
+BIC_spatial = 
+	c(-2*logLik(sp_ml_0) + (length(coef(sp_ml_0)) + 3)*log(dim(DFo)[1]), 
+	-2*logLik(sp_ml_1) + (length(coef(sp_ml_1)) + 3)*log(dim(DFo)[1]),  
+	-2*logLik(sp_ml_2) + (length(coef(sp_ml_2)) + 3)*log(dim(DFo)[1]), 
+	-2*logLik(sp_ml_3) + (length(coef(sp_ml_3)) + 3)*log(dim(DFo)[1]),  
+	-2*logLik(sp_ml_4) + (length(coef(sp_ml_4)) + 3)*log(dim(DFo)[1]),  
+	-2*logLik(sp_ml_5) + (length(coef(sp_ml_5)) + 3)*log(dim(DFo)[1]) )
+		
+# plot them
+file_name = "figures/SO4_AIC_orig"
+pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
+	old.par = par(mar = c(5,5,1,1))
+	plot(0:5, AIC_indep, ylim = c(300, 550), type = 'l', lwd = 3, 
+		xlab = 'Order of Polynomial', ylab = '-2loglikelihood or AIC or BIC', cex.axis = 1.5, cex.lab = 2)
+	points(0:5, AIC_indep, pch = 19, cex = 3)
+	lines(0:5, m2ll_indep,lty = 1, lwd = 3)
+	points(0:5, m2ll_indep, pch = 17, cex = 3)
+	lines(0:5, BIC_indep,lty = 1, lwd = 3)
+	points(0:5, BIC_indep, pch = 15, cex = 3)
+	lines(0:5, AIC_spatial,lty = 2, lwd = 3)
+	points(0:5, AIC_spatial, pch = 21, cex = 3)
+	lines(0:5, m2ll_spatial,lty = 2, lwd = 3)
+	points(0:5, m2ll_spatial, pch = 24, cex = 3)
+	lines(0:5, BIC_spatial,lty = 2, lwd = 3)
+	points(0:5, BIC_spatial, pch = 22, cex = 3)
+	legend(2.9, 550, legend = 
+		c('Indep m2LL','Indep AIC','Indep BIC',
+		'Spatial m2LL', 'Spatial AIC', 'Spatial BIC'), lty = c(1,1,1,2,2,2), 
+		lwd = 2, pch = c(17, 19, 15, 24, 21, 22), cex = 2)
+	par(old.par)
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+# ---------- Fit 3rd Order Model with and without outliers
+
+sp_reml_3o = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), 
+	data = DFo, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+sp_reml_3 = splm(y ~ poly(easting, northing, degree = 3, raw = TRUE), 
+	data = DF, xcoord = easting, ycoord = northing, spcov_type = "exponential",
+	estmethod = 'reml')
+
+coef(sp_reml_3o, type = 'spcov')
+coef(sp_reml_3, type = 'spcov')
+pseudoR2(sp_reml_3o)
+pseudoR2(sp_reml_3)
+
 
 ################################################################################
 #-------------------------------------------------------------------------------
-#          Likelihood Surface and Profile Likelihood
+#        Visualize Profiled Likelihood for Autocorrelation Parameters
 #-------------------------------------------------------------------------------
 ################################################################################
 
-spfit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
-	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE )
-summary(spfit)
-
-#set grids sequences and dimensions
+#set grids sequences and dimensions for all plots
 seqs = seq(-1,1,by = 0.05)
 grid_dim = length(seqs)
 
-# create a sequence of values to try for range and partial sill
-de_seq = log(coef(spfit, type = "spcov")['de']) + .2*seqs
-de_seq = exp(de_seq)
-range_seq = 0.99*(seqs + 1)/2
+# Model A
+corModel = 'circular'
 
+# inital covariance values using REMLE
+splmfitA = splm(y ~ 1, 
+	data = DF, xcoord = easting, ycoord = northing, 
+	spcov_type = corModel, estmethod = 'reml')
+summary(splmfitA)
+# create a sequence of values to try for range and partial sill
+de_seqA = log(coef(splmfitA, type = "spcov")['de']) + 3*seqs
+range_seqA = log(coef(splmfitA, type = "spcov")['range']) + 3*seqs
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+# empty matrix to store results
 zA = matrix(NA, nrow = grid_dim, ncol = grid_dim)
 for(i in 1:grid_dim) {
 	for(j in 1:grid_dim) {
-		spautorout = spautor(
-			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
-			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
-			spcov_initial = spcov_initial(spcov_type = 'car', 
-				de = de_seq[i], range = range_seq[j],
-				known = c('de','range'))
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = corModel, 
+				de = exp(de_seqA[i]), range = exp(range_seqA[j]), 
+				ie = coef(splmfitA, type = "spcov")['ie'],
+				known = c('de','range','ie'))
 		)	
-		zA[i,j] = logLik(spautorout)
+		zA[i,j] = logLik(splmout)
 	}
 }
 
-store_range = rep(NA, times = grid_dim)
-for(i in 1:grid_dim) {
-		spautorout = spautor(
-			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
-			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
-			spcov_initial = spcov_initial(spcov_type = 'car', 
-				range = range_seq[i],
-				known = c('range'))
-		)	
-	store_range[i] = logLik(spautorout)
-}
-
-store_de = rep(NA, times = grid_dim)
-for(i in 1:grid_dim) {
-		spautorout = spautor(
-			Estimate ~ stockname, data = seals_sf, estmethod = 'reml',
-			control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE,
-			spcov_initial = spcov_initial(spcov_type = 'car', 
-				de = de_seq[i],
-				known = c('de'))
-		)	
-	store_de[i] = logLik(spautorout)
-}
-
-# use profile likelihood to get confidence interval on autocorrelation parameter	
-minrhoindx = min(which(2*store_range > 
-	(2*logLik(spfit) - qchisq(0.95, df = 1))))
-maxrhoindx = max(which(2*store_range > 
-	(2*logLik(spfit) - qchisq(0.95, df = 1))))
-
-# linear interpolation for bounds of confidence interval
-lo_range = mean(range_seq[minrhoindx],range_seq[minrhoindx-1])
-up_range = mean(range_seq[maxrhoindx],range_seq[maxrhoindx+1])
-lo_range
-up_range
-
-# use profile likelihood to get confidence interval on variance parameter	
-minsigindx = min(which(2*store_de > 
-	(2*logLik(spfit) - qchisq(0.95, df = 1))))
-maxsigindx = max(which(2*store_de > 
-	(2*logLik(spfit) - qchisq(0.95, df = 1))))
-
-# linear interpolation for bounds of confidence interval
-lo_sig = mean(de_seq[minsigindx],de_seq[minsigindx-1])
-up_sig = mean(de_seq[maxsigindx],de_seq[maxsigindx+1])
-lo_sig
-up_sig
-
-file_name = 'Seals_logLik'
-#pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
-tiff(paste0(file_name,'.tiff'), width = 960, height = 480)
-
-	padj = -.5
-	adj = -.17
-	cex_mtext = 3.3
-	cex_lab = 3.5
-	cex_axis = 2
-	
-	layout(matrix(c(1,1,2,2,
-									1,1,3,3), nrow = 2, byrow = TRUE))
 	nbrks = 20
 	brks = quantile(zA, probs = (0:nbrks)/nbrks)
 	cramp = viridis(nbrks)
-	par(mar = c(7,7,5,2), mgp=c(4, 1.3, 0))
-	image(de_seq, range_seq, zA, breaks = brks, col = cramp,
-		cex.main = 2, xlab = '', ylab = expression(rho),
-		cex.axis = cex_axis, cex.lab = cex_lab)
-	title(xlab = expression(sigma^2), line = 5, cex.lab = cex_lab)
-	points(coef(spfit, type = "spcov")['de'], 
-		coef(spfit, type = "spcov")['range'], 
-		pch = 19, cex = 2.5, col = 'black')
-	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
+	image(de_seqA, range_seqA, zA, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(range)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitA, type = "spcov")['de']), 
+		log(coef(splmfitA, type = "spcov")['range']), 
+		pch = 19, cex = 2, col = 'white')
 
-	cex_lab = 2.7
-	adj = -.13
+corModel = 'spherical'
 
-	par(mar = c(6,9,5,1), mgp=c(4, 1.3, 0))
-	plot(de_seq,2*store_de, type = 'l', lwd = 3, 
-		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~hat(rho),bold(y))), 
-		cex.lab = cex_lab, cex.axis = cex_axis)
-	points(coef(spfit, type = "spcov")['de'], 2*logLik(spfit), pch = 19,
-		cex = 2.5)
-	lines(c(min(de_seq), max(de_seq)), 
-		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
-		lty = 2, lwd = 3)
-	lines(c(lo_sig, up_sig), 
-		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
-		lwd = 7)
-	title(xlab = expression(sigma^2), line = 5, cex.lab = 3)
-	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
+# inital covariance values using REMLE
+splmfitB = splm(y ~ 1, 
+	data = DF, xcoord = easting, ycoord = northing, 
+	spcov_type = corModel, estmethod = 'reml')
+summary(splmfitB)
+
+# create a sequence of values to try for range and partial sill
+
+de_seqB = log(coef(splmfitB, type = "spcov")['de']) + 3*seqs
+range_seqB = log(coef(splmfitB, type = "spcov")['range']) + 3*seqs
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+# empty matrix to store results
+zB = matrix(NA, nrow = grid_dim, ncol = grid_dim)
+for(i in 1:grid_dim) {
+	for(j in 1:grid_dim) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = corModel, 
+				de = exp(de_seqB[i]), range = exp(range_seqB[j]), 
+				ie = coef(splmfitB, type = "spcov")['ie'],
+				known = c('de','range','ie'))
+		)	
+		zB[i,j] = logLik(splmout)
+	}
+}
 
 
-	plot(range_seq,2*store_range, type = 'l', lwd = 3, 
-		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~hat(sigma)^2,bold(y))), 
-		cex.lab = cex_lab, cex.axis = cex_axis)
-	points(coef(spfit, type = "spcov")['range'], 2*logLik(spfit), pch = 19,
-		cex = 2.5)
-	lines(c(-1, 1), rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
-		lty = 2, lwd = 3)
-	lines(c(lo_range, up_range), 
-		rep(2*logLik(spfit) - qchisq(.95, df = 1), times = 2), 
-		lwd = 7)
-	title(xlab = expression(rho), line = 5, cex.lab = 3)
-	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
-		
-	layout(1)
+# Model C
+corModel = 'gaussian'
 
-dev.off()
+# inital covariance values using REMLE
+splmfitC = splm(y ~ 1, 
+	data = DF, xcoord = easting, ycoord = northing, 
+	spcov_type = corModel, estmethod = 'reml')
+
+# create a sequence of values to try for range and partial sill
+de_seqC = log(coef(splmfitC, type = "spcov")['de']) + 3*seqs
+range_seqC = log(coef(splmfitC, type = "spcov")['range']) + seqs
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+# empty matrix to store results
+zC = matrix(NA, nrow = grid_dim, ncol = grid_dim)
+for(i in 1:grid_dim) {
+	for(j in 1:grid_dim) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = corModel, 
+				de = exp(de_seqC[i]), range = exp(range_seqC[j]), 
+				ie = coef(splmfitC, type = "spcov")['ie'],
+				known = c('de','range','ie'))
+		)	
+		zC[i,j] = logLik(splmout)
+	}
+}
+
+
+# Model D
+corModel = 'gravity'
+
+# inital covariance values using REMLE
+splmfitD = splm(y ~ 1, 
+	data = DF, xcoord = easting, ycoord = northing, 
+	spcov_type = corModel, estmethod = 'reml')
+
+# create a sequence of values to try for range and partial sill
+de_seqD = log(coef(splmfitD, type = "spcov")['de']) + 3*seqs
+range_seqD = log(coef(splmfitD, type = "spcov")['range']) + 1.5*seqs
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+# empty matrix to store results
+zD = matrix(NA, nrow = grid_dim, ncol = grid_dim)
+for(i in 1:grid_dim) {
+	for(j in 1:grid_dim) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = corModel, 
+				de = exp(de_seqD[i]), range = exp(range_seqD[j]), 
+				ie = coef(splmfitD, type = "spcov")['ie'],
+				known = c('de','range','ie'))
+		)	
+		zD[i,j] = logLik(splmout)
+	}
+}
+
+file_name = "figures/SO4_Viz_m2LL_covParms"
+
+#pdf(paste0(file_name,'.pdf'), width = 12.5, height = 12.5)
+tiff(paste0(file_name,'.tiff'), width = 720, height = 720)
+
+	padj = -.5
+	adj = -.15
+	dotcol = 'black'
+	layout(matrix(1:4, ncol = 2, byrow = TRUE))
+	old.par = par(mar = c(5,5,5,1))
+
+	nbrks = 20
+	brks = quantile(zA, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	image(de_seqA, range_seqA, zA, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(range)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitA, type = "spcov")['de']), 
+		log(coef(splmfitA, type = "spcov")['range']), 
+		pch = 19, cex = 2, col = dotcol)
+	mtext('A', adj = adj, cex = 3, padj = padj)
+
+	brks = quantile(zB, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	image(de_seqB, range_seqB, zB, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(range)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitB, type = "spcov")['de']), 
+		log(coef(splmfitB, type = "spcov")['range']), 
+		pch = 19, cex = 2, col = dotcol)
+	mtext('B', adj = adj, cex = 3, padj = padj)
+
+	brks = quantile(zC, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	image(de_seqC, range_seqC, zC, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(range)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitC, type = "spcov")['de']), 
+		log(coef(splmfitC, type = "spcov")['range']), 
+		pch = 19, cex = 2, col = dotcol)
+	mtext('C', adj = adj, cex = 3, padj = padj)
+
+	brks = quantile(zD, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	image(de_seqD, range_seqD, zD, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(range)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitD, type = "spcov")['de']), 
+		log(coef(splmfitD, type = "spcov")['range']), 
+		pch = 19, cex = 2, col = dotcol)
+	mtext('D', adj = adj, cex = 3, padj = padj)
+
+	par(old.par)
 	
+dev.off()
+
 system(paste0('tiff2pdf -o','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\' ','\'',SLEDbook_path,
 	sec_path,file_name,'.tiff','\''))
@@ -374,158 +498,52 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
 
+# create a sequence of values to try for range and partial sill
 
-################################################################################
-#-------------------------------------------------------------------------------
-# Hessian, Fisher Information, and Covariance Matrix for Covariance Parameters
-#-------------------------------------------------------------------------------
-################################################################################
-
-spfit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
-	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE )
-theta = coef(spfit, type = 'spcov')
-
-# ---------------------- Analytical Approach ----------------------------
-
-# create the covariance matrix and take its inverse
-D = diag(apply(Nmat4,1,sum))
-DW = D - theta['range']*Nmat4
-DWi = solve(DW)
-Vi = DW/theta['de']
-V = theta['de']*DWi
-A = -theta['de']*DWi %*% Nmat4 %*% DWi
-		
-# compute Fisher Information element by element using trace formula
-FI = matrix(rep(NA, times = 4), nrow = 2)
-FI[1,1] = sum(diag(Vi %*% DWi %*% Vi %*% DWi))
-FI[1,2] = FI[2,1] = sum(diag(Vi %*% DWi %*% Vi %*% A))
-FI[2,2] = sum(diag(Vi %*% A %*% Vi %*% A))
-FI = 0.5*FI
-asycov = solve(FI)
-theta[c('de','range')] - 1.96*sqrt(diag(asycov))
-theta[c('de','range')] + 1.96*sqrt(diag(asycov))
-
-# asymptotic correlation matrix
-diag(1/sqrt(diag(asycov))) %*% asycov %*% diag(1/sqrt(diag(asycov)))
-
-# ---------------------- Numerical Hessian Approach ----------------------------
-
-# a function to return log-likelihood for specified theta
-fixed_parms = function(theta) {
-	#initialize covariance parameters and hold them constant
-	spini = spcov_initial = spcov_initial(spcov_type = 'car', de = theta[1], 
-		range = theta[2], known = c('de','range'))
-	ModelFit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
-		control = list(reltol = 1e-7), W = Nmat4, row_st = TRUE, 
-		spcov_initial = spini)
-	logLik(ModelFit)
+de_seqE = log(coef(splmfitB, type = "spcov")['de']) + seqs
+ie_seqE = log(coef(splmfitB, type = "spcov")['ie']) + seqs
+# compute minus 2 times loglikelihood on a grid around REMLE estimates
+# empty matrix to store results
+zE = matrix(NA, nrow = grid_dim, ncol = grid_dim)
+for(i in 1:grid_dim) {
+	for(j in 1:grid_dim) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = 'spherical', 
+				de = exp(de_seqE[i]), ie = exp(ie_seqE[j]), 
+				range = coef(splmfitB, type = "spcov")['range'],
+				known = c('de','range','ie'))
+		)	
+		zE[i,j] = logLik(splmout)
+	}
 }
-fixed_parms(theta)
-# find numerical Hessian
-FishInf = -hessian(fixed_parms, theta[c(1,3)])
-# asymptotic covariance matrix
-asycov_comp = solve(FishInf)
 
-theta[c('de','range')] - 1.96*sqrt(diag(asycov_comp))
-theta[c('de','range')] + 1.96*sqrt(diag(asycov_comp))
+file_name = "figures/SO4_psillvsnugget"
 
-# asymptotic correlation matrix
-diag(1/sqrt(diag(asycov_comp))) %*% asycov_comp %*% 
-	diag(1/sqrt(diag(asycov_comp)))
+#pdf(paste0(file_name,'.pdf'), width = 8, height = 8)
+tiff(paste0(file_name,'.tiff'), width = 480, height = 480)
 
-################################################################################
-#-------------------------------------------------------------------------------
-#          Nonstationarity
-#-------------------------------------------------------------------------------
-################################################################################
-
-spfit4_rs = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
-	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE)
-rhohat_rs = coef(spfit4_rs, type = 'spcov')['range']
-sig2hat_rs = coef(spfit4_rs, type = 'spcov')['de']
-
-spfit4_un = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'ml', 
-	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = FALSE)
-rhohat_un = coef(spfit4_un, type = 'spcov')['range']
-sig2hat_un = coef(spfit4_un, type = 'spcov')['de']
-
-# create fitted CAR covariance matrix for 4th order neighbors, both
-# row-standardized and unstandardized
-n = dim(Nmat4)[1]
-Sigma_rs = sig2hat_rs*
-    solve(diag(apply(Nmat4,1,sum)) - 
-		rhohat_rs*Nmat4)
-margvar_rs = diag(Sigma_rs)
-plot(apply(Nmat4,1,sum), margvar_rs)
-
-Sigma_un = sig2hat_un*
-    solve(diag(dim(Nmat4)[1]) - 
-		rhohat_un*Nmat4)
-margvar_un = diag(Sigma_un)
-plot(apply(Nmat4,1,sum), margvar_un)
-
-# correlation matrix for Sigma_rs
-Cormat_rs = diag(1/sqrt(diag(Sigma_rs))) %*% Sigma_rs %*%
-	diag(1/sqrt(diag(Sigma_rs)))
-cN1 = Cormat_rs[Nmat1 == 1]
-cN2 = Cormat_rs[Nmat2 - Nmat1 == 1]
-cN3 = Cormat_rs[Nmat3 - Nmat2 == 1]
-cN4 = Cormat_rs[Nmat4 - Nmat3 == 1]
-cN5 = Cormat_rs[Nmat5 - Nmat4 == 1]
-cN6 = Cormat_rs[Nmat6 - Nmat5 == 1]
-
-corNei = rbind(cbind(cN1,1), cbind(cN2,2), cbind(cN3,3), cbind(cN4,4),
-	cbind(cN5,5), cbind(cN6,6)) 
-corNei = data.frame(cor = corNei[,1], ordNei = corNei[,2])
-vioplot(cor ~ ordNei, data = corNei)
-
-dist_cor = data.frame(dist = distMat[upper.tri(distMat)],
-	cor = Cormat_rs[upper.tri(Cormat_rs)])
-plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200) )
-
-file_name = 'Seals_nonstationary'
-#pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
-png(paste0(file_name,'.png'), width = 960, height = 960)
-
-	padj = -.25
-	adj = -.23
-	cex_mtext = 3.5
-	cex_lab = 3.5
-	cex_axis = 2
-	layout(matrix(1:4, nrow = 2, byrow = TRUE))
-	# A
-	par(mar = c(7,7,5,2), mgp=c(4, 1.3, 0))
-	plot(apply(Nmat4,1,sum), margvar_rs, ylab = 'Marginal Variance',
-		xlab = 'Number of Neighbors', cex.lab = cex_lab, 
-		cex.axis = cex_axis, cex = 1.5)
-	mtext('A', adj = adj, cex = cex_mtext, padj = padj)
-	# B
-	plot(apply(Nmat4,1,sum), margvar_un, ylab = 'Marginal Variance',
-		xlab = 'Number of Neighbors', cex.lab = cex_lab, 
-		cex.axis = cex_axis, cex = 1.5)
-	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
-	# C
-	vioplot(cor ~ ordNei, data = corNei, xlab = '',
-		ylab = '', cex.lab = cex_lab+2, cex.axis = cex_axis)
-	title(ylab="Autocorrelation", xlab="Neighbor Order", cex.lab = cex_lab)
-	axis(1, at = 1:4, labels = as.character(1:4), las = 1, cex.axis = cex_axis,
-		cex.lab = cex_lab, xlab = 'Number of')
-	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
-	# D
-	plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200),
-		xlab = 'Distance', ylab = 'Autocorrelation', cex.lab = cex_lab, 
-		cex.axis = cex_axis)
-	mtext('D', adj = adj, cex = cex_mtext, padj = padj)
-
-	layout(1)
-
-dev.off()
+	old.par = par(mar = c(5,5,1,1))
 	
-system(paste0('img2pdf ','\'',SLEDbook_path,
-	sec_path,file_name,'.png','\'', ' -o ', '\'',SLEDbook_path,
-	sec_path,file_name,'.pdf','\''))
+	brks = quantile(zE, probs = (0:nbrks)/nbrks)
+	cramp = viridis(nbrks)
+	image(de_seqE, ie_seqE, zE, breaks = brks, col = cramp,
+		cex.main = 2, xlab = 'log(partial sill)', ylab = 'log(nugget)',
+		cex.axis = 1.5, cex.lab = 2)
+	points(log(coef(splmfitB, type = "spcov")['de']), 
+		log(coef(splmfitB, type = "spcov")['ie']), 
+		pch = 19, cex = 2, col = dotcol)
+
+	par(old.par)
+	
+dev.off()
+
+system(paste0('tiff2pdf -o','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.tiff','\''))
 system(paste0('rm ','\'',SLEDbook_path,
-		sec_path,file_name,'.png','\''))
+		sec_path,file_name,'.tiff','\''))
 
 system(paste0('pdfcrop ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
@@ -537,134 +555,304 @@ system(paste0('rm ','\'',SLEDbook_path,
 
 ################################################################################
 #-------------------------------------------------------------------------------
-#                         Other Models
+# Hessian, Fisher Information, and Covariance Matrix for Covariance Parameters
 #-------------------------------------------------------------------------------
 ################################################################################
 
-# model that allows islands
-# let spmodel determine neighbors by those that share any border
-spautor_3parms = spautor(Estimate ~ stockname, data = seals_sf, 
-	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
-summary(spautor_3parms)
--2*logLik(spautor_3parms)
--2*logLik(spautor_3parms) + 2*5 + 2*3
+asy_se = data.frame(NA, nrow = 7, ncol = 10)
 
-# try a geostatistical model based on centroids
-splm_ml = splm(Estimate ~ stockname, data = seals_sf, 
-	spcov_type = "circular",
-	xcoord = polycentroids$X, ycoord = polycentroids$Y,
-	estmethod = 'ml')
-summary(splm_ml)
--2*logLik(splm_ml)
--2*logLik(splm_ml) + 2*5 + 2*3
+spcov_list = c('exponential', 'spherical','gaussian','gravity',
+	'rquad','magnetic','circular')
+for(i in 1:7) {
+	# pick a model and an estimation method
+	spcov_mod = spcov_list[i]
+	pvec_len = 3
+	estmeth = 'reml'
 
-# try the Tieseldorf weights
-Tdorfsum = apply(Nmat4,1,sum)
-W_Tdorf = (1/sqrt(Tdorfsum))*Nmat4
-K_Tdorf_vec = 1/sqrt(Tdorfsum)
-1/max(eigen(W_Tdorf)$values)
-1/min(eigen(W_Tdorf)$values)
+	#fit the model to obtain the (RE)MLE
+	ModelFit = splm(y ~ 1, 
+		data = DF, xcoord = easting, ycoord = northing, 
+		spcov_type = spcov_mod, estmethod = estmeth,
+		control = list(reltol = 1e-7))
+	summary(ModelFit)
+	theta_reml = coef(ModelFit, type = 'spcov')[1:pvec_len]
+	theta = theta_reml
 
-spautor_Tdorf = spautor(Estimate ~ stockname, data = seals_sf, 
-	estmethod = 'ml', spcov_type = 'car',
-	W = W_Tdorf, M = K_Tdorf_vec, row_st = FALSE)
-summary(spautor_Tdorf)
--2*logLik(spautor_Tdorf)
--2*logLik(spautor_Tdorf) + 2*5 + 2*2
+	# ---------------------- Numerical Hessian Approach --------------------------
 
-################################################################################
-#-------------------------------------------------------------------------------
-#          ANOVA on Fixed Effects
-#-------------------------------------------------------------------------------
-################################################################################
+	# create a function that returns the log-likelihood at any value of the
+	# covariance parameters
+	REML_parms_only = function(theta)
+	{
+		#initialize covariance parameters and hold them constant
+		if(pvec_len == 3) {
+			spini = spcov_initial = spcov_initial(spcov_type = spcov_mod, de = theta[1], 
+				ie = theta[2], range = theta[3], known = c('de','ie','range'))
+		} else {
+			spini = spcov_initial = spcov_initial(spcov_type = spcov_mod, de = theta[1], 
+				ie = theta[2], range = theta[3], extra = theta[4],
+					known = c('de','ie','range','extra'))
+		}
+		# return the log-likelihood for the specified theta value
+		ModelFit = splm(y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, 
+			estmethod = estmeth, spcov_initial = spini )
+			logLik(ModelFit)
+	}
+	# use a numerical method to find the Hessian matrix
+	# observed Fisher Information is the negative Hessian evaluated at (RE)MLE
+	FishInf = -hessian(REML_parms_only, theta_reml)
+	# asymptotic covariance matrix
+	vcov_theta_comp = solve(FishInf)
 
-smry_spautor_3parms = summary(spautor_3parms)
-smry_spautor_3parms
-smry_spautor_3parms$coefficients$fixed
+	# ---------------------- Analytical Approach ----------------------------
 
-# asymptotic marginal test
-anova(spautor_3parms)
+	# get the matrix of all pairwise distances
+	D = as.matrix(dist(cbind(DF$easting,DF$northing)))
+	# create a diagonal matrix with dimension D
+	II = diag(dim(D)[1])
+	# create a matrix of all 1's with dimension D
+	allones = matrix(1, nrow = dim(D)[1], ncol = dim(D)[1])
+	# for models with restricted range
+	Dind = D*(D < theta['range'])
+	# create the spatial correlation matrix
+	if(spcov_mod == 'exponential') R = exp(-D/theta['range'])
+	if(spcov_mod == 'spherical') R = (allones - 1.5*Dind/theta['range'] + 
+		0.5*(Dind/theta['range'])^3)
+	if(spcov_mod == 'gaussian') R = exp(-D/(theta['range'])^2)
+	if(spcov_mod == 'gravity') R = (allones + (D/theta['range'])^2)^(-0.5)
+	if(spcov_mod == 'rquad') R = (allones + (D/theta['range'])^2)^(-1)
+	if(spcov_mod == 'magnetic') R = (allones + (D/theta['range'])^2)^(-1.5)
+	if(spcov_mod == 'circular')  R = 2/pi*(acos(Dind/theta['range']) - 
+		Dind/theta['range']*sqrt(1 - Dind^2/theta['range']^2))
 
-# check it manually
-# intercept
-L = matrix(c(1,0,0,0,0), nrow = 1)
-L
-Chi2 = t(L %*% coef(spautor_3parms)) %*% 
-	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
-	(L %*% coef(spautor_3parms))
-Chi2
-1 - pchisq(Chi2,df = 1)
-#stock
-L = cbind(rep(0, times = 4),  diag(4))
-L
-Chi2 = t(L %*% coef(spautor_3parms)) %*% 
-	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
-	(L %*% coef(spautor_3parms))
-Chi2
-1 - pchisq(Chi2,df = 4)
+	# create the covariance matrix and take its inverse
+	V = theta['de']*R + theta['ie']*II
+	Vi = solve(V)
+	# compute P matrix for REML
+	X = rep(1, times = dim(DF)[1])
+	P = Vi - Vi %*% X %*% solve(t(X) %*% Vi %*% X, t(X)) %*% Vi
 
-# likelihood ratio test
-spautor_3parms_meanonly = spautor(Estimate ~ 1, data = seals_sf, 
-	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
-summary(spautor_3parms_meanonly)
--2*logLik(spautor_3parms_meanonly)
-anova(spautor_3parms_meanonly, spautor_3parms)
-# check it manually
-chi2 = 2*logLik(spautor_3parms) - 2*logLik(spautor_3parms_meanonly)
-chi2
-1-pchisq(chi2, df = 4)
+	# create the derivative matrix
+	if(spcov_mod == 'exponential') A = theta['de']*D*R/theta['range']^2
+	if(spcov_mod == 'spherical') A = -theta['de']*
+		1.5*(Dind^3 - Dind*theta['range']^2)/(theta['range']^4)
+	if(spcov_mod == 'gaussian') A = theta['de']*2*D^2*R/theta['range']^3
+	if(spcov_mod == 'gravity') A = theta['de']*D^2/(theta['range']^3*
+		(D^2/theta['range']^2 + 1)^(1.5))
+	if(spcov_mod == 'rquad') A = theta['de']*(2*D^2*theta['range'])/((theta['range']^2 +
+		(D^2))^(2))
+	if(spcov_mod == 'magnetic') A = theta['de']*3*D^2/(theta['range']^3*
+		(D^2/theta['range']^2 + 1)^(2.5))
+	if(spcov_mod == 'circular') A = theta['de']*2/pi*2*Dind/theta['range']^2*
+		sqrt(1 - Dind^2/theta['range']^2)
 
+	# compute Fisher Information element by element using trace formula
+	FI = matrix(rep(NA, times = 9), nrow = 3)
+	FI[1,1] = sum(diag(P %*% R %*% P %*% R))
+	FI[1,2] = FI[2,1] = sum(diag(P %*% R %*% P %*% II))
+	FI[1,3] = FI[3,1] = sum(diag(P %*% R %*% P %*% A))
+	FI[2,2] = sum(diag(P %*% II %*% P %*% II))
+	FI[2,3] = FI[3,2] = sum(diag(P %*% II %*% P %*% A))
+	FI[3,3] = sum(diag(P %*% A %*% P %*% A))
+	FI = 0.5*FI
 
-################################################################################
-#-------------------------------------------------------------------------------
-#                  Estimating Fixed Effects
-#-------------------------------------------------------------------------------
-################################################################################
+	# get the variance covariance matrix of theta from Fisher Information
+	vcov_theta_ana = solve(FI)
 
+	asy_se[i,1] = spcov_mod
+	asy_se[i,2:4] = theta
+	asy_se[i,5:7] = sqrt(diag(vcov_theta_ana))
+#	asy_se[i,8:10] = sqrt(diag(vcov_theta_comp))
+}
 
-summary(spautor_3parms)
-library(xtable)
-FE_table = summary(spautor_3parms)$coefficient$fixed
-FE_table
 print(
-    xtable(FE_table, 
-      align = c('l',rep('l', times = length(FE_table[1,]))),
-      digits = c(0,4,4,3,5),
-      caption = 'Fitted fixed effects',
-      label = 'tab:SealsFixEff'
+    xtable(asy_se, 
+      align = c('l',rep('l', times = length(asy_se[1,]))),
+      digits = c(0,0,rep(3, times = 6)),
+      caption = 'Aymptotic Standard Errors for Covariance Parameters',
+      label = 'tab:AsySE'
     ),
     size = 'footnotesize',
     sanitize.text.function = identity,
-    include.rownames = TRUE,
+    include.rownames = FALSE,
     sanitize.rownames.function = identity,
     only.contents = TRUE,
     include.colnames = FALSE
 )
 
-ell = c(1,1,0,0,0)
-# Dixon/Cape Decision estimate
-DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
-DCest
-# Dixon/Cape Decision standard error
-DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
-DCse
-# Dixon/Cape Decision confidence interval
-DCest - qnorm(.975)*DCse
-DCest + qnorm(.975)*DCse
+# show the asymptotic correlation matrix for the last model used, the
+# circular model
+print(
+	xtable(
+		diag(1/sqrt(diag(vcov_theta_ana))) %*% vcov_theta_ana %*% 
+				diag(1/sqrt(diag(vcov_theta_ana))),
+     align = c('l',rep('l', times = 3)),
+      digits = c(0,rep(4, times = 3)),
+      caption = 'Aymptotic correlation matrix for covariance parameters',
+      label = 'tab:AsySE'
+    ),
+    size = 'footnotesize',
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
+		
+################################################################################
+#-------------------------------------------------------------------------------
+#                            The Matern Model
+#-------------------------------------------------------------------------------
+################################################################################
 
-# Estimate the difference between the mean of the southern
-# three stocks minus the mean of the northern two stocks 
 
-ell = c(0,1/3,-1/2,-1/2,1/3)
-# Dixon/Cape Decision estimate
-DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
-DCest
-# Dixon/Cape Decision standard error
-DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
-DCse
-# Dixon/Cape Decision confidence interval
-DCest - qnorm(.975)*DCse
-DCest + qnorm(.975)*DCse
+MaternFit = splm(y ~ 1, data = DF, xcoord = easting, ycoord = northing, 
+	estmethod = 'reml', spcov_type = 'matern', control = list(reltol = 1e-7) )	
 
+seqs = seq(-1,1,by = 0.1)
+range_seqs = exp(log(coef(MaternFit, type = "spcov")['range']) + seqs)
+seqs_len = length(seqs)
+store_range = rep(NA, times = seqs_len)
+for(i in 1:seqs_len) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = 'matern', 
+#				de = coef(MaternFit, type = "spcov")['de'], 
+				range = range_seqs[i], 
+#				ie = coef(MaternFit, type = "spcov")['ie'],
+#				extra = coef(MaternFit, type = "spcov")['extra'],
+				known = c('range')),
+				control = list(reltol = 1e-7)
+		)	
+	store_range[i] = logLik(splmout)
+	}
+old.par = par(mar = c(5,5,1,1))
+plot(range_seqs,store_range, pch = 1, cex = 2, xlab = 'Range Parameter Values', 
+	ylab = 'Profile Likelihood Value', cex.lab = 2, cex.axis = 1.5)
+points(coef(MaternFit, type = "spcov")['range'], logLik(MaternFit), pch = 3,
+	cex = 3, lwd = 3)
+par(old.par)
 
+range_seqs[which(store_range == max(store_range))]
+
+seqs = seq(-1,1,by = 0.1)
+de_seqs = exp(log(coef(MaternFit, type = "spcov")['de']) + seqs)
+seqs_len = length(seqs)
+store_de = rep(NA, times = seqs_len)
+for(i in 1:seqs_len) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = 'matern', 
+				de = de_seqs[i], 
+#				range = coef(MaternFit, type = "spcov")['range'], 
+#				ie = coef(MaternFit, type = "spcov")['ie'],
+#				extra = coef(MaternFit, type = "spcov")['extra'],
+				known = c('de')),
+				control = list(reltol = 1e-7)
+		)	
+	store_de[i] = logLik(splmout)
+	}
+old.par = par(mar = c(5,5,1,1))
+plot(de_seqs,store_de, pch = 1, cex = 2, xlab = 'Partial Sill', 
+	ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+points(coef(MaternFit, type = "spcov")['de'], logLik(MaternFit), pch = 3,
+	cex = 3, lwd = 3)
+par(old.par)
+
+de_seqs[which(store_de == max(store_de))]
+
+seqs = seq(-1,1,by = 0.1)
+extra_seqs = exp(1.6*seqs)
+seqs_len = length(seqs)
+store_extra = rep(NA, times = seqs_len)
+for(i in 1:seqs_len) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = 'matern', 
+#				de = coef(MaternFit, type = "spcov")['de'], 
+#				range = coef(MaternFit, type = "spcov")['range'], 
+#				ie = coef(MaternFit, type = "spcov")['ie'],
+				extra = extra_seqs[i],
+				known = c('extra'))
+		)	
+	store_extra[i] = logLik(splmout)
+	}
+old.par = par(mar = c(5,5,1,1))
+plot(extra_seqs,store_extra, pch = 1, cex = 2, xlab = 'Smoothness Parameter', 
+	ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+points(coef(MaternFit, type = "spcov")['extra'], logLik(MaternFit), pch = 3,
+	cex = 3, lwd = 3)
+par(old.par)
+
+seqs = seq(-1,1,by = 0.1)
+ie_seqs = exp(log(coef(MaternFit, type = "spcov")['ie']) + seqs)
+seqs_len = length(seqs)
+store_ie = rep(NA, times = seqs_len)
+i = 6
+for(i in 1:seqs_len) {
+		splmout = splm(
+			y ~ 1, 
+			data = DF, xcoord = easting, ycoord = northing, estmethod = 'reml',
+			spcov_initial = spcov_initial(spcov_type = 'matern', 
+				ie = ie_seqs[i], known = c('ie'))
+		)	
+	store_ie[i] = logLik(splmout)
+	}
+old.par = par(mar = c(5,5,1,1))
+plot(ie_seqs,store_ie, pch = 1, cex = 2, xlab = 'Nugget', 
+	ylab = 'Profile Likelihood Value', cex.lab = 2, cex.axis = 1.5)
+points(coef(MaternFit, type = "spcov")['ie'], logLik(MaternFit), pch = 3,
+	cex = 3, lwd = 3)
+par(old.par)
+
+de_seqs[which(store_de == max(store_de))]
+
+# profile likelihood for range parameter
+
+file_name = "figures/Matern_SO4"
+
+pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
+
+	layout(matrix(1:4, ncol = 2, byrow = TRUE))
+
+	padj = -.6
+	adj = -.25
+	old.par = par(mar = c(5,5,4,1))
+	plot(de_seqs,store_de, pch = 1, cex = 2, xlab = 'Partial Sill', 
+		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+	points(coef(MaternFit, type = "spcov")['de'], logLik(MaternFit), pch = 3,
+		cex = 3, lwd = 3)
+	mtext('A', adj = adj, cex = 3, padj = padj)
+	plot(ie_seqs,store_ie, pch = 1, cex = 2, xlab = 'Nugget', 
+		ylab = 'Profile Likelihood Value', cex.lab = 2, cex.axis = 1.5)
+	points(coef(MaternFit, type = "spcov")['ie'], logLik(MaternFit), pch = 3,
+		cex = 3, lwd = 3)
+	mtext('B', adj = adj, cex = 3, padj = padj)
+	plot(range_seqs,store_range, pch = 1, cex = 2, xlab = 'Range', 
+		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+	points(coef(MaternFit, type = "spcov")['range'], logLik(MaternFit), pch = 3,
+		cex = 3, lwd = 3)
+	mtext('C', adj = adj, cex = 3, padj = padj)
+	plot(extra_seqs,store_extra, pch = 1, cex = 2, xlab = 'Smoothness', 
+		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+	points(coef(MaternFit, type = "spcov")['extra'], logLik(MaternFit), pch = 3,
+		cex = 3, lwd = 3)
+	mtext('D', adj = adj, cex = 3, padj = padj)
+	par(old.par)
+	
+	layout(1)
+	
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
 
