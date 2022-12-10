@@ -311,7 +311,7 @@ up_sig = mean(de_seq[maxsigindx],de_seq[maxsigindx+1])
 lo_sig
 up_sig
 
-file_name = 'Seals_logLik'
+file_name = 'figures/Seals_logLik'
 #pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 tiff(paste0(file_name,'.tiff'), width = 960, height = 480)
 
@@ -408,12 +408,14 @@ DWi = solve(DW)
 Vi = DW/theta['de']
 V = theta['de']*DWi
 A = -theta['de']*DWi %*% Nmat4 %*% DWi
+X = model.matrix(~ stockname, data = seals_sf)
+P = Vi - Vi %*% X %*% solve(t(X) %*% Vi %*% X, t(X)) %*% Vi
 		
 # compute Fisher Information element by element using trace formula
 FI = matrix(rep(NA, times = 4), nrow = 2)
-FI[1,1] = sum(diag(Vi %*% DWi %*% Vi %*% DWi))
-FI[1,2] = FI[2,1] = sum(diag(Vi %*% DWi %*% Vi %*% A))
-FI[2,2] = sum(diag(Vi %*% A %*% Vi %*% A))
+FI[1,1] = sum(diag(P %*% DWi %*% P %*% DWi))
+FI[1,2] = FI[2,1] = sum(diag(P %*% DWi %*% P %*% A))
+FI[2,2] = sum(diag(P %*% A %*% P %*% A))
 FI = 0.5*FI
 asycov = solve(FI)
 theta[c('de','range')] - 1.96*sqrt(diag(asycov))
@@ -497,7 +499,7 @@ dist_cor = data.frame(dist = distMat[upper.tri(distMat)],
 	cor = Cormat_rs[upper.tri(Cormat_rs)])
 plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200) )
 
-file_name = 'Seals_nonstationary'
+file_name = 'figures/Seals_nonstationary'
 #pdf(paste0(file_name,'.pdf'), width = 6, height = 6)
 png(paste0(file_name,'.png'), width = 960, height = 960)
 
@@ -617,6 +619,27 @@ Chi2 = t(L %*% coef(spautor_3parms)) %*%
 Chi2
 1 - pchisq(Chi2,df = 4)
 
+# ------------------------------------------------------------------------------
+#        Use F-test with stock effects, no intercept
+# ------------------------------------------------------------------------------
+
+spautor_4Ftest = spautor(Estimate ~ -1 + stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+summary(spautor_4Ftest)
+
+#stock
+L = cbind(diag(4), rep(0, times = 4)) - cbind(rep(0, times = 4),  diag(4))
+L
+Fval = t(L %*% coef(spautor_4Ftest)) %*% 
+	solve(L %*% vcov(spautor_4Ftest) %*% t(L)) %*% 
+	(L %*% coef(spautor_4Ftest))/
+	(4*max(coef(spautor_4Ftest, type = 'spcov')[c('de','extra')]))
+1 - pf(Fval, df1 = sum(!is.na(seals_sf$Estimate)) - 5, df2 = 4)
+
+# ------------------------------------------------------------------------------
+#        likelihood ratio test
+# ------------------------------------------------------------------------------
+
 # likelihood ratio test
 spautor_3parms_meanonly = spautor(Estimate ~ 1, data = seals_sf, 
 	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
@@ -635,6 +658,9 @@ chi2
 #-------------------------------------------------------------------------------
 ################################################################################
 
+# fit a model with mean for each stock
+spautor_3parms = spautor(Estimate ~ -1 + stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
 
 summary(spautor_3parms)
 library(xtable)

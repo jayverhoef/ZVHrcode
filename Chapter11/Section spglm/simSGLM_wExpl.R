@@ -1,6 +1,6 @@
 simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 	autocorr_type = 'covariance', autocor_fun = rho_exp,
-	nknots = NULL)
+	nknots = NULL, sampsize = NULL, family = 'poisson')
 {
 	if(loc_type == 'grid') {
 		ndim = round(sqrt(n),0)
@@ -19,18 +19,11 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 		}
 	}
 	if(loc_type == 'random') {
-		# set mindist to a small number
-		mindist = 1e-32
-		# simulate coordinates while minimum distance is too small
-		while(mindist < 0.001) {
-			# generate coordinates randomly
-			xycoord = data.frame(x = runif(n), y = runif(n))
-			# get distances between all pairs of points
-			Hdist = as.matrix(dist(xycoord))
-			# check for minimum distance
-			# if too small, covariance matrix may be singular
-			mindist = min(Hdist[upper.tri(Hdist)])
-		}
+		# generate coordinates randomly
+		xycoord = data.frame(x = runif(n), y = runif(n))
+		# get distances between all pairs of points
+		Hdist = as.matrix(dist(xycoord))
+		# check for minimum distance
 		nall = n
 		if(pred == TRUE) {
 		# create a prediction grid
@@ -54,20 +47,20 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 	# choose some true covariance parameters for simulation
 	# gammas = c(1, 1, 0.0001)
 
+	if(is.null(sampsize)) sampsize = rep(1, times = n)
 	if(autocorr_type == 'covariance') {
 		# create true covariance matrix
 		Hdist = as.matrix(dist(xycoord))
 		Sig_true = gammas[1]*autocor_fun(Hdist,gammas[2]) + 
 				gammas[3]*diag(nall)
-		# check the correlation matrix
-		cor_true = (1/sqrt(diag(Sig_true)))*t((1/sqrt(diag(Sig_true)))*Sig_true)
-		cor_true[1:5,1:5]
 		# cholesky of true covariance matrix
 		Sig_chol = t(chol(Sig_true))
 		# create true w's for simulating data
 		w_true = X %*% betas + Sig_chol %*% rnorm(nall)
 		# simulate y conditional on w's
-		y = rpois(nall, lambda = exp(w_true))
+		if(family == 'poisson') y = rpois(nall, lambda = exp(w_true))
+		if(family == 'binomial') y = rbinom(nall, size = sampsize, 
+			p = expit(w_true))
 	}
 	if(autocorr_type == 'radialbasis') {
 		knots = kmeans(xycoord, nknots)$centers
@@ -76,7 +69,9 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 		# create w values as linear combination of kernel distances
 		w_true = gammas[1]*kern_epi(Z_dist, gammas[2]) %*% rnorm(nknots) + 0.0001
 		# simulate y conditional on w's
-		y = rpois(nall, lambda = exp(w_true))
+		if(family == 'poisson') y = rpois(nall, lambda = exp(w_true))
+		if(family == 'binomial') y = rbinom(nall, size = sampsize, 
+			p = expit(w_true))
 	}
 	obspred = rep('obs', times = nall)
 	if(pred == TRUE) obspred = c(rep('obs', times = n), 

@@ -1,9 +1,9 @@
-pred_wSMW = function(theta, y, X, Hdist, autocor_fun,stepsize, 
+estpred = function(theta, y, X, dist, autocor_fun, maxvar, maxrange,
 	Xp = NULL, dist_op = NULL, dist_pp = NULL)
 {
 # after optimizing for covariance parameters, we need betahat and w's
-# we just need one pass through the likelihood function to obtain them
-# so just copy that same code
+# we just need one pass through optimizing w's to obtain them
+# so just copy that same code from likelihood function
 	gam_1 = exp(theta[1])
 	gam_2 = exp(theta[2])
 	# set the nugget effect to a small value

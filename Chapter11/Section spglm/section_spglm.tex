@@ -112,9 +112,9 @@ Below, we will give more details on the Laplace approximation and the marginal m
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
-%{\large \flushleft \textbf{12.x.2 Exploratory spatial data analysis}}
+{\large \flushleft \textbf{12.x.2 Exploratory spatial data analysis}}
 
-% la te da
+la te da
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -125,9 +125,9 @@ Below, we will give more details on the Laplace approximation and the marginal m
 % ------------------------------------------------------------------------------
 
 
-% {\large \flushleft \textbf{12.x.3 Parametric models for the mean structure}}
+{\large \flushleft \textbf{12.x.3 Parametric models for the mean structure}}
 
-% la te da
+ la te da
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -137,9 +137,9 @@ Below, we will give more details on the Laplace approximation and the marginal m
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
-% {\large \flushleft \textbf{12.x.4 Parametric models for the covariance structure}}
+{\large \flushleft \textbf{12.x.4 Parametric models for the covariance structure}}
 
-% la te da
+la te da
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -217,11 +217,43 @@ so the gradient of \eqref{eq:ll_plus_C} is
 $$
 \mathbf{g} = \mathbf{d} - \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{w} + \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}\hat{\boldsymbol{\beta}} = \mathbf{d} - \mathbf{P}_{\boldsymbol{\theta}}\mathbf{w},
 $$
-where $\mathbf{P}_{\boldsymbol{\theta}}$ was defined in (8.2). For example, if $[y_i|w_i]$ is binomial with logit link function where the expected probability is $\mu_{i} = \exp(w_{i})/(1 + \exp(w_{i}))$ with sample size $n_{i}$, then $d_{i} = y_i - \mu_{i}n_i$.  If $[y_i|w_i]$ is Poisson with log link function, then $d_{i} = y_{i} - \exp(w_{i})$. For the Hessian, let $\mathbf{D}$ be a diagonal matrix with $i$th component,
+where $\mathbf{P}_{\boldsymbol{\theta}}$ was defined in (8.2). For the Hessian, let $\mathbf{D}$ be a diagonal matrix with $i$th component,
 $$
 D_{i,i} \equiv \frac{\partial^2\log[y_i|w_i,\boldsymbol{\phi}]}{\partial w_i^2},
 $$
-where all off-diagonal elements are zero because all second partials are 0 when $i \neq j$ due to conditional independence. Next, notice that
+where all off-diagonal elements are zero because all second partials are 0 when $i \neq j$ due to conditional independence. A table of $\mathbf{d}_{i}$ and $\mathbf{D}_{i,i}$ for a few common distributions and link functions is given in Table~\ref{tab:dDlinkDist}.
+\begin{table}[H] 
+	\caption{Distributions, inverse link functions, and first and second partial derivative with respect to $w_{i}$ for the data model part of the loglikelihood.  \label{tab:dDlinkDist}}
+\begin{center}
+\begin{tabular}{|c|ccc|}
+\hline
+\hline
+Distribution & $\mu = g^{-1}(\eta)$ & $\mathbf{d}_{i}$ & $\mathbf{D}_{i,i}$ \\
+\hline
+Binomial & $\mu =\frac{\exp(\eta)}{1+\exp(\eta)}$ & $y_{i} - \frac{n_{i}\exp(w_{i})}{1+\exp(w_{i})}$ & $- \frac{n_{i}\exp(w_{i})}{(1+\exp(w_{i}))^{2}}$ \\ 
+Poisson & $\mu = \exp(\eta)$ & $y_{i} - \exp(w_{i})$ & $- \exp(w_{i})$ \\ 
+Negative Binomial & $\mu = \exp(\eta)$ &  $
+\frac{\phi(y_{i} - e^{w_{i}})}{\phi + e^{w_{i}}}$ & $-\frac{\phi e^{w_{i}}(\phi + y_{i})}{(\phi + e^{w_{i}})^{2}}$ \\ 
+\hline
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+{\flushleft In Table~\ref{tab:dDlinkDist}, the alternative parameterization for the negative binomial was used,}
+$$
+[y|\mu,\phi] = 
+\frac{\Gamma(y + \phi)}{\Gamma(\phi)y!}
+\left(
+\frac{\mu}{\mu + \phi}
+\right)^{y}
+\left(
+\frac{\phi}{\mu + \phi}
+\right)^{\phi},
+$$
+where $\textrm{E}(y) = \mu$ and $\var(y) = \mu + \mu^{2}/\phi$.
+
+
+Next, notice that
 $$
 \frac{\partial^2 [-\frac{1}{2}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}(\mathbf{w} - \mathbf{X}\hat{\boldsymbol{\beta}})] }{\partial \mathbf{w} \partial \mathbf{w}^{T}} =
 	-\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1} + \boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X}(\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1} = -\mathbf{P}_{\boldsymbol{\theta}},
@@ -230,15 +262,16 @@ and so the Hessian of \eqref{eq:ll_plus_C} is
 \begin{equation} \label{eq:Hdef}
 \mathbf{H} = \mathbf{D} -\mathbf{P}_{\boldsymbol{\theta}}.
 \end{equation}
-For example, if $[y_i|w_i]$ is binomial with the logit link function and sample size $n_{i}$, then $\mathbf{D}_{i,i} = -\mu_i n_i/(1 + \exp(w_i))$, and if $[y_i|w_i]$ is Poisson with the log link function, then $\mathbf{D}_{i,i} = -\exp(w_i)$.
 
 Conditional on $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, a Newton-Raphson update is,
 \[
-\mathbf{w}^{[k+1]} = \mathbf{w}^{[k]} - \mathbf{H}^{-1}\mathbf{g}
+\mathbf{w}^{[k+1]} = \mathbf{w}^{[k]} - \mathbf{H}^{-1}\mathbf{g},
 \]
-and upon convergence we set $\mathbf{a} = \mathbf{w}$ in \eqref{eq:m2LLmargMLE} for any evaluation of the likelihood for given $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.  Notice that this makes the marginal MLE doubly iterative, as we solve for $\mathbf{a}$ while optimizing for $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.
-
-
+and upon convergence we set $\mathbf{a} = \mathbf{w}$ in \eqref{eq:m2LLmargMLE} for any evaluation of the likelihood for given $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$.  Notice that this makes the marginal MLE doubly iterative, as we solve for $\mathbf{a}$ while optimizing for $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$. It is possible to use other maximization routines, such as the EM algorithm, but, generally, the Newton-Raphson algorithm converges rapidly (often around 10 iterations in our experience).  However, on occasion, the stepsize needs to be adjusted so that $\mathbf{g}$ does not diverge.  For example, it is easy and fast to check $\mathbf{g}^{[k + 1]} = \mathbf{d} - \mathbf{P}_{\boldsymbol{\theta}}\mathbf{w}^{[k+1]}$, and if $\mathbf{g}^{[k + 1]}$ is ``larger'' than $\mathbf{g}$ by some criterion (e.g., largest or average element of $\mathbf{g}$), then take
+\[
+\mathbf{w}^{[k+1]} = \mathbf{w}^{[k]} - \alpha\mathbf{H}^{-1}\mathbf{g},
+\]
+where $0 < \alpha < 1$.  In the simulation below, we check $\mathbf{g}^{[k + 1]}$ in the manner described above, and set $\alpha =0.1$ if the largest element of $\mathbf{g}^{[k + 1]}$ is larger than the largest element of $\mathbf{g}$.  The advantage of using Newton-Raphson is that it provides $\mathbf{H}$, which is required to make adjustments to estimation and prediction, as we describe next.
 
 
 % ------------------------------------------------------------------------------
@@ -255,13 +288,13 @@ and upon convergence we set $\mathbf{a} = \mathbf{w}$ in \eqref{eq:m2LLmargMLE} 
 
 In order to estimate $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, it was necessary to optimize the likelihood for $\mathbf{w}$, which we called $\mathbf{a}$, using Newton-Raphson, for each evaluation of the likelihood.  Upon convergence in estimating $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$, we also have optimized values for $\mathbf{w}$, and let us denote them as $\hat{\mathbf{w}} = \mathbf{a}$.  Also, recall that, in contrast to \citet{bonat_practical_2016}, we integrated over $\boldsymbol{\beta}$, so an estimator is needed.
 
-An obvious estimator of $\boldsymbol{\beta}$ is to consider $\hat{\mathbf{w}}$ as if they were observed data, and then use the generalized least squares estimator $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$.  However, $\mathbf{w}$ are predictions of an unobserved, latent random variable, rather than observed value.  We will need to make some adjustments in order to estimate the variance of $\hat{\boldsymbol{\beta}}$.  It will be convenient to condition on $\mathbf{w}$ as if we had observed them, and then we can use
+An obvious estimator of $\boldsymbol{\beta}$ is to consider $\hat{\mathbf{w}}$ as if they were observed data, and then use the generalized least squares estimator $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$, where $\mathbf{B} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}$.  However, $\mathbf{w}$ contains predictions of an unobserved, latent random variables, rather than observed values.  We will need to make some adjustments in order to estimate the variance of $\hat{\boldsymbol{\beta}}$.  It will be convenient to condition on $\mathbf{w}$ as if we had observed them, and then we can use
 $$
 \var(\mathbf{B}\hat{\mathbf{w}}) = \textrm{E}_{\mathbf{w}}[\var(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})] + \var_{\mathbf{w}}[\textrm{E}(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})].
 $$
 We will assume that $\hat{\mathbf{w}}$ is unbiased for $\mathbf{w}$, i.e., $E(\hat{\mathbf{w}}|\mathbf{w}) = \mathbf{w}$, so $\var_{\mathbf{w}}[\textrm{E}(\mathbf{B}\hat{\mathbf{w}}|\mathbf{w})] = \mathbf{B}\boldsymbol{\Sigma_{\boldsymbol{\theta}}}\mathbf{B}^{T}$, which simplifies to $\mathbf{C}_{\boldsymbol{\beta}} = (\mathbf{X}^{T}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}^{-1}\mathbf{X})^{-1}$, the usual variance-covariance matrix of fixed effects when using generalized least squares (5.2). We can use the inverse of the observed Fisher-Information to obtain $\var(\hat{\mathbf{w}}|\mathbf{w})$, which is $-\mathbf{H}^{-1}$.  Notice that this depends on $\mathbf{w}$ through the diagonal elements of $\mathbf{D}$ in \eqref{eq:Hdef}.  As an approximation, we will replace $\mathbf{w}$ with their predicted values $\hat{\mathbf{w}} = \mathbf{a}$, and so an estimator of the covariance matrix of fixed effects is
 \begin{equation} \label{eq:sglmm_varfe}
-\widehat{\var}(\hat{\boldsymbol{\beta}}) = \mathbf{B}(-\mathbf{H}_{\mathbf{a}}^{-1})\mathbf{B}^{T} + \mathbf{C}_{\boldsymbol{\beta}}
+\widehat{\var}(\hat{\boldsymbol{\beta}}) = \mathbf{B}(-\mathbf{H}_{\mathbf{a}}^{-1})\mathbf{B}^{T} + \mathbf{C}_{\boldsymbol{\beta}}.
 \end{equation}
 
 We proceed in a similar fashion for predictions and prediction variances.  Suppose that we want to predict the latent spatial variable $W_{j}$ at unobserved locations for $j = 1, \ldots, J$, and we denote this vector of random variables as $\mathbf{u}$.  Note that from (9.4), we can write $\hat{\mathbf{u}} = \boldsymbol{\Lambda}\hat{\mathbf{w}}$ where $\boldsymbol{\Lambda} = \mathbf{X}^{T}_{\mathbf{u}}\mathbf{B} + \boldsymbol{\Sigma}^{T}_{\mathbf{w}\mathbf{u}}\boldsymbol{\Sigma}^{-1}_{\boldsymbol{\theta}} - \boldsymbol{\Sigma}^{T}_{\mathbf{w}\mathbf{u}}\boldsymbol{\Sigma}^{-1}_{\boldsymbol{\theta}}\mathbf{X}\mathbf{B}$ and where $\boldsymbol{\Sigma}^{T}_{\mathbf{w}\mathbf{u}}$ is the covariance matrix between $\mathbf{w}$ and $\mathbf{u}$ at the observed and unobserved locations, respectively. As for fixed effects, we need an estimator of the mean-squared-prediction errors, also called the prediction variance, which is $\var(\hat{\mathbf{u}} -\mathbf{u}) = \var(\boldsymbol{\Lambda}\hat{\mathbf{w}} - \mathbf{u})$.  Now, if we had observed $\mathbf{w}$, rather than predicting $\hat{\mathbf{w}}$, then $\var(\boldsymbol{\Lambda}\hat{\mathbf{w}} - \mathbf{u})$ is given by (9.5), but again we need to make some adjustments because we are estimating $\hat{\mathbf{w}}$.  Conditioning on $\mathbf{w}$ and $\mathbf{u}$, we have
@@ -276,40 +309,40 @@ where $\boldsymbol{\Sigma}^{T}_{\mathbf{u}\mathbf{u}}$ is the covariance matrix 
 
 How well do all of these approximations work?  We will illustrate with a simulation so that we know the true values.  We created a square grid of $20 \times 20$ locations equally spaced on a $(0,1) \times (0,1)$ domain. Let $\mathbf{X} = \mathbf{1}$ and a single overall mean parameter $\beta_{0} = 2$.  We generated $\mathbf{w}$ from a spatially-autocorrelated model with an exponential autocorrelation function (Table 6.2) where $\alpha = 1$, and the autocovariance model was $\cov(w(\mathbf{s}),w(\mathbf{s} + r)) = \exp(-r) + 0.0001\mathcal{I}(r = 0)$, where $\mathcal{I}(\cdot)$ is the indicator function, equal to one if its argument is true, otherwise it is zero.  The 400 simulated $\mathbf{w}$ values are shown in Figure~\ref{Fig:sglm_likelihood_estimation}B.  Conditional on the $\mathbf{w}$, at each spatial location we independently simulated a Poisson random variable with mean equal to $\exp(w_{i})$, which are shown in Figure~\ref{Fig:sglm_likelihood_estimation}A.
 
-Using the values in Figure~\ref{Fig:sglm_likelihood_estimation}A, we assumed an unknown mean and covariance function $\cov(w(\mathbf{s}),w(\mathbf{s} + r)) = \sigma^{2}\exp(-r/\alpha) + 0.0001\mathcal{I}(r = 0)$, where we say that $\sigma^{2}$ is the partial sill and $\alpha$ is the range parameter.  Optimizing the likelihood for \eqref{eq:m2LLmargMLE} for $\boldsymbol{\theta} = (\sigma^{2},\alpha)$ we obtain the values $\hat{\sigma}^{2} = 0.427$ and $\hat{\alpha} = 0.357$.  The likelilhood surface for $\sigma^{2}$ and $\alpha$ is shown in Figure~\ref{Fig:sglm_likelihood_estimation}C, where the true values are shown with a large white circle, and the estimated values are given by the smaller white circle.  A pronounced ridge shows the positive association in the likelihood between $\sigma^{2}$ and $\alpha$, which we saw in Chapter 8; e.g., Figure 8.4. The estimation of $\sigma^{2}$ and $\alpha$ also provided $\hat{\mathbf{w}}$, which are shown in Figure~\ref{Fig:sglm_likelihood_estimation}D, and it appears that we were able to recover the spatial patterning of $\mathbf{w}$ quite well.
+Using the values in Figure~\ref{Fig:sglm_likelihood_estimation}A, we assumed an unknown mean and covariance function $\cov(w(\mathbf{s}),w(\mathbf{s} + r)) = \sigma_{1}^{2}\exp(-r/\alpha) + \sigma^{2}_{0}\mathcal{I}(r = 0)$, where recall that $\sigma_{1}^{2}$ is the partial sill, $\alpha$ is the range parameter, and $\sigma_{0}^{2}$ is the nugget effect.  Optimizing the likelihood for \eqref{eq:m2LLmargMLE} for $\boldsymbol{\theta} = (\sigma_{1}^{2},\alpha, \sigma_{0}^{2})$ we obtain the values $\hat{\sigma}_{1}^{2} = 0.950$, $\hat{\alpha} = 0.894$, and $\hat{\sigma}_{0}^{2} = 0.046$.  The likelilhood surface for $\sigma_{1}^{2}$ and $\alpha$ is shown in Figure~\ref{Fig:sglm_likelihood_estimation}C. A pronounced ridge shows the positive association in the likelihood between $\sigma_{1}^{2}$ and $\alpha$, which we saw in Chapter 8; e.g., Figure 8.4. The estimation of $\boldsymbol{\theta} = (\sigma_{1}^{2},\alpha, \sigma_{0}^{2})$ also provided $\hat{\mathbf{w}}$, which are shown in Figure~\ref{Fig:sglm_likelihood_estimation}D, and it appears that we were able to recover the spatial patterning of the true simulated $\mathbf{w}$ quite well.  A similar example using Bernoulli data is provided in the \texttt{R} code that accompanies this book.
 
 \begin{figure}[H]
   \begin{center}
-	    \includegraphics[width=.8\linewidth]{figures/sglm_likelihood_estimation}
+	    \includegraphics[width=.8\linewidth]{figures/pois_likelihood_estimation}
   \end{center}
-  \caption{Estimation for simulated data. A. Simulated count data using the model described in the text.  B. The simulated $\mathbf{w}$ values. C. The likelihood surface of the simulated data.  The large white circle shows the true parameter values (on the log scale), and the smaller white circle shows the estimated values.  D. The estimated $\hat{\mathbf{w}}$ values. \label{Fig:sglm_likelihood_estimation}}
+  \caption{Estimation for simulated data. A. Simulated count data using the model described in the text.  B. The true simulated $\mathbf{w}$ values. C. The likelihood surface of the simulated data.  The white circle shows the estimated value.  D. The estimated $\hat{\mathbf{w}}$ values. \label{Fig:sglm_likelihood_estimation}}
 \end{figure}
 
 Of course, this is just one simulation.  How does it work on average?  Are the estimators and predictors unbiased, and are we estimating their variance correctly so that they have the proper confidence and prediction interval coverage?  In order to answer these questions, we did a computer simulation experiment.  Here, we created 200 locations randomly on the unit square. We used the same autocovariance model as above, $\cov(w(\mathbf{s}),w(\mathbf{s} + r)) = \exp(-r) + 0.0001\mathcal{I}(r = 0)$.  For the mean structure, we used
 $$
 \textrm{E}(w_{i}) = \beta_{0} + \beta_{1}x_{i} + \beta_{2}\tau_{i} + \beta_{3}(x{:}\tau)_{i}
 $$
-where $x_{i}$ were randomly simulated from $\textrm{N}(0,1)$, $\tau_{i}$ were randomly simulated bernoulli variables with probability $p = 0.5$, and $(x{:}\tau)_{i}$ was in interaction between the normally-distributed and bernoulli-distributed explanatory variables.  We set $\mathbf{\beta} = (-0.5, 0.5, -0.5, 0.5)$.  We also created 100 prediction locations where we used a $10 \times 10$ square grid of equally-spaced prediction points throughout the unit square.  Explanatory variables were also simulated at the prediction locations, and so 300 $w_{i}$ values were simulated from $\textrm{N}(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$. We then created the observed data as counts from a Poisson distribution conditional on the $\mathbf{w}$, where at each spatial location we independently simulated the Poisson random variable with mean equal to $\exp(w_{i})$.  We simulated 2000 data sets to assess bias and confidence/prediction interval coverage.
+where $x_{i}$ were randomly simulated from $\textrm{N}(0,1)$, $\tau_{i}$ were randomly simulated bernoulli variables with probability $p = 0.5$, and $(x{:}\tau)_{i}$ was in interaction between the normally-distributed and bernoulli-distributed explanatory variables.  We set $\mathbf{\beta} = (0.5, 0.5, -0.5, 0.5)$.  We also created 100 prediction locations where we used a $10 \times 10$ square grid of equally-spaced prediction points throughout the unit square.  Explanatory variables were also simulated at the prediction locations, and so 300 $w_{i}$ values were simulated from $\textrm{N}(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$. We then created the observed data as counts from a Poisson distribution conditional on the $\mathbf{w}$, where at each spatial location we independently simulated the Poisson random variable with mean equal to $\exp(w_{i})$.  We simulated 2000 data sets to assess bias and confidence/prediction interval coverage.
 
 For each simulated data set, we first estimated the covariance parameters using \eqref{eq:m2LLmargMLE}, using an exponential autocorrelation model as before. Then, we used the estimated covariance parameters as plugin values for the autocovariance model to obtain $\boldsymbol{\Sigma}_{\hat{\boldsymbol{\theta}}}$, and along with the estimated $\hat{\mathbf{w}}$, we estimated fixed effects $\hat{\boldsymbol{\beta}} = \mathbf{B}\hat{\mathbf{w}}$.  To estimate bias, we took the average of $\hat{\boldsymbol{\beta}} - \boldsymbol{\beta}$ over all 2000 simulated data sets. We also formed 90\% confidence intervals as $\hat{\boldsymbol{\beta}} \pm 1.645 \widehat{\textrm{se}}(\hat{\boldsymbol{\beta}})$, where $\widehat{\textrm{se}}(\hat{\boldsymbol{\beta}})$ were the square roots of the diagonal elements of \eqref{eq:sglmm_varfe}.  Over the 2000 simulations, we computed the proportion of times that the confidence interval contained the true value.  If we are estimating the variances of $\hat{\boldsymbol{\beta}}$ well, the coverage should be close to 90\%. We also computed the confidence interval coverage based on the naive unadjusted $\mathbf{C}_{\boldsymbol{\beta}}$. 
 
-The results are shown in Table~\ref{tab:sglm_fe}, where we see that there is very little bias in estimating any of the parameters in $\boldsymbol{\beta}$.  The confidence interval coverage for $\beta_{0}$ is too low, but the overall mean parameter is difficult to estimate in spatial models, and generally not of great interest.  The confidence interval coverages for $\beta_{1}$ - $\beta_{3}$ are very close to 90\% when using \eqref{eq:sglmm_varfe}, but they are much too short when using $\mathbf{C}_{\boldsymbol{\beta}}$.
+The results are shown in Table~\ref{tab:sglm_fe}, where we see that there is very little bias in estimating any of the parameters in $\boldsymbol{\beta}$.  The confidence interval coverage for $\beta_{0}$ is slightly low, but the confidence interval coverages for $\beta_{1}$ - $\beta_{3}$ are very close to 90\% when using \eqref{eq:sglmm_varfe}, but they are much too short when using $\mathbf{C}_{\boldsymbol{\beta}}$.
 
-We also used the estimated covariance parameters in $\boldsymbol{\Sigma}_{\hat{\boldsymbol{\theta}}}$ and the estimated $\hat{\mathbf{w}}$ to make predictions at all 100 values for each simulated data set using $\hat{\mathbf{u}} = \boldsymbol{\Lambda}\hat{\mathbf{w}}$.  To estimate bias, we took the average of $\hat{\mathbf{u}} - \mathbf{u}$ for each simulated data set, where recall that $\mathbf{u}$ contains 100 simulated values, and then averaged those across the 2000 simulated data sets.  We also formed 90\% prediction intervals as $\hat{\mathbf{u}} \pm 1.645 \widehat{\textrm{se}}(\hat{\mathbf{u}})$, where $\widehat{\textrm{se}}(\hat{\mathbf{u}})$ were the square roots of the diagonal elements of \eqref{eq:sglmm_varpred}. Over the 2000 simulations, we computed the proportion of times that the prediction intervals contained the true values, which should be about 90\%. Table~\ref{tab:sglm_fe} gives the prediction results, which show little indication of bias, and coverage that is just a little bit too low, but pretty close to 90\%.
+We also used the estimated covariance parameters in $\boldsymbol{\Sigma}_{\hat{\boldsymbol{\theta}}}$ and the estimated $\hat{\mathbf{w}}$ to make predictions at all 100 values for each simulated data set using $\hat{\mathbf{u}} = \boldsymbol{\Lambda}\hat{\mathbf{w}}$.  To estimate bias, we took the average of $\hat{\mathbf{u}} - \mathbf{u}$ for each simulated data set, where recall that $\mathbf{u}$ contains 100 simulated values, and then averaged those across the 2000 simulated data sets.  We also formed 90\% prediction intervals as $\hat{\mathbf{u}} \pm 1.645 \widehat{\textrm{se}}(\hat{\mathbf{u}})$, where $\widehat{\textrm{se}}(\hat{\mathbf{u}})$ were the square roots of the diagonal elements of \eqref{eq:sglmm_varpred}. Over the 2000 simulations, we computed the proportion of times that the prediction intervals contained the true values, which should be about 90\%. Table~\ref{tab:sglm_fe} gives the prediction results, which show little indication of bias, and coverage was very close to 90\%.
 
 \begin{table}[H] 
-	\caption{Bias and coverage for estimation of fixed effects $\boldsymbol{\beta}$ and for prediction of $\mathbf{u}$ at unobserved locations.  Coverage is for 90\% confidence and prediction intervals, and CI90$_{c}$ used the corrected versions in \eqref{eq:sglmm_varfe} and \eqref{eq:sglmm_varpred}, while CI90$_{c}$ shows coverage for the naive standard error estimator based on $\mathbf{C}_{\boldsymbol{\beta}}$.  \label{tab:sglm_fe}}
+	\caption{Bias and coverage for estimation of fixed effects $\boldsymbol{\beta}$ and for prediction of $\mathbf{u}$ at unobserved locations.  Coverage is for 90\% confidence and prediction intervals, and CI90$_{c}$ used the corrected versions in \eqref{eq:sglmm_varfe} and \eqref{eq:sglmm_varpred}, while CI90$_{u}$ shows coverage for the uncorrected standard-error estimator based on $\mathbf{C}_{\boldsymbol{\beta}}$ and the uncorrected prediction standard errors using (9.5).  \label{tab:sglm_fe}}
 \begin{center}
 \begin{tabular}{|c|rrr|}
 \hline
 \hline
-effect & bias & CI90$_{c}$ & CI90$_{u}$ \\
-\hline
-$\beta_{0}$ &  0.023 & 0.748 & 0.700 \\ 
-$\beta_{1}$ &   -0.009 & 0.919 & 0.223 \\ 
-$\beta_{2}$ &  0.003 & 0.917 & 0.175 \\ 
-$\beta_{3}$ &  -0.010 & 0.914 & 0.222 \\ 
-$\hat{\mathbf{u}}$ &  0.056 & 0.872 &  \\ 
+effect & bias & CI90$_{u}$ & CI90$_{u}$ \\
+\hline{}
+$\beta_{0}$ & -0.006 & 0.865 & 0.875 \\ 
+$\beta_{1}$ &    -0.003 & 0.360 & 0.905 \\ 
+$\beta_{2}$ &   0.002 & 0.310 & 0.898 \\ 
+$\beta_{3}$ &   -0.004 & 0.331 & 0.896 \\ 
+$\hat{\mathbf{u}}$ &   0.034 & 0.692 & 0.894 \\  
 \hline
 \hline
 \end{tabular}

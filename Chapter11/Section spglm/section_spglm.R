@@ -35,7 +35,7 @@ set.seed(1011)
 betas = c(2, 0, 0, 0)
 gammas = c(1, 1, 0.0001)
 sim_data = simSGLM_wExpl(20^2, autocor_fun = rho_exp, betas = betas,
-	gammas = gammas, type = 'grid', pred = FALSE)
+	gammas = gammas, loc_type = 'grid', pred = FALSE)
 
 layout(matrix(1:4, nrow = 1), widths = rep(c(3,1), times = 2))
 
@@ -81,7 +81,7 @@ X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
 # get observed values
 y = sim_data[sim_data$obspred == 'obs','y']
 # get distances among observed data locations
-Hdist = as.matrix(dist(sim_data[sim_data$obspred == 
+distmat = as.matrix(dist(sim_data[sim_data$obspred == 
 	'obs',c('xcoord', 'ycoord')]))
 
 #-------------------------------------------------------------------------------
@@ -93,13 +93,19 @@ Hdist = as.matrix(dist(sim_data[sim_data$obspred ==
 #-------------------------------------------------------------------------------
 
 #initial value for optim
-theta = log(c(1,1))
+theta = c(-2,-2,-2)
 # optimize for covariance parameters
 # undebug(logLik_Laplace)
-optout = optim(theta, logLik_Laplace, method = 'BFGS',
-	y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp)
+maxvar = 5*var(y)
+maxrange = 5*max(distmat)
+# undebug(logLik_Laplace)
+optout = optim(theta, logLik_Laplace,
+	y = y, X = X, distmat = distmat, autocor_fun = rho_exp,
+	maxvar = maxvar, maxrange = maxrange, family = 'poisson')
 # covariance parameters
-exp(optout$par)
+maxvar*expit(optout$par[1])
+maxvar*expit(optout$par[2])
+maxrange*expit(optout$par[3])
 # set theta as the optimized parameters on log scale
 theta = optout$par
 
@@ -112,8 +118,10 @@ theta = optout$par
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-pred_w_out = pred_w(optout$par, y, X, Hdist, rho_exp, stepsize = 1)
-pred_w_out$betahat
+beta_out = estpred(optout$par, y = y, X = X, distmat = distmat, 
+	autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, 
+	family = 'poisson' )
+beta_out$betahat
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -125,20 +133,21 @@ pred_w_out$betahat
 
 # make a graph for the likelihood surface for partial sill and range
 # center on estimated values and scale by estimated value/10
-theta1 = optout$par[1] + (-15:15)*optout$par[1]/5
-theta2 = optout$par[2] + (-15:15)*optout$par[2]/5
+theta2 = optout$par[2] + (-15:15)*optout$par[2]/15
+theta3 = optout$par[3] + (-15:15)*optout$par[3]/15
 # matrix to hold likelihood surface values
-llgrid = matrix(NA, ncol = 3, nrow = length(theta1)*length(theta2))
+llgrid = matrix(NA, ncol = 3, nrow = length(theta2)*length(theta3))
 
 # loop through various parameter values and compute -2*loglikelihood
 iter = 0
-for(i in 1:length(theta1)) {
-	for(j in 1:length(theta2)) {
+for(i in 1:length(theta2)) {
+	for(j in 1:length(theta3)) {
 		iter = iter + 1
-		llgrid[iter,1] = theta1[i]
-		llgrid[iter,2] = theta2[j]
-		llgrid[iter,3] = logLik_Laplace(theta = c(theta1[i],theta2[j]), 
-			y = y, X = X, Hdist = Hdist, autocor_fun = rho_exp, stepsize = .2)
+		llgrid[iter,1] = theta2[i]
+		llgrid[iter,2] = theta3[j]
+		llgrid[iter,3] = logLik_Laplace(
+			theta = c(optout$par[1], theta2[i],theta3[j]), 
+			y = y, X = X, distmat = distmat, autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, family = 'poisson')
 	}
 }
 
@@ -198,15 +207,15 @@ addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
 # make a plot of the -2*loglikelihood surface
 brks = quantile(llgrid[,3], probs = (0:9)/9)
 cip = classIntervals(llgrid[,3], style = 'fixed', fixedBreaks= brks)
-cip = classIntervals(llgrid[,3], style = 'fisher')
-palp = viridis(12)[c(1:6,10:12)]
+cip = classIntervals(llgrid[,3], n = 9, style = 'fisher')
+palp = viridis(9)
 cip_colors = findColours(cip, palp)
 par(mar = c(5,5,5,1))
-plot(llgrid[,1:3], col = cip_colors, pch = 15, cex = cex_plot,
+plot(llgrid[,1:2], col = cip_colors, pch = 15, cex = cex_plot,
 	cex.lab = 2, cex.axis = 1.5, xlab = 'log(partial sill)',
 	ylab = 'log(range)')
-points(optout$par[1], optout$par[2], pch = 19, col = 'white', cex = 1.5)
-points(0, 0, pch = 19, col = 'white', cex = 3)
+points(optout$par[2], optout$par[3], pch = 19, col = 'white', cex = 1.5)
+#points(0, 0, pch = 19, col = 'white', cex = 3)
 mtext('C', cex = mtext_cex, adj = adj, padj = padj)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
@@ -214,7 +223,7 @@ plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
 addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = "1.1")
 
-cip = classIntervals(pred_w_out$w, 9, style = 'fisher')
+cip = classIntervals(beta_out$w, 9, style = 'fisher')
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 par(mar = c(5,5,5,1))
