@@ -68,11 +68,9 @@ Nelder, J.~A. and Wedderburn, R. W.~M. (1972), \enquote{Generalized {Linear}
   {Models},} \textit{Journal of the Royal Statistical Society, Series A:
   General}, 135, 370--384.
 
-\bibitem[{Wedderburn(1974)}]{wedderburn_quasi-likelihood_1974}
-Wedderburn, R. W.~M. (1974), \enquote{Quasi-{Likelihood} {Functions},
-  {Generalized} {Linear} {Models}, and the {Gauss}-{Newton} {Method},}
-  \textit{Biometrika}, 61, 439--447, publisher: [Oxford University Press,
-  Biometrika Trust].
+\bibitem[{Ver~Hoef(2012)}]{VerHoef2012Whoinventeddelta124}
+Ver~Hoef, J.~M. (2012), \enquote{Who {Invented} the {Delta} {Method}?}
+  \textit{The American Statistician}, 66, 124--127.
 
 \bibitem[{Wolfinger and
   O'Connell(1993)}]{WolfingerEtAl1993GeneralizedLinearMixed233}

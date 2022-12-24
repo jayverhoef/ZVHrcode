@@ -5,36 +5,36 @@ The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
 Database file #1: spglm.bib
 You've used 14 entries,
             2777 wiz_defined-function locations,
-            731 strings with 7782 characters,
-and the built_in function-call counts, 6528 in all, are:
-= -- 638
+            732 strings with 7709 characters,
+and the built_in function-call counts, 6515 in all, are:
+= -- 635
 > -- 272
 < -- 11
 + -- 100
 - -- 84
-* -- 613
-:= -- 1144
+* -- 611
+:= -- 1143
 add.period$ -- 26
 call.type$ -- 14
-change.case$ -- 89
+change.case$ -- 88
 chr.to.int$ -- 14
 cite$ -- 14
-duplicate$ -- 287
+duplicate$ -- 286
 empty$ -- 472
 format.name$ -- 132
-if$ -- 1259
+if$ -- 1256
 int.to.chr$ -- 1
 int.to.str$ -- 1
 missing$ -- 16
 newline$ -- 47
 num.names$ -- 56
-pop$ -- 81
+pop$ -- 82
 preamble$ -- 1
 purify$ -- 84
 quote$ -- 0
 skip$ -- 189
 stack$ -- 0
-substring$ -- 469
+substring$ -- 467
 swap$ -- 67
 text.length$ -- 0
 text.prefix$ -- 0
@@ -43,4 +43,4 @@ type$ -- 120
 warning$ -- 0
 while$ -- 66
 width$ -- 0
-write$ -- 161
+write$ -- 160

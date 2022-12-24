@@ -398,6 +398,7 @@ system(paste0('rm ','\'',SLEDbook_path,
 spfit = spautor(Estimate ~ stockname, data = seals_sf, estmethod = 'reml', 
 	control = list(reltol = 1e-7), W = Nmat4, spcov_type = 'car', row_st = TRUE )
 theta = coef(spfit, type = 'spcov')
+summary(spfit)
 
 # ---------------------- Analytical Approach ----------------------------
 
@@ -418,6 +419,7 @@ FI[1,2] = FI[2,1] = sum(diag(P %*% DWi %*% P %*% A))
 FI[2,2] = sum(diag(P %*% A %*% P %*% A))
 FI = 0.5*FI
 asycov = solve(FI)
+sqrt(diag(asycov))
 theta[c('de','range')] - 1.96*sqrt(diag(asycov))
 theta[c('de','range')] + 1.96*sqrt(diag(asycov))
 
@@ -441,6 +443,8 @@ fixed_parms(theta)
 FishInf = -hessian(fixed_parms, theta[c(1,3)])
 # asymptotic covariance matrix
 asycov_comp = solve(FishInf)
+
+sqrt(diag(asycov_comp))
 
 theta[c('de','range')] - 1.96*sqrt(diag(asycov_comp))
 theta[c('de','range')] + 1.96*sqrt(diag(asycov_comp))

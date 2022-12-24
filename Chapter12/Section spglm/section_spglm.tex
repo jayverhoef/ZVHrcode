@@ -56,65 +56,14 @@
 
 Many types of data are binary, counts, or positive continuous.  Early attempts to model such data relied on transformations to ``near normal'' so that classical linear model methods could be used.  For example, a square root transformation was often used for count data.  However, \citet{NelderEtAl1972GeneralizedLinearModels370} introduced a natural extension to linear models using parameteric distributions such as the Poisson for counts, the Bernoulli for binary data, etc., called the generalized linear model \citep[GLM,][]{McCullaghEtAl1989GeneralizedLinearModels}, which have become very popular and generally preferred to data transformations.  A natural extension of GLMs by allowing latent random effects in the linear mixed model, to create a class of generalized linear mixed model \citep[GLMM,][]{breslow_approximate_1993}.  The latent random effects are generally assumed to be independent and identically distributed from normal distribution.  However, it is also possible to for the latent random effects to be spatially autocorrelated, leading to the spatial generalized linear model \citep[SGLM,][]{GotwayEtAl1997GeneralizedLinearModel157, DiggleEtAl1998ModelbasedGeostatisticsDisc299}, which we review here.
 
-Historically, for areal data, such as the models in Chapter 7, there are equivalent models for discrete data, such as those that are binary or counts.  These have been termed the autologistic, auto-Poisson models, autobinomial, and auto negative binomial, with obvious connections to their nonspatial distributions \citep{Besag1974SpatialInteractionStatistical192, Cressie1993StatisticsSpatialData}.  These models have not been very popular, as the conditional specification does not always lead to a recognizable likelihood, or, indeed, as for the auto-Poisson, that likelihood may not have a closed form under positive autocorrelation.  We will not discuss these models further.
+Historically, for areal data, such as the models in Chapter 7, there are equivalent models for discrete data, such as those that are binary or counts.  These have been termed the autologistic, auto-Poisson, autobinomial, and auto negative binomial models, with obvious connections to their nonspatial distributions \citep{Besag1974SpatialInteractionStatistical192, Cressie1993StatisticsSpatialData}.  These models have not been very popular, as the conditional specification does not always lead to a recognizable likelihood, or, indeed, as for the auto-Poisson, that likelihood may not have a closed form under positive autocorrelation.  We will not discuss these models further.
 
 Another class of models are based on a hierarchical constuction, where the mean of any of the distributions in GLMs is allowed to vary by using spatial random effects in the mean structure.  Here, there are three broad methods of analysis.  The most obvious method is to take a Bayesian approach and compute the posterior distribution of all latent spatial variables and parameters.  This has been extremely popular beginning with disease-mapping \citep{clayton_empirical_1987} and the introduction of the \texttt{WinBUGS} software \citep{lunn_winbugs-bayesian_2000}. 
 
 Another approach is the penalized quasi-likelihood models \citep{breslow_approximate_1993, WolfingerEtAl1993GeneralizedLinearMixed233}.  These models have been implemented in popular software such as the \texttt{glmmPQL} function in the \texttt{MASS} package in \texttt{R} and the \texttt{GLIMMIX} package in \texttt{SAS}.
 
-A third approach is to take a likelihood approach and attempt to estimate covariance parameter, and perhaps fixed effects simultaneously, while integrating out over all spatial random effects.   This can be done using Markov chain Monte Carlo methods \citep[e.g.,][]{christensen_monte_2004} or more directly using a Laplace approximation \citep[e.g.,][]{evangelou_estimation_2011, bonat_practical_2016}.  Here, we will follow \citet{bonat_practical_2016}, and improve their methods.
+A third approach is to take a likelihood approach and attempt to estimate covariance parameter, and perhaps fixed effects simultaneously, while integrating out over all spatial random effects.   This can be done using Markov chain Monte Carlo methods \citep[e.g.,][]{christensen_monte_2004} or more directly using a Laplace approximation \citep[e.g.,][]{evangelou_estimation_2011, bonat_practical_2016}.  Here, we will focus primarily on \citet{bonat_practical_2016}, and improve their methods.
 
-
-
-
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-%                  12.x.1 Spatially structured dependence
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-
-{\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
-
-A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\xi}]$ to denote any probability density function of the vector of random variables $\mathbf{y}$ conditional on a vector of parameters, or other fixed variables, $\boldsymbol{\xi}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameter and fixed value vectors on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\xi}_{1}, \boldsymbol{\xi}_{2}, \ldots, \boldsymbol{\xi}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\xi}]$ be the product of independent Poisson distributions with mean parameters contained in the vector $\boldsymbol{\xi}$.  For the hierarchical construction of a SGLM, we condition on spatially-autocorrelated random effects $\mathbf{w}$, thus $[\mathbf{y}|\mathbf{w}]$, where $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\boldsymbol{\theta}]$, where the vector $\boldsymbol{\theta}$ contains covariance parameters.  For example, $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect for geostatistical models (Chapter 6), or may contain the variance and autocorrelation parameters from Chapter 7.  Hence, the joint distribution of the data $\mathbf{y}$ and the latent spatial random effects $\mathbf{w}$ is $[\mathbf{y},\mathbf{w}|\boldsymbol{\theta}] = [\mathbf{y}|\mathbf{w}][\mathbf{w}|\boldsymbol{\theta}]$.  
-
-The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$, where it is parameterized so that $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$.  If our linear model is $\boldsymbol{\eta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \mathbf{w}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example because, recall that the mean of a Poisson distribution must be postive, and $g^{-1}(\cdot)$ is the exponential function, and hence $\boldsymbol{\mu} = g^{-1}(\mathbf{w})$ is always positive and $\mathbf{w}$ is unconstrained on the real line, as it must be for a multivariate normal distribution. For an example with extra parameters for $\mathbf{y}$, consider the negative binomial distribution, which can be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.  
-
-Now, let us write
-$$
-\mathbf{w} = \mathbf{X}\boldsymbol{\beta} + \mathbf{e},
-$$
-where this model is the same one defined in (1.1), where $\var(\mathbf{e}) = \boldsymbol{\Sigma}_{\boldsymbol{\theta}}$, and we use the subscript to show the dependence of $\boldsymbol{\Sigma}$ on $\boldsymbol{\theta}$.  Thus, we use the notation $[\mathbf{w}|\mathbf{X},\boldsymbol{\beta},\boldsymbol{\theta}]$ to indicate the probability density function $N(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$.  Then, a very general model can be constructed hierarchically as,
-\begin{equation} \label{eq:hsglm}
-[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}].
-\end{equation}
-As a concrete example, suppose that $[\mathbf{y}|\mathbf{w}]$ is Poisson, and $[\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}]$ is multivariate normal, then the joint likelihood is
-$$
-[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = \left(\prod_{i=1}^{n}\frac{\exp(w_{i})^{y_{i}}\exp(-\exp(w_i))}{y_{i}!}\right)\frac{\exp-[(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})^{T}\boldsymbol{\Sigma_{\boldsymbol{\theta}}}^{-1}(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})]}{(2\pi)^{n/2}|\boldsymbol{\Sigma_{\boldsymbol{\theta}}}|^{1/2}},
-$$
-and note the use of $\mu_{i} = g^{-1}(w_{i}) = \exp(w_{i})$.
-
-The joint distribution \ref{eq:hsglm} forms the basis for inference, with popular choices given by
-\begin{itemize}
-\item putting prior distributions on $\boldsymbol{\phi}$, $\boldsymbol{\beta}$, and $\boldsymbol{\theta}$ and computing, or sampling from, the joint posterior distribution $[\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}|\mathbf{y},\mathbf{X}]$ using any of a variety of Bayesian methods, or 
-\item approximating \eqref{eq:hsglm} with a quasi-likehood and using iterative fitting algorithms for $\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}$, or
-\item integrating over $\mathbf{w}$ using a Laplace approximation, and integrating over $\boldsymbol{\beta}$ as in REML, and use maximum likelihood to estimate $\boldsymbol{\phi},\boldsymbol{\theta}$ marginally, followed by GLS estimation of $\boldsymbol{\beta}$ and prediction for $\mathbf{w}$.
-\end{itemize}
-
-Below, we will give more details on the Laplace approximation and the marginal maximum likelihood approach.
-
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-%               12.x.2 Exploratory spatial data analysis
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-% ------------------------------------------------------------------------------
-
-{\large \flushleft \textbf{12.x.2 Exploratory spatial data analysis}}
-
-la te da
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -127,19 +76,106 @@ la te da
 
 {\large \flushleft \textbf{12.x.3 Parametric models for the mean structure}}
 
- la te da
+A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\mu}]$ to denote any probability density function of the vector of random variables $\mathbf{y}$ conditional on a vector of parameters, or other fixed variables, $\boldsymbol{\mu}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameter and fixed value vectors on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\mu}_{1}, \boldsymbol{\mu}_{2}, \ldots, \boldsymbol{\mu}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\mu}]$ be the product of independent Poisson distributions with mean parameters contained in the vector $\boldsymbol{\mu}$.  Although not strictly necessary, it makes most sense for $\boldsymbol{\mu}$ to be the mean for $\mathbf{y}$, so $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$. The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$. For an example with extra parameters for $\mathbf{y}$, consider the negative binomial distribution, which can be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.
+
+If our linear model is $\boldsymbol{\eta} = \mathbf{X}\boldsymbol{\beta}$, then generalized linear models establish a link function between $\boldsymbol{\mu}$ and $\boldsymbol{\eta}$, which we denote as $g(\boldsymbol{\mu}) = \boldsymbol{\eta}$, where $g(\cdot)$ is called the link function.  For the Poisson example, $g(\cdot)$ is often the log function.  Link functions are monotonic so that $g^{-1}(\cdot)$ is one-to-one with $g(\cdot)$.  The log link makes sense for the Poisson example. Recall that the mean of a Poisson distribution must be positive, and if $g(\cdot)$ is the log function, then $g^{-1}(\cdot)$ is the exponential function. Hence $\boldsymbol{\mu} = g^{-1}(\boldsymbol{\eta})$ is always positive and $\boldsymbol{\eta}$ is unconstrained on the real line, as is typical for a linear model $\boldsymbol{\eta} = \mathbf{X}\boldsymbol{\beta}$.
+
+For the hierarchical construction of a generalized linear mixed model, we condition on random effects, and we will change notation to $\mathbf{w}$ rather than $\boldsymbol{\eta}$ to reflect the fact that $\mathbf{w}$ has a probability distribution. Thus we write $[\mathbf{y}|\mathbf{w}]$, where $\textrm{E}(\mathbf{y}) = \mathbf{w}$, and $\mathbf{w}$ is generally considered to have multivariate normal distribution, which can be denoted $[\mathbf{w}|\mathbf{X}, \boldsymbol{\beta}, \boldsymbol{\theta}]$, where $\mathbf{X}$ is the design matrix of fixed explanatory variables, $\boldsymbol{\beta}$ is a vector of fixed effects parameters, $\textrm{E}(\mathbf{w}) = \mathbf{X}\boldsymbol{\beta}$, and the vector $\boldsymbol{\theta}$ contains covariance parameters.   Thus, we use the notation $[\mathbf{w}|\mathbf{X},\boldsymbol{\beta},\boldsymbol{\theta}]$ to indicate the probability density function $\mathbf{w} \sim N(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$. For the hierarchical construction of a SGLM, we simply let $\mathbf{w}$ be a spatial model, which we turn to next.
+
+   
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%                  12.x.1 Spatially structured dependence
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
+
+Let us write
+$$
+\mathbf{w} = \mathbf{X}\boldsymbol{\beta} + \mathbf{e},
+$$
+where this model is the same one defined in (1.1), where $\var(\mathbf{e}) = \boldsymbol{\Sigma}_{\boldsymbol{\theta}}$, and we use the subscript to show the dependence of $\boldsymbol{\Sigma}$ on $\boldsymbol{\theta}$. Then, a very general model can be constructed hierarchically as,
+\begin{equation} \label{eq:hsglm}
+[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = [\mathbf{y}|\mathbf{w},\boldsymbol{\phi}][\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}].
+\end{equation}
+As a concrete example, suppose that $[\mathbf{y}|\mathbf{w}]$ is Poisson, and $[\mathbf{w}|\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}]$ is multivariate normal, then the joint likelihood is
+$$
+[\mathbf{y},\mathbf{w}|\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta},\mathbf{X}] = \left(\prod_{i=1}^{n}\frac{\exp(w_{i})^{y_{i}}\exp(-\exp(w_i))}{y_{i}!}\right)\frac{\exp-[(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})^{T}\boldsymbol{\Sigma_{\boldsymbol{\theta}}}^{-1}(\mathbf{w} - \mathbf{X}\boldsymbol{\beta})]}{(2\pi)^{n/2}|\boldsymbol{\Sigma_{\boldsymbol{\theta}}}|^{1/2}},
+$$
+and note the use of $\textrm{E}(y_{i}) = \mu_{i} = g^{-1}(w_{i}) = \exp(w_{i})$.
+
+The joint distribution \ref{eq:hsglm} forms the basis for inference, with popular choices given by
+\begin{itemize}
+\item putting prior distributions on $\boldsymbol{\phi}$, $\boldsymbol{\beta}$, and $\boldsymbol{\theta}$ and computing, or sampling from, the joint posterior distribution $[\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}|\mathbf{y},\mathbf{X}]$ using any of a variety of Bayesian methods, or 
+\item approximating \eqref{eq:hsglm} with a quasi-likehood and using iterative fitting algorithms for $\mathbf{w},\boldsymbol{\phi},\boldsymbol{\beta},\boldsymbol{\theta}$, or
+\item integrating over $\mathbf{w}$ using a Laplace approximation, and integrating over $\boldsymbol{\beta}$ as in REML, and then using maximum likelihood to estimate $\boldsymbol{\phi},\boldsymbol{\theta}$ marginally, followed by GLS estimation of $\boldsymbol{\beta}$ and prediction for $\mathbf{w}$.
+\end{itemize}
+
+Baysian inference is beyond the scope of this book. Below, we briefly outline quasi-likelihood, and then give more details on the Laplace approximation and the marginal maximum likelihood approach.
+
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%           12.x.4 Parametric models for the covariance structure
+%           12.x.3 Parametric models for the covariance structure
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
-{\large \flushleft \textbf{12.x.4 Parametric models for the covariance structure}}
+{\large \flushleft \textbf{12.x.3 Parametric models for the covariance structure}}
 
-la te da
+In \eqref{eq:hsglm}, we still need parametric models for $\boldsymbol{\Sigma}$ in $\mathbf{w} \sim N(\mathbf{X}\boldsymbol{\beta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}})$.  There are no theoretical constraints here, and any valid spatial model for $\boldsymbol{\Sigma}_{\boldsymbol{\theta}}$ is possible. For example, $\boldsymbol{\Sigma}_{\boldsymbol{\theta}}$ may be constructed from geostatistical models (Chapter 6), where $\boldsymbol{\theta}$ often contains the partial sill, range, and nugget effect, or $\boldsymbol{\Sigma}_{\boldsymbol{\theta}}$ may be constructed from spatial weights models from Chapter 7, where $\boldsymbol{\theta}$ often contains an autocorrelation and variance parameter.
+
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+%           12.x.4 Inference using Quasi-likelihood
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
+
+{\large \flushleft \textbf{12.x.4 Inference using Quasi-likelihood}}
+
+Qausi-likelihood makes assumptions on the first and second moments, rather than creating a hierarchical model, but the underlying models are similar.  Let us suppose that $\textrm{E}(\mathbf{y}) = g^{-1}(\mathbf{\mathbf{X}\boldsymbol{\beta}})$ and $\textrm{var}(\mathbf{y}) = \mathbf{A}^{1/2}\mathbf{R}\mathbf{A}^{1/2}$, where $\mathbf{R}$ is a spatial autocorrelation matrix using one of the models in Chapter 6 or Chapter 7 (minus the overall variance parameter), and $\mathbf{A}$ is a diagonal matrix that contains the variance functions of the model.  Generalized linear models specify a variance function as well as a mean function, which is determined by the distribution for $\mathbf{y}$ and is often related to the mean function (e.g., for the Poisson distribution, the variance equals the mean).  
+
+A multivariate Taylor-series approximation to a nonlinear function $g(\mathbf{x})$ around some value $\mathbf{a}$ is
+$$
+g(\mathbf{x}) \approx g(\mathbf{a}) + g^{\prime}(\mathbf{a})(\mathbf{x} - \mathbf{a}),
+$$
+so let us expand $g^{-1}(\mathbf{X}\boldsymbol{\beta})$ around some value of $\tilde{\boldsymbol{\beta}}$,
+$$
+g^{-1}(\mathbf{\mathbf{X}\boldsymbol{\beta}}) \approx g^{-1}(\mathbf{X}\tilde{\boldsymbol{\beta}}) + \boldsymbol{\Delta}\mathbf{X}(\boldsymbol{\beta} - \tilde{\boldsymbol{\beta}}),
+$$
+where $\boldsymbol{\Delta}$ is a diagonal matrix with diagonal elements
+$$
+\boldsymbol{\Delta} = \frac{\partial g^{-1}(\boldsymbol{\eta})}{\partial \boldsymbol{\eta}},
+$$
+evaluated at $\tilde{\boldsymbol{\beta}}$, and recall that $\boldsymbol{\eta} = \mathbf{X}\boldsymbol{\beta}$.  Notice that
+$$
+\textrm{E}[\mathbf{y} - g^{-1}(\mathbf{X}\tilde{\boldsymbol{\beta}}) - \boldsymbol{\Delta}\mathbf{X}(\boldsymbol{\beta} - \tilde{\boldsymbol{\beta}})] \approx g^{-1}(\mathbf{X}\boldsymbol{\beta}) - g^{-1}(\mathbf{X}\tilde{\boldsymbol{\beta}}) - \boldsymbol{\Delta}\mathbf{X}(\boldsymbol{\beta} - \tilde{\boldsymbol{\beta}})],
+$$
+and, with some rearrangement,
+$$
+\mathbf{X}\boldsymbol{\beta} \approx \boldsymbol{\Delta}^{-1}[g^{-1}(\mathbf{X}\boldsymbol{\beta}) - g^{-1}(\mathbf{X}\tilde{\boldsymbol{\beta}})] + \mathbf{X}\tilde{\boldsymbol{\beta}},
+$$
+so this suggest creating pseudo-data from $\mathbf{y}$ as
+\begin{equation} \label{eq:pseudodata}
+\tilde{\mathbf{p}} = \boldsymbol{\Delta}^{-1}[\mathbf{y} - g^{-1}(\mathbf{X}\tilde{\boldsymbol{\beta}})] + \mathbf{X}\tilde{\boldsymbol{\beta}},
+\end{equation}
+whose approximate expectation is $\mathbf{X}\boldsymbol{\beta}$.  From our assumed covariance model for $\mathbf{y}$, we have 
+$$
+\var({\tilde{\mathbf{p}}}) = \boldsymbol{\Delta}^{-1}\mathbf{A}^{1/2}\mathbf{R}\mathbf{A}^{1/2}\boldsymbol{\Delta}^{-1} \equiv \mathbf{V}
+$$
+
+
+Treating $\tilde{\mathbf{p}}$ as data and $\mathbf{V}$ as a covariance matrix with unknown parameters, we can use maximum likelihood or restricted maximum likelihood (Chapter 8) to estimate the covariance parameters of $\mathbf{R}$, which is contained in $\mathbf{V}$, and, upon plugging them into $\mathbf{V}$ we have an estimated covariance matrix that we denote $\tilde{\mathbf{V}}$.  From $\tilde{\mathbf{V}}$, we can get updated values,
+$$
+\tilde{\boldsymbol{\beta}} = (\mathbf{X}^{T}\tilde{\mathbf{V}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\tilde{\mathbf{V}}^{-1}\tilde{\mathbf{p}},
+$$
+and from updated $\tilde{\boldsymbol{\beta}}$, we can update the pseudo-data from \eqref{eq:pseudodata}.  This iterative proceduce continues until convergence in $\tilde{\boldsymbol{\beta}}$ and the covariance parameters in $\mathbf{R}$.  The algorithm only needs starting values for $\tilde{\boldsymbol{\beta}}$ which can be obtained by assuming data are independent and using iteratively reweighted least squares (IRLS), which is the default parameter estimation method for nearly all generalized linear model software.  Note that while IRLS converges to the maximum likelihood solution under most common conditions \citep{green_iteratively_1984}, the quasi-model approach described above does not converge toward any likelihood, and, in fact, is not guaranteed to converge at all.
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
