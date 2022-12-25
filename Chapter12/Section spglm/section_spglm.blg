@@ -3,44 +3,46 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: section_spglm.aux
 The style file: /mnt/ExtraDrive1/Work/shTex/asa.bst
 Database file #1: spglm.bib
-You've used 14 entries,
+Warning--I didn't find a database entry for "lunn_winbugs-bayesian_2000"
+You've used 16 entries,
             2777 wiz_defined-function locations,
-            732 strings with 7709 characters,
-and the built_in function-call counts, 6515 in all, are:
-= -- 635
-> -- 272
-< -- 11
-+ -- 100
-- -- 84
-* -- 611
-:= -- 1143
-add.period$ -- 26
-call.type$ -- 14
-change.case$ -- 88
-chr.to.int$ -- 14
-cite$ -- 14
-duplicate$ -- 286
-empty$ -- 472
-format.name$ -- 132
-if$ -- 1256
+            743 strings with 8425 characters,
+and the built_in function-call counts, 8278 in all, are:
+= -- 787
+> -- 392
+< -- 12
++ -- 144
+- -- 126
+* -- 792
+:= -- 1434
+add.period$ -- 30
+call.type$ -- 16
+change.case$ -- 106
+chr.to.int$ -- 16
+cite$ -- 16
+duplicate$ -- 336
+empty$ -- 586
+format.name$ -- 180
+if$ -- 1602
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 16
-newline$ -- 47
-num.names$ -- 56
-pop$ -- 82
+missing$ -- 18
+newline$ -- 53
+num.names$ -- 64
+pop$ -- 113
 preamble$ -- 1
-purify$ -- 84
+purify$ -- 106
 quote$ -- 0
-skip$ -- 189
+skip$ -- 225
 stack$ -- 0
-substring$ -- 467
-swap$ -- 67
-text.length$ -- 0
+substring$ -- 640
+swap$ -- 86
+text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 120
+type$ -- 138
 warning$ -- 0
-while$ -- 66
+while$ -- 78
 width$ -- 0
-write$ -- 160
+write$ -- 178
+(There was 1 warning)

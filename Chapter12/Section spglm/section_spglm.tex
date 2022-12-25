@@ -68,13 +68,13 @@ A third approach is to take a likelihood approach and attempt to estimate covari
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%               12.x.3 Parametric models for the mean structure
+%               12.x.1 Parametric models for the mean structure
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
 
-{\large \flushleft \textbf{12.x.3 Parametric models for the mean structure}}
+{\large \flushleft \textbf{12.x.1 Parametric models for the mean structure}}
 
 A very general way to create spatially structured dependence for GLMMs is through a hierarchical construction.  We will use the notation $[\mathbf{y}|\boldsymbol{\mu}]$ to denote any probability density function of the vector of random variables $\mathbf{y}$ conditional on a vector of parameters, or other fixed variables, $\boldsymbol{\mu}$. We can have a joint distribution on the left side of the conditional bar, and multiple parameter and fixed value vectors on the right, e.g., $[\mathbf{y}_{1},\mathbf{y}_{2}, \ldots, \mathbf{y}_{k} | \boldsymbol{\mu}_{1}, \boldsymbol{\mu}_{2}, \ldots, \boldsymbol{\mu}_{k}]$. For example, let $[\mathbf{y}|\boldsymbol{\mu}]$ be the product of independent Poisson distributions with mean parameters contained in the vector $\boldsymbol{\mu}$.  Although not strictly necessary, it makes most sense for $\boldsymbol{\mu}$ to be the mean for $\mathbf{y}$, so $\textrm{E}(\mathbf{y}) = \boldsymbol{\mu}$. The model for the data $\mathbf{y}$ can have more parameters than just the mean, in which case we write it $[\mathbf{y}|\boldsymbol{\mu},\boldsymbol{\phi}]$. For an example with extra parameters for $\mathbf{y}$, consider the negative binomial distribution, which can be parameterized with a mean, and an extra parameter that allows for overdispersion, which we would write as $[\mathbf{y}|\boldsymbol{\mu},\phi]$, where $\phi$ is the overdispersion parameter.
 
@@ -86,12 +86,12 @@ For the hierarchical construction of a generalized linear mixed model, we condit
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%                  12.x.1 Spatially structured dependence
+%                  12.x.2 Spatially structured dependence
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 
-{\large \flushleft \textbf{12.x.1 Spatially structured dependence}}
+{\large \flushleft \textbf{12.x.2 Spatially structured dependence}}
 
 Let us write
 $$
@@ -167,7 +167,7 @@ so this suggest creating pseudo-data from $\mathbf{y}$ as
 \end{equation}
 whose approximate expectation is $\mathbf{X}\boldsymbol{\beta}$.  From our assumed covariance model for $\mathbf{y}$, we have 
 $$
-\var({\tilde{\mathbf{p}}}) = \boldsymbol{\Delta}^{-1}\mathbf{A}^{1/2}\mathbf{R}\mathbf{A}^{1/2}\boldsymbol{\Delta}^{-1} \equiv \mathbf{V}
+\var({\tilde{\mathbf{p}}}) = \boldsymbol{\Delta}^{-1}\mathbf{A}^{1/2}\mathbf{R}\mathbf{A}^{1/2}\boldsymbol{\Delta}^{-1} \equiv \mathbf{V}.
 $$
 
 
@@ -175,12 +175,12 @@ Treating $\tilde{\mathbf{p}}$ as data and $\mathbf{V}$ as a covariance matrix wi
 $$
 \tilde{\boldsymbol{\beta}} = (\mathbf{X}^{T}\tilde{\mathbf{V}}^{-1}\mathbf{X})^{-1}\mathbf{X}^{T}\tilde{\mathbf{V}}^{-1}\tilde{\mathbf{p}},
 $$
-and from updated $\tilde{\boldsymbol{\beta}}$, we can update the pseudo-data from \eqref{eq:pseudodata}.  This iterative proceduce continues until convergence in $\tilde{\boldsymbol{\beta}}$ and the covariance parameters in $\mathbf{R}$.  The algorithm only needs starting values for $\tilde{\boldsymbol{\beta}}$ which can be obtained by assuming data are independent and using iteratively reweighted least squares (IRLS), which is the default parameter estimation method for nearly all generalized linear model software.  Note that while IRLS converges to the maximum likelihood solution under most common conditions \citep{green_iteratively_1984}, the quasi-model approach described above does not converge toward any likelihood, and, in fact, is not guaranteed to converge at all.
+and from updated $\tilde{\boldsymbol{\beta}}$, we can update the pseudo-data from \eqref{eq:pseudodata}.  This iterative proceduce continues until convergence in $\tilde{\boldsymbol{\beta}}$ and the covariance parameters in $\mathbf{R}$.  The algorithm only needs starting values for $\tilde{\boldsymbol{\beta}}$ which can be obtained by assuming data are independent and using iteratively reweighted least squares (IRLS), which is the default parameter estimation method for nearly all generalized linear model software.  Note that while IRLS converges to the maximum likelihood solution under most common conditions \citep{green_iteratively_1984}, the quasi-model approach described above does not converge toward any true likelihood, and, in fact, is not guaranteed to converge at all \citep{boykin_generalized_2010, kleinschmidt_use_2001,li_adjusting_2016}.
 
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
-%           Marginal Maximum Likelihood Estimation
+%           12.x.5 Marginal MLE for Covariance Parameters
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
@@ -372,7 +372,7 @@ We also used the estimated covariance parameters in $\boldsymbol{\Sigma}_{\hat{\
 \begin{tabular}{|c|rrr|}
 \hline
 \hline
-effect & bias & CI90$_{u}$ & CI90$_{u}$ \\
+effect & bias & CI90$_{u}$ & CI90$_{c}$ \\
 \hline{}
 $\beta_{0}$ & -0.006 & 0.865 & 0.875 \\ 
 $\beta_{1}$ &    -0.003 & 0.360 & 0.905 \\ 
