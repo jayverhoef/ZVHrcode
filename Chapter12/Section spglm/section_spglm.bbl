@@ -1,4 +1,4 @@
-\begin{thebibliography}{16}
+\begin{thebibliography}{17}
 \newcommand{\enquote}[1]{``#1''}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
@@ -77,6 +77,13 @@ Li, L., Brumback, B.~A., Weppelmann, T.~A., Morris~Jr, J.~G., and Ali, A.
   (2016), \enquote{Adjusting for unmeasured confounding due to either of two
   crossed factors with a logistic regression model,} \textit{Statistics in
   Medicine}, 35, 3179--3188.
+
+\bibitem[{Lunn et~al.(2000)Lunn, Thomas, Best, and
+  Spiegelhalter}]{lunn_winbugs_2000}
+Lunn, D.~J., Thomas, A., Best, N., and Spiegelhalter, D. (2000),
+  \enquote{{WinBUGS} - {A} {Bayesian} modelling framework: {Concepts},
+  structure, and extensibility,} \textit{Statistics and Computing}, 10,
+  325--337.
 
 \bibitem[{McCullagh and
   Nelder(1989)}]{McCullaghEtAl1989GeneralizedLinearModels}
