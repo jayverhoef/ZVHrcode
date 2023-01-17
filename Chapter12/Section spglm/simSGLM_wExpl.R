@@ -61,6 +61,8 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 		if(family == 'poisson') y = rpois(nall, lambda = exp(w_true))
 		if(family == 'binomial') y = rbinom(nall, size = sampsize, 
 			p = expit(w_true))
+		if(family == 'negbinomial') y = rnbinom(nall, mu = exp(w_true), 
+			size = exp(gammas[4]))
 	}
 	if(autocorr_type == 'radialbasis') {
 		knots = kmeans(xycoord, nknots)$centers
@@ -72,6 +74,8 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 		if(family == 'poisson') y = rpois(nall, lambda = exp(w_true))
 		if(family == 'binomial') y = rbinom(nall, size = sampsize, 
 			p = expit(w_true))
+		if(family == 'negbinomial') y = rnbinom(nall, mu = exp(w_true), 
+			size = exp(gammas[4]))
 	}
 	obspred = rep('obs', times = nall)
 	if(pred == TRUE) obspred = c(rep('obs', times = n), 

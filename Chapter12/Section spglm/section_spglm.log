@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  28 DEC 2022 12:50
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.11)  4 JAN 2023 19:49
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -336,50 +336,61 @@ LaTeX Font Info:    Trying to load font information for U+rsfs on input line 77
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 ) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] [7] [8
-]
-<figures/pois_likelihood_estimation.pdf, id=49, 761.84625pt x 652.4375pt>
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4]
+Overfull \hbox (5.08284pt too wide) in paragraph at lines 195--197
+[]\OT1/cmr/bx/n/14.4 12.x.5 Es-ti-mat-ing Co-vari-ance Pa-ram-e-ters for the Hi
+-er-ar-chi-cal Model
+ []
+
+
+Overfull \hbox (30.68602pt too wide) in paragraph at lines 207--209
+\OT1/cmr/m/n/12 where for ML es-ti-ma-tion $\OML/cmm/m/it/12 C[] \U/MnSymbolD/m
+/n/12 ^^@ []$ \OT1/cmr/m/n/12 and for REML es-ti-ma-tion $\OML/cmm/m/it/12 C[] 
+\U/MnSymbolD/m/n/12 ^^@ []$\OT1/cmr/m/n/12 .
+ []
+
+[5] [6] [7] [8]
+<figures/pois_likelihood_estimation.pdf, id=48, 761.84625pt x 652.4375pt>
 File: figures/pois_likelihood_estimation.pdf Graphic file (type pdf)
 <use figures/pois_likelihood_estimation.pdf>
 Package pdftex.def Info: figures/pois_likelihood_estimation.pdf  used on input 
 line 356.
 (pdftex.def)             Requested size: 375.80542pt x 321.82762pt.
- [9 <./figures/pois_likelihood_estimation.pdf>] [10] (./section_spglm.bbl [11])
- [12]
-(./section_spglm.aux) ) 
+ [9] [10 <./figures/pois_likelihood_estimation.pdf>]
+(./section_spglm.bbl [11] [12]) [13] (./section_spglm.aux) ) 
 Here is how much of TeX's memory you used:
  5664 strings out of 481239
  74246 string characters out of 5920377
- 290533 words of memory out of 5000000
+ 289534 words of memory out of 5000000
  20834 multiletter control sequences out of 15000+600000
  551748 words of font info for 91 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  30i,13n,31p,1442b,264s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/
-MnSymbolS.enc}{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr
-/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolD.enc}{/usr/share/te
-xlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolF.enc}{/usr/share/texlive/tex
-mf-dist/fonts/enc/dvips/mnsymbol/MnSymbolE.enc}{/usr/share/texlive/texmf-dist/f
-onts/enc/dvips/mnsymbol/MnSymbolC.enc}</usr/share/texlive/texmf-dist/fonts/type
-1/public/mnsymbol/MnSymbol12.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
-lic/mnsymbol/MnSymbol8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmbx6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmb
-x8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb
-></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/
-share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/t
-exlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1
-/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmtt12.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1200
-.pfb>
-Output written on section_spglm.pdf (12 pages, 279875 bytes).
+{/usr/share/texlive
+/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolS.enc}{/usr/share/texmf/fonts/enc/
+dvips/cm-super/cm-super-ts1.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/
+mnsymbol/MnSymbolD.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/
+MnSymbolF.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolE
+.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolC.enc}</us
+r/share/texlive/texmf-dist/fonts/type1/public/mnsymbol/MnSymbol12.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/mnsymbol/MnSymbol8.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share/texlive/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share/texlive/texmf-dist/font
+s/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmmib10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
+mextra/cmmib8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/share/texmf
+/fonts/type1/public/cm-super/sfrm1200.pfb>
+Output written on section_spglm.pdf (13 pages, 280999 bytes).
 PDF statistics:
- 133 PDF objects out of 1000 (max. 8388607)
- 99 compressed objects within 1 object stream
+ 138 PDF objects out of 1000 (max. 8388607)
+ 102 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 

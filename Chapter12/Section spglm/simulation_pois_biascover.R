@@ -12,7 +12,6 @@ library(classInt)
 library(pdist)
 library(xtable)
 
-
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -51,15 +50,16 @@ for(iter in 1:niter) {
 	Dist_pp = as.matrix(dist(xypred))
 
 	#initial covariance parameters values for optim
-	theta = rep(-2, times = 3)
+	theta = rep(-2, times = 4)
 	# undebug(logLik_Laplace)
 	# optimize for covariance parameters
-	maxvar = 5*var(y)
-	maxrange = 5*max(distmat)
+	maxvar = 10*var(log(y+1))
+	maxrange = 10*max(distmat)
+	maxphi = 1000
 	# undebug(logLik_Laplace)
-	optout = optim(theta, logLik_Laplace,
-		y = y, X = X, distmat = distmat, autocor_fun = rho_exp,
-		maxvar = maxvar, maxrange = maxrange, family = 'poisson')
+	optout = optim(theta, logLik_Laplace, y = y, X = X, distmat = distmat, 
+		autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, 
+		maxphi = maxphi, family = 'poisson', mlmeth = 'reml')
 	# covariance parameters
 	maxvar*expit(optout$par[1])
 	maxvar*expit(optout$par[2])
@@ -70,7 +70,8 @@ for(iter in 1:niter) {
 	pred_out = estpred(optout$par, y = y, X = X, distmat = distmat, 
 		autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, 
 		family = 'poisson', Xp = Xp, dist_op = dist_op, dist_pp = dist_pp )
-
+  pred_out$betahat
+  
   w_true = sim_data$w_true[sim_data$obspred == 'pred']
   bias_pred = mean(pred_out$w_pred - w_true)
   cover_pred = sum(pred_out$w_pred - 1.645*pred_out$wpred_se < w_true & 

@@ -12,13 +12,16 @@ expit = function(x) {exp(x)/(1 + exp(x))}
 #       and range parameter as it arguments
 # maxvar: maximum variance for either partial sill or nugget effect
 # maxrange: maximum for the range parameter
+# family: family for the data model, one of either "poisson", "binomial", 
+#       "negbinomial", "gamma", or "invgaussian"				
 logLik_Laplace = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
-	maxvar, maxrange, family)
+	maxvar, maxrange, maxphi = NULL, family, mlmeth = 'reml')
 {
 	# transform theta
 	gam_0 = maxvar*expit(theta[1]) + 1e-6
 	gam_1 = maxvar*expit(theta[2])
 	gam_2 = maxrange*expit(theta[3])
+	if(length(theta) == 4) phi = maxphi*expit(theta[4])
 
 	# number of observed locations
 	n = length(y)
@@ -27,6 +30,7 @@ logLik_Laplace = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 	# starting values for w
 	if(family == 'poisson') w = 0.5*log(y + 1)
 	if(family == 'binomial') w = 0.5*(y - 0.5*sampsize)
+	if(family == 'negbinomial') w = 0.5*log(y + 1)
 	
 	# covariance matrix
 	CovMat = gam_1*autocor_fun(distmat, gam_2) + gam_0*diag(n)
@@ -50,12 +54,15 @@ logLik_Laplace = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 		# compute d based on family
 		if(family == 'poisson') d = y - exp(w)
 		if(family == 'binomial') d = y - sampsize*expit(w)
+		if(family == 'negbinomial') d = phi*(y - sampsize*exp(w))/(phi + exp(w))
 		g =  d - mPtheta %*% w
 		# Next, compute H
 		# compute D based on family
 		if(family == 'poisson') D = -diag(as.vector(exp(w)))
 		if(family == 'binomial') 
 			D = -diag(as.vector(sampsize*expit(w)/(1 + exp(w))))
+		if(family == 'negbinomial') 
+			D = -diag(as.vector(phi*exp(w)*(phi + y)/(phi + exp(w))^2))
 		H = D - mPtheta
 		# compute new w
 		solveHg = solve(H, g)
@@ -63,6 +70,8 @@ logLik_Laplace = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 		# if g is not shrinking towards zero, decrease stepsize
 		if(family == 'poisson') dnew = y - exp(wnew)
 		if(family == 'binomial') dnew = y - sampsize*expit(wnew)
+		if(family == 'negbinomial') dnew = 
+			phi*(y - sampsize*exp(wnew))/(phi + exp(wnew))
 		gnew = dnew - mPtheta %*% wnew
 		if(max(abs(gnew)) > max(abs(g))) 
 			wnew = w - 0.1*solveHg
@@ -82,14 +91,17 @@ logLik_Laplace = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 		dm = -2*sum(dpois(y, lambda = exp(w), log = TRUE)) 
 	if(family == 'binomial')
 		dm = -2*sum(dbinom(y, size = sampsize, prob = expit(w), log = TRUE)) 
+	if(family == 'negbinomial')
+		dm = -2*sum(dnbinom(y, mu = exp(w), size = phi, log = TRUE)) 
+	mlmethpart = 0
+	if(mlmeth == 'reml')
+		mlmethpart = determinant(t(X) %*% SigiX, logarithm = TRUE)$modulus
 	Likelihood =
 		# data model part
-		dm + 		
+		dm + mlmethpart +  		
 		# multivariate normal part
 		determinant(CovMat, logarithm = TRUE)$modulus + 
-			t(w - X %*% betahat) %*% CovMati %*% (w - X %*% betahat) +
-		# REML part
-		determinant(t(X) %*% SigiX, logarithm = TRUE)$modulus +
+		t(w - X %*% betahat) %*% CovMati %*% (w - X %*% betahat) +
 		# Laplace part
 	  determinant(-H, logarithm = TRUE)$modulus 
 	return(as.numeric(Likelihood))

@@ -15,7 +15,8 @@
 # dist_op: Euclidean distance between observed and prediction locations
 # dist_pp: Euclidean distance among prediction locations
 estpred = function(theta, y, sampsize = NULL, X, distmat, autocor_fun, 
-	maxvar, maxrange, family, Xp = NULL, dist_op = NULL, dist_pp = NULL)
+	maxvar, maxrange, maxphi = NULL, family, 
+	Xp = NULL, dist_op = NULL, dist_pp = NULL)
 {
 # after optimizing for covariance parameters, we need betahat and w's
 # we just need one pass through optimizing w's to obtain them
@@ -25,6 +26,7 @@ estpred = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 	gam_0 = maxvar*expit(theta[1]) + 1e-6
 	gam_1 = maxvar*expit(theta[2])
 	gam_2 = maxrange*expit(theta[3])
+	if(length(theta) == 4) phi = maxphi*expit(theta[4])
 
 	# number of observed locations
 	n = length(y)
@@ -33,6 +35,7 @@ estpred = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 	# starting values for w
 	if(family == 'poisson') w = 0.5*log(y + 1)
 	if(family == 'binomial') w = 0.5*(y - 0.5*sampsize)
+	if(family == 'negbinomial') w = 0.5*log(y + 1)
 	
 	# covariance matrix
 	CovMat = gam_1*autocor_fun(distmat, gam_2) + gam_0*diag(n)
@@ -56,12 +59,15 @@ estpred = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 		# compute d based on family
 		if(family == 'poisson') d = y - exp(w)
 		if(family == 'binomial') d = y - sampsize*expit(w)
+		if(family == 'negbinomial') d = phi*(y - sampsize*exp(w))/(phi + exp(w))
 		g =  d - mPtheta %*% w
 		# Next, compute H
 		# compute D based on family
 		if(family == 'poisson') D = -diag(as.vector(exp(w)))
 		if(family == 'binomial') 
 			D = -diag(as.vector(sampsize*expit(w)/(1 + exp(w))))
+		if(family == 'negbinomial') 
+			D = -diag(as.vector(phi*exp(w)*(phi + y)/(phi + exp(w))^2))
 		H = D - mPtheta
 		# compute new w
 		solveHg = solve(H, g)
@@ -69,6 +75,8 @@ estpred = function(theta, y, sampsize = NULL, X, distmat, autocor_fun,
 		# if g is not shrinking towards zero, decrease stepsize
 		if(family == 'poisson') dnew = y - exp(wnew)
 		if(family == 'binomial') dnew = y - sampsize*expit(wnew)
+		if(family == 'negbinomial') dnew = 
+			phi*(y - sampsize*exp(wnew))/(phi + exp(wnew))
 		gnew = dnew - mPtheta %*% wnew
 		if(max(abs(gnew)) > max(abs(g))) wnew = w - 0.1*solveHg
 		# compute change in w for convergence
