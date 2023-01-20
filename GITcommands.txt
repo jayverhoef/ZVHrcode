@@ -1,7 +1,7 @@
 #github cloud commits
 cd '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode'
 git add .
-git commit -a -m 'spatial generalized linear models'
+git commit -a -m 'Section 8.6'
 git push origin master
 git pull origin master
 
