@@ -2,6 +2,8 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 	autocorr_type = 'covariance', autocor_fun = rho_exp,
 	nknots = NULL, sampsize = NULL, family = 'poisson')
 {
+	if(family == 'invgauss') require('statmod')
+	
 	if(loc_type == 'grid') {
 		ndim = round(sqrt(n),0)
 		xycoord = data.frame(x = kronecker(((1:ndim) - 0.5)/ndim, 
@@ -63,6 +65,12 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 			p = expit(w_true))
 		if(family == 'negbinomial') y = rnbinom(nall, mu = exp(w_true), 
 			size = exp(gammas[4]))
+		if(family == 'beta') y = rbeta(nall, shape1 = gammas[4]*expit(w_true), 
+			shape2 = gammas[4]*(1- expit(w_true)))
+		if(family == 'invgauss') y = rinvgauss(nall, mean = exp(w_true), 
+			shape = exp(w_true)*gammas[4])
+		if(family == 'gamma') y = rgamma(nall, shape = gammas[4], 
+			scale = exp(w_true)/gammas[4])
 	}
 	if(autocorr_type == 'radialbasis') {
 		knots = kmeans(xycoord, nknots)$centers
@@ -76,6 +84,10 @@ simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 			p = expit(w_true))
 		if(family == 'negbinomial') y = rnbinom(nall, mu = exp(w_true), 
 			size = exp(gammas[4]))
+		if(family == 'beta') y = rbeta(nall, shape1 = gammas[4]*expit(w_true), 
+			shape2 = gammas[4]*(1- expit(w_true)))
+		if(family == 'invgauss') y = rinvgauss(nall, mean = exp(w_true), 
+			shape = exp(w_true)*exp(gammas[4]))
 	}
 	obspred = rep('obs', times = nall)
 	if(pred == TRUE) obspred = c(rep('obs', times = n), 

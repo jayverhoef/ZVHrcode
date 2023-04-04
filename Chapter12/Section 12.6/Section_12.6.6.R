@@ -1,14 +1,12 @@
-sec_path = 'Rcode/Chapter11/Section spglm/'
+sec_path = 'Rcode/Chapter12/Section 12.6/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 source('simSGLM_wExpl.R')
-source('autocorr_functions.R')
-source('logLik_Laplace.R')
-source('estpred.R')
 source('addBreakColorLegend.R')
 
 library(viridis)
 library(classInt)
+library(spmodel)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -34,6 +32,7 @@ betas = c(2, 0, 0, 0)
 gammas = c(1, 1, 0.0001)
 sim_data = simSGLM_wExpl(20^2, autocor_fun = rho_exp, betas = betas,
 	gammas = gammas, loc_type = 'grid', pred = FALSE)
+#save(sim_data, file = 'sim_data.rda')
 
 layout(matrix(1:4, nrow = 1), widths = rep(c(3,1), times = 2))
 
@@ -74,55 +73,30 @@ addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
 par(par_orig)
 layout(1)
 
-# create design matrix for observed data
-X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
-#X = model.matrix(~ 1, data = sim_data[sim_data$obspred == 'obs',])
-# get observed values
-y = sim_data[sim_data$obspred == 'obs','y']
-# get distances among observed data locations
-distmat = as.matrix(dist(sim_data[sim_data$obspred == 
-	'obs',c('xcoord', 'ycoord')]))
-
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#   Estimate covariance parameters using Laplace
+#   Estimate covariance parameters and fixed effects using Laplace
+#   as implemented in spmodel
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-#initial value for optim
-theta = c(-2,-2,-2)
-# optimize for covariance parameters
-# undebug(logLik_Laplace)
-maxvar = 5*var(y)
-maxrange = 5*max(distmat)
-# undebug(logLik_Laplace)
-optout = optim(theta, logLik_Laplace,
-	y = y, X = X, distmat = distmat, autocor_fun = rho_exp,
-	maxvar = maxvar, maxrange = maxrange, family = 'poisson')
-# covariance parameters
-maxvar*expit(optout$par[1])
-maxvar*expit(optout$par[2])
-maxrange*expit(optout$par[3])
-# set theta as the optimized parameters on log scale
-theta = optout$par
-
+poismod <- spglm(y ~ 1, family = "poisson", data = sim_data, 
+	spcov_type = "exponential", xcoord = xcoord, ycoord = ycoord, 
+	control = list(reltol = 1e-8))	
+summary(poismod)
+	
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#   Estimate fixed effects and spatial random effects after estimating
+#   Plot true values versus spatial random effects (w's) after estimating
 #       covariance parameters
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-beta_out = estpred(optout$par, y = y, X = X, distmat = distmat, 
-	autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, 
-	family = 'poisson' )
-beta_out$betahat
-
-plot(sim_data$w_true, beta_out$w)
+plot(sim_data$w_true, fitted(poismod, type = 'link'))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -132,23 +106,29 @@ plot(sim_data$w_true, beta_out$w)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
+coef(poismod, type = "spcov")
+
 # make a graph for the likelihood surface for partial sill and range
-# center on estimated values and scale by estimated value/10
-theta2 = optout$par[2] + (-15:15)/5
-theta3 = optout$par[3] + (-15:15)/5
+# centered on estimated values and scale by estimated value/5
+theta1 = log(coef(poismod, type = "spcov")['de']) + (-15:15)/5
+theta2 = log(coef(poismod, type = "spcov")['range']) + (-15:15)/5
 # matrix to hold likelihood surface values
-llgrid = matrix(NA, ncol = 3, nrow = length(theta2)*length(theta3))
+llgrid = matrix(NA, ncol = 3, nrow = length(theta1)*length(theta2))
 
 # loop through various parameter values and compute -2*loglikelihood
 iter = 0
-for(i in 1:length(theta2)) {
-	for(j in 1:length(theta3)) {
+for(i in 1:length(theta1)) {
+	for(j in 1:length(theta2)) {
+		cat("\r", "i: ", i, " out of ", length(theta1),"   j: ", 
+			j, " out of ", length(theta1))
 		iter = iter + 1
-		llgrid[iter,1] = theta2[i]
-		llgrid[iter,2] = theta3[j]
-		llgrid[iter,3] = logLik_Laplace(
-			theta = c(optout$par[1], theta2[i],theta3[j]), 
-			y = y, X = X, distmat = distmat, autocor_fun = rho_exp, maxvar = maxvar, maxrange = maxrange, family = 'poisson')
+		llgrid[iter,1] = theta1[i]
+		llgrid[iter,2] = theta2[j]
+		llgrid[iter,3] = -2*logLik(spglm(y ~ 1, family = "poisson", data = sim_data, 
+			spcov_initial = spcov_initial("exponential", de = exp(theta1[i]), 
+				range = exp(theta2[j]), ie = coef(poismod, type = "spcov")['ie'],
+				known = 'given'),
+			xcoord = xcoord, ycoord = ycoord))	
 	}
 }
 
@@ -210,14 +190,16 @@ addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
 # make a plot of the -2*loglikelihood surface
 brks = quantile(llgrid[,3], probs = (0:9)/9)
 cip = classIntervals(llgrid[,3], style = 'fixed', fixedBreaks= brks)
-cip = classIntervals(llgrid[,3], n = 9, style = 'fisher')
+#cip = classIntervals(llgrid[,3], n = 9, style = 'fisher')
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 par(mar = c(5,5,5,1))
 plot(llgrid[,1:2], col = cip_colors, pch = 15, cex = cex_plot,
 	cex.lab = 2, cex.axis = 1.5, xlab = 'log(partial sill)',
 	ylab = 'log(range)')
-points(optout$par[2], optout$par[3], pch = 19, col = 'white', cex = 1.5)
+points(log(coef(poismod, type = "spcov")['de']), 
+	log(coef(poismod, type = "spcov")['range']), 
+	pch = 19, col = 'white', cex = 1.5)
 #points(0, 0, pch = 19, col = 'white', cex = 3)
 mtext('C', cex = mtext_cex, adj = adj, padj = padj)
 par(mar = c(0,0,0,0))
@@ -226,7 +208,7 @@ plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
 addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = "1.1")
 
-cip = classIntervals(beta_out$w, 9, style = 'fisher')
+cip = classIntervals(fitted(poismod, type = 'link'), 9, style = 'fisher')
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 par(mar = c(5,5,5,1))

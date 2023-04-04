@@ -1,4 +1,4 @@
-sec_path = 'Rcode/Chapter10/Section 10.6/'
+sec_path = 'Rcode/Chapter11/Section 11.5/'
 setwd(paste0(SLEDbook_path,sec_path))
 
 library(gtools)
