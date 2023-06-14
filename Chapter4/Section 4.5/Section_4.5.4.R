@@ -35,7 +35,7 @@ summary(lmfit3)
 
 # choose lmfit2 model and create ANOVA table
 aovOut0 = summary(aov(log(Pb) ~ 1, data = MOSS_data))
-aovOut2 = summary(aov(log(Pb) ~year + sideroad + log(dist2road) + 
+aovOut2 = summary(aov(log(Pb) ~ year + sideroad + log(dist2road) + 
   log(dist2road)*sideroad, data = MOSS_data))
 aovTab = rbind(aovOut2[[1]],aovOut0[[1]])
 aovTab[dim(aovTab)[1],3:dim(aovTab)[2]] = NA
@@ -97,7 +97,7 @@ pdf(file = paste0(file_name,'.pdf'), width = 10, height = 10)
   xaxs[MOSS_data$sideroad == 'S'] = 1
   xaxs = xaxs*log(MOSS_data$dist2road)
   old.par = par(mar = c(5,5,1,1))
-  plot(xaxs, log(MOSS_data$Pb), xlab = 'Log Distance From Road',
+  plot(xaxs, log(MOSS_data$Pb), xlab = 'Log Distance (ln m) From Road',
     ylab = 'Log Lead Concentration (ln Pb mg/kg)', pch = 19, type = 'n',
     cex = 1.5, cex.lab = 2, cex.axis = 1.5,
     xaxt = 'n', col = 'white', ylim = c(-.25,7.5))

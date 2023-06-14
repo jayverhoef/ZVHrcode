@@ -152,12 +152,12 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 	adj = -.2
 	cex_mtext = 3.2
 	cex_all = 1.8
-	par(mar = c(5,5,4,1))
+	par(mar = c(5,6,4,1))
 	plot(store_jitter[,c(1,6)], xlim = c(.9, max(store_jitter[,1]) + .1),
 		ylim = c(min(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]),
 			max(-2*logLik(lmout_m), -2*logLik(lmout_X), store_jitter[,6]) + 10),
 		type = 'n', xlab = '', xaxt = 'n',
-		ylab = expression("-2"*italic(L)(bold(theta)~";"~bold(y))), cex.lab = 2, cex.axis = 1.5)
+		ylab = expression("-2"*italic(L)(tilde(bold(theta))~";"~bold(y))), cex.lab = 2, cex.axis = 1.5)
 	points(1, -2*logLik(lmout_m), pch = 19, cex = cex_all)
 	points(5, -2*logLik(lmout_X), pch = 19, cex = cex_all)
 	ind = store_jitter[,4] == 1 & store_jitter[,5] == 1
@@ -342,7 +342,7 @@ tiff(paste0(file_name,'.tiff'), width = 960, height = 480)
 	par(mar = c(6,9,5,1), mgp=c(4, 1.3, 0))
 	plot(de_seq,2*store_de, type = 'l', lwd = 3, 
 		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~hat(rho),bold(y))), 
+		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~tilde(rho),bold(y))), 
 		cex.lab = cex_lab, cex.axis = cex_axis)
 	points(coef(spfit, type = "spcov")['de'], 2*logLik(spfit), pch = 19,
 		cex = 2.5)
@@ -358,7 +358,7 @@ tiff(paste0(file_name,'.tiff'), width = 960, height = 480)
 
 	plot(range_seq,2*store_range, type = 'l', lwd = 3, 
 		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~hat(sigma)^2,bold(y))), 
+		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~tilde(sigma)^2,bold(y))), 
 		cex.lab = cex_lab, cex.axis = cex_axis)
 	points(coef(spfit, type = "spcov")['range'], 2*logLik(spfit), pch = 19,
 		cex = 2.5)
@@ -533,7 +533,7 @@ png(paste0(file_name,'.png'), width = 960, height = 960)
 	mtext('C', adj = adj, cex = cex_mtext, padj = padj)
 	# D
 	plot(dist_cor, pch = 19, cex = .5, col = rgb(0,0,0,.1), xlim = c(0,200),
-		xlab = 'Distance', ylab = 'Autocorrelation', cex.lab = cex_lab, 
+		xlab = 'Distance (km)', ylab = 'Autocorrelation', cex.lab = cex_lab, 
 		cex.axis = cex_axis)
 	mtext('D', adj = adj, cex = cex_mtext, padj = padj)
 

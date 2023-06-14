@@ -117,7 +117,7 @@ file_name = "figures/RedDog_DistRoad"
 pdf(file = paste0(file_name,'.pdf'), width = 10, height = 10)
   old.par = par(mar = c(5,5,1,1))
   plot(xaxs, log(MOSS_data$Pb), type = 'n', , ylim = c(-.25,7.0),
-    xlab = 'Log Distance From Road', 
+    xlab = 'Log Distance (ln m) From Road', 
     ylab = 'Log Lead Concentration (ln Pb mg/kg)', 
     pch = 19, cex = 1.2, cex.lab = 2, cex.axis = 1.5, xaxt = 'n'
   )

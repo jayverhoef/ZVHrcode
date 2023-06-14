@@ -214,7 +214,7 @@ pdf(paste0(file_name,'.pdf'))
 
 	par(mar = c(5,5,1,1))
 	boxplot(x = as.list(as.data.frame(store_results)), xaxt = 'n',
-		xlab = 'Lag', ylab = 'Sample Semivariogram', cex.lab = 2, cex.axis = 1.5)
+		xlab = 'Lag', ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5)
 	axis(1, at = 1:20, cex.axis = 1.5)
 
 dev.off()
@@ -240,11 +240,11 @@ file_name = "figures/polar-partition"
 
 library(shape)
 pdf(paste0(file_name,'.pdf'))
-  old.par = par(mar = c(5,5,1,1))
+  par(mar = c(5,5,1,1))
   xpts <- c(-4,4)
   ypts <- c(-4,4)
   par(pty="s")
-  plot(xpts,ypts,type="n",xlab="x-coordinate of lag",ylab="y-coordinate of lag",
+  plot(xpts,ypts,type='n',xlab='Abscissa of lag', ylab = 'Ordinate of lag',
     cex.axis = 1.5, cex.lab = 2)
   plotcircle(r = 1, mid = c(0,0), from = -pi/8, to = 7*pi/8, lwd = 3)
   plotcircle(r = 2, mid = c(0,0), from = -pi/8, to = 7*pi/8, lwd = 3)
@@ -265,6 +265,7 @@ system(paste0('cp ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
+
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------

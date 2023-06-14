@@ -123,8 +123,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(bold(paste("Separable (", alpha[1], " = 1, ", 
-		alpha[2], " = 2)"))),
+  main = expression(bold(paste("Separable (", alpha[u], " = 1, ", 
+		alpha[v], " = 2)"))),
   breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))
@@ -198,8 +198,8 @@ old.par = par(mar = c(1,2,3,0))
 cip = classIntervals(simdata1$sim1, n = 12, style = 'fisher')
 palp = viridis(12)
 image(simdata1,col = palp, bty = 'n', xaxt = 'n', yaxt = 'n', 
-  main = expression(bold(paste("Separable (", alpha[1], " = 2, ", 
-		alpha[2], " = 1)"))),
+  main = expression(bold(paste("Separable (", alpha[u], " = 2, ", 
+		alpha[v], " = 1)"))),
   breaks = cip$brks, cex.main = cex_main,
   xlim = c(0.05,10.05), ylim = c(0.05,10.05))
 par(mar = c(0,0,0,0))

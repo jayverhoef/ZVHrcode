@@ -16,10 +16,11 @@ xpts <- c(1,1,2,2,5)
 ypts <- c(4,3,3,2,4)
 
 pdf(paste0(file_name,'.pdf'))
-  old.par = par(pty="s", mar = c(3,3,1,1))
-  plot(xpts, ypts, pch=16, xlim=c(1,5), ylim=c(1,5), xlab="", ylab="",
-    cex = 2.5, cex.axis = 1.8)
-  par(old.par)
+
+	par(mar = c(5,5,1,1))
+	plot(x,y, xlim = c(1,5), ylim = c(1,5), pch = 19, cex = 2,
+		cex.lab = 2.5, cex.axis = 1.8, xlab = '', ylab = '')
+	text(x,y, labels = labs, pos = 3, cex = 2)
   
 dev.off()
 

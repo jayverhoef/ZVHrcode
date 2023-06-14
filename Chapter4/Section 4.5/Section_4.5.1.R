@@ -379,7 +379,7 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 15)
   layout(matrix(1:2, nrow = 1))
     old_par = par(mar = c(5,5,5,1))
     plot(cvgm_resid_omni$dist, cvgm_resid_omni$gamma, xlab = 'Distance (km)',
-      ylab = 'Autocovariance Function', cex.lab = 2, cex.axis = 1.5, pch = 19,
+      ylab = 'Autocovariance', cex.lab = 2, cex.axis = 1.5, pch = 19,
       cex = 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
     mtext('A', adj = -.15, padj = -.4, cex = 3)
     plot(vgm_resid_omni$dist, vgm_resid_omni$gamma, xlab = 'Distance (km)',

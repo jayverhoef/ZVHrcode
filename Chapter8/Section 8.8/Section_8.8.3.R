@@ -349,7 +349,7 @@ layout(matrix(1:2, nrow = 2))
 	par(mar = c(6,9,5,1), mgp=c(4, 1.3, 0))
 	plot(de_seq,2*store_de, type = 'l', lwd = 3, 
 		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~hat(rho),bold(y))), 
+		ylab = expression("2"*italic(L)[italic("-i,R")](sigma^2~";"~tilde(rho),bold(y))), 
 		cex.lab = cex_lab, cex.axis = cex_axis)
 	points(coef(spfit, type = "spcov")['de'], 2*logLik(spfit), pch = 19,
 		cex = 2.5)
@@ -365,7 +365,7 @@ layout(matrix(1:2, nrow = 2))
 
 	plot(range_seq,2*store_range, type = 'l', lwd = 3, 
 		xlab = '', 
-		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~hat(sigma)^2,bold(y))), 
+		ylab = expression("2"*italic(L)[italic("-i,R")](rho~";"~tilde(sigma)^2,bold(y))), 
 		cex.lab = cex_lab, cex.axis = cex_axis)
 	points(coef(spfit, type = "spcov")['range'], 2*logLik(spfit), pch = 19,
 		cex = 2.5)

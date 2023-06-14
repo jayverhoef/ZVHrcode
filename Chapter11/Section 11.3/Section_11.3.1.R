@@ -75,7 +75,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 9)
 		cex_axis = 1.5
 
 		par(mar = c(7,7,4,2), mgp=c(4, 1.3, 0))
-		plot(1:1000, sim1D, pch = 19, cex = .5, xlab = 'coordinate',
+		plot(1:1000, sim1D, pch = 19, cex = .5, xlab = 'Coordinate',
 			ylab = 'Simulated Value', cex.lab = cex_lab, cex.axis = cex_axis)
 		points(321:350, sim1D[321:350], pch = 1, cex = 1.5)
 		points(901:930, sim1D[901:930], pch = 1, cex = 1.5)

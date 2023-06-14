@@ -242,6 +242,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 	ylim = c(-1.8,4.1)
 	axat = -1:4
 	leg_cex = 1.7
+	cex.right = 1.8
 	layout(matrix(1:4, nrow = 2, byrow = TRUE))
 	par(mar = c(5,5,4,6))
 	plot(D1$x, D1$ysim, pch = 19, ylim = ylim, xlim = xlim, cex = 2,
@@ -254,7 +255,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)
-	mtext(side = 4, line = 3, "Variance", cex = 2)
+	mtext(side = 4, line = 3, "Variance", cex = cex.right)
 	points(D1$x, D1$ysim, pch = 19, cex = 2)
 	lines(c(0,1),c(0,0), lty = 2, lwd = 2)
 	lines(new_xy[,1], predexp$se.fit^2, lty = 2, col = 'red', lwd = 2)
@@ -266,7 +267,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)
-	mtext(side = 4, line = 3, "Variance", cex = 2)
+	mtext(side = 4, line = 3, "Variance", cex = cex.right)
 	points(D1$x, D1$ysim, pch = 19, cex = 2)
 	lines(c(0,1),c(0,0), lty = 2, lwd = 2)
 	lines(new_xy[,1], predsph$se.fit^2, lty = 2, col = 'red', lwd = 2)
@@ -279,7 +280,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 		xlab = 'Location Coordinate', ylab = 'Response Value', 
 		cex.lab = 2, cex.axis = 1.5, lwd = 2)
 	axis(4, at = axat, cex.lab = 2, cex.axis = 1.5)
-	mtext(side = 4, line = 3, "Variance", cex = 2)
+	mtext(side = 4, line = 3, "Variance", cex = cex.right)
 	points(D1$x, D1$ysim, pch = 19, cex = 2)
 	lines(c(0,1),c(0,0), lty = 2, lwd = 2)
 	lines(new_xy[,1], predgau$se.fit^2, lty = 2, col = 'red', lwd = 2)

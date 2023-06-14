@@ -21,17 +21,8 @@ library(xtable)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-# a function to compute usual covb as if the w's were observed
+# a function spatial prediction as if the w's were observed
 # takes a fitted model from spmodel using the spglm function
-covb_naive = function(modfit, data)
-{
-	theta = coef(modfit, type = 'spcov')
-	distmat = as.matrix(dist(data[data$obspred == 'obs',c('xcoord','ycoord')]))
-	Sigma = theta['de']*exp(-distmat/theta['range']) + 
-		theta['ie']*diag(length(modfit$y))
-	X = model.matrix(modfit)
-	solve(t(X) %*% solve(Sigma, X))
-}
 
 predvar_naive = function(modfit, data)
 {
@@ -88,17 +79,18 @@ for(iter in 1:niter) {
 	npred = dim(xypred)[1]
 	nobs = dim(xyobs)[1]
 
-  vcovnai = covb_naive(poismod, sim_data_predNA)
+  vcovnai = vcov(poismod, var_correct = FALSE)
   vcovadj = vcov(poismod) 
   predadj = predict(poismod, se.fit = TRUE)
   predsenai = predvar_naive(poismod, sim_data_predNA) 
   
   w_true = sim_data$w_true[sim_data$obspred == 'pred']
   bias_pred = mean(predadj$fit - w_true)
+  MSPE = mean((predadj$fit - w_true)^2) 
   cover_pred_adj = sum(predadj$fit - 1.645*predadj$se.fit < w_true & 
 		w_true < predadj$fit + 1.645*predadj$se.fit)/100
   cover_pred_nai = sum(predadj$fit - 1.645*predsenai < w_true & 
-		w_true < pout$fit + 1.645*predsenai)/100
+		w_true < predadj$fit + 1.645*predsenai)/100
 	plot(c(min(w_true, predadj$fit),max(w_true, predadj$fit)),
 		c(min(w_true, predadj$fit),max(w_true, predadj$fit)), type = 'l',
 		xlab = 'true', ylab = 'predicted')
@@ -117,6 +109,7 @@ for(iter in 1:niter) {
 			betas < coef(poismod) + 
 			1.645*sqrt(diag(vcovadj)),
 		bias_pred = bias_pred,
+		MSPE = MSPE,
 		cover_pred = cover_pred_nai,
 		cover_pred_adj = cover_pred_adj
 	)
@@ -130,31 +123,38 @@ difftime(end_time, start_time)
 
 i = 1
 est_bias = rep(0, times = 4)
+MSE = rep(0, times = 4)
 cover_est_uncor = rep(0, times = 4)
 cover_est_cor = rep(0, times = 4)
 pred_bias = 0
 cover_pred_uncor = 0
 cover_pred_cor = 0
+MSPE = 0
 
 for(i in 1:niter) {
 	est_bias = est_bias + store[[i]]$betahat - store[[i]]$True
+	MSE = MSE + (store[[i]]$betahat - store[[i]]$True)^2
 	cover_est_uncor = cover_est_uncor + store[[i]]$CI90_uncorr
 	cover_est_cor = cover_est_cor + store[[i]]$CI90_corr
 	pred_bias = pred_bias + store[[i]]$bias_pred[1]
 	cover_pred_uncor = cover_pred_uncor + store[[i]]$cover_pred[1]
 	cover_pred_cor = cover_pred_cor + store[[i]]$cover_pred_adj[1]
+	MSPE = MSPE + store[[i]]$MSPE[1]
 }
 sglm_fe = data.frame(est_bias =  est_bias/niter,
+	MSE = MSE/niter,
 	cover_est_uncor = cover_est_uncor/niter,
 	cover_est_cor = cover_est_cor/niter
 )
+(est_bias/niter)^2/(MSE/niter)
+MSPE = MSPE/niter
 sglm_simsumm = rbind(sglm_fe,
-	c(pred_bias/niter, cover_pred_uncor/niter, cover_pred_cor/niter))
+	c(pred_bias/niter, MSPE, cover_pred_uncor/niter, cover_pred_cor/niter))
 
 print(
     xtable(sglm_simsumm, 
       align = c('l',rep('l', times = length(sglm_fe[1,]))),
-      digits = c(0, rep(3, times = 3))
+      digits = c(0, rep(3, times = 4))
     ),
     sanitize.text.function = identity,
     include.rownames = FALSE,

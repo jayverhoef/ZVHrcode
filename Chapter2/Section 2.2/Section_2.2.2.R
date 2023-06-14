@@ -125,7 +125,7 @@ pdf(paste0(file_name,'.pdf'), height = 7, width = 7)
 
 	par(mar = c(5,5,1,1))
 	plot(x,y, xlim = c(1,5), ylim = c(1,5), pch = 19, cex = 2,
-		cex.lab = 2.5, cex.axis = 1.8)
+		cex.lab = 2.5, cex.axis = 1.8, xlab = '', ylab = '')
 	text(x,y, labels = labs, pos = 3, cex = 2)
 
 dev.off()

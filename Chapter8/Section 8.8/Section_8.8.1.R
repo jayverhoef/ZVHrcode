@@ -823,22 +823,22 @@ pdf(paste0(file_name,'.pdf'), width = 9, height = 9)
 	adj = -.25
 	old.par = par(mar = c(5,5,4,1))
 	plot(de_seqs,store_de, pch = 1, cex = 2, xlab = 'Partial Sill', 
-		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+		ylab = 'Profile Log-Likelihood', cex.lab = 2, cex.axis = 1.5)
 	points(coef(MaternFit, type = "spcov")['de'], logLik(MaternFit), pch = 3,
 		cex = 3, lwd = 3)
 	mtext('A', adj = adj, cex = 3, padj = padj)
 	plot(ie_seqs,store_ie, pch = 1, cex = 2, xlab = 'Nugget', 
-		ylab = 'Profile Likelihood Value', cex.lab = 2, cex.axis = 1.5)
+		ylab = 'Profile Log-Likelihood', cex.lab = 2, cex.axis = 1.5)
 	points(coef(MaternFit, type = "spcov")['ie'], logLik(MaternFit), pch = 3,
 		cex = 3, lwd = 3)
 	mtext('B', adj = adj, cex = 3, padj = padj)
 	plot(range_seqs,store_range, pch = 1, cex = 2, xlab = 'Range', 
-		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+		ylab = 'Profile Log-Likelihood', cex.lab = 2, cex.axis = 1.5)
 	points(coef(MaternFit, type = "spcov")['range'], logLik(MaternFit), pch = 3,
 		cex = 3, lwd = 3)
 	mtext('C', adj = adj, cex = 3, padj = padj)
 	plot(extra_seqs,store_extra, pch = 1, cex = 2, xlab = 'Smoothness', 
-		ylab = 'Profile Likelihood', cex.lab = 2, cex.axis = 1.5)
+		ylab = 'Profile Log-Likelihood', cex.lab = 2, cex.axis = 1.5)
 	points(coef(MaternFit, type = "spcov")['extra'], logLik(MaternFit), pch = 3,
 		cex = 3, lwd = 3)
 	mtext('D', adj = adj, cex = 3, padj = padj)

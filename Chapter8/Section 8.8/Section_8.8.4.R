@@ -212,7 +212,7 @@ pdf(paste0(file_name,'.pdf'), width = 10, height = 10)
   xaxs[DF$sideroad == 'S'] = 1
   xaxs = xaxs*DF$dist2road
   old.par = par(mar = c(5,5,1,1))
-  plot(xaxs, DF$Pb, xlab = 'Log Distance From Road',
+  plot(xaxs, DF$Pb, xlab = 'Log Distance (ln m) From Road',
     ylab = 'Log Lead Concentration (ln Pb mg/kg)', pch = 19, type = 'n',
     cex = 1.5, cex.lab = 2, cex.axis = 1.5,
     xaxt = 'n', col = 'white', ylim = c(-.25,7.8))

@@ -179,7 +179,7 @@ pdf(paste0(file_name,'.pdf'), width = 11, height = 11)
 	for(i in 2:dim(nborpairs6)[1]){
 		lines(rho6bar,margcorrSMAbar[i,], lwd=1.0)}
 	plot(rhousa, margcorrusaSMA[1,], type = 'l', ylim=c(-1.0,1.0), lwd = 1.0, 
-		xlab = expression(paste(rho[SMAR])),
+		xlab = expression(paste(rho[SMA])),
 		ylab = 'Marginal Correlation',cex.axis = 1.5, cex.lab = 2, 
 		main = 'US States, binary weights', cex.main = 2)
 	for(i in 2:dim(nborpairsusa)[1]){
