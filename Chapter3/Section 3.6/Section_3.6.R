@@ -210,7 +210,7 @@ store_results = rbind(store_results,
 
 file_name = "figures/para_box_vgms"
 
-pdf(paste0(file_name,'.pdf'))
+pdf(paste0(file_name,'.pdf'), height = 8, width = 11)
 
 	par(mar = c(5,5,1,1))
 	boxplot(x = as.list(as.data.frame(store_results)), xaxt = 'n',
