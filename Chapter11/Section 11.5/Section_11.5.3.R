@@ -68,7 +68,7 @@ for(i in 1:6^3) {
 		model.matrix(~ - 1 + trt, data = df))
 
 	# generalized inverse of the covariance matrix of fixed effects
-	ginvvar = mginv(t(X) %*% solve(V,X))
+	ginvvar = mginv(t(X) %*% solve(V,X)) 
 
 	# the sum of the 3 contrast variances
 	var_store.5[i] = sum(diag(con %*% ginvvar %*% t(con)))
@@ -303,3 +303,6 @@ system(paste0('cp ','\'',SLEDbook_path,
 	sec_path,file_name,'.pdf','\''))
 system(paste0('rm ','\'',SLEDbook_path,
 		sec_path,file_name,'-crop.pdf','\''))
+
+
+

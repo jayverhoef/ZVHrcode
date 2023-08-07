@@ -1,3 +1,5 @@
+expit = function(x){exp(x)/(1 + exp(x))}
+	
 simSGLM_wExpl = function(n, betas, gammas, loc_type = 'random', pred = TRUE,
 	autocorr_type = 'covariance', autocor_fun = rho_exp,
 	nknots = NULL, sampsize = NULL, family = 'poisson')

@@ -209,10 +209,28 @@ rbind(
 	)
 )
 
+# Create Tables 8.1 and 8.2
+simDF1 = simDF[,1:8]
 print(
-    xtable(simDF, 
-      align = c('l',rep('l', times = length(simDF[1,]))),
-      digits = c(0,rep(3, times = 12)),
+    xtable(simDF1, 
+      align = c('l',rep('l', times = length(simDF1[1,]))),
+      digits = c(0,rep(3, times = 8)),
+      caption = 'Covariates used for model-fitting',
+      label = 'tab:covList'
+    ),
+    size = 'footnotesize',
+    include.rownames = FALSE,
+    sanitize.text.function = identity,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
+
+simDF2 = simDF[,9:12]
+print(
+    xtable(simDF2, 
+      align = c('l',rep('l', times = length(simDF2[1,]))),
+      digits = c(0,rep(3, times = 4)),
       caption = 'Covariates used for model-fitting',
       label = 'tab:covList'
     ),
