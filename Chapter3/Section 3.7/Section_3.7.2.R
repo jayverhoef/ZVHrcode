@@ -115,14 +115,15 @@ Nlist[[443]] = as.integer(281)
 Nlist[[281]] = as.integer(c(Nlist[[281]],443))
 Nlist[[463]] = as.integer(79)
 # is Nlist in the same order as sealPolys@data?
-all(attr(Nlist,'region.id') == sealPolys@data$polyid)
+all(as.integer(attr(Nlist,'region.id')) == 
+	as.integer(st_drop_geometry(sealPolys)$polyid))
 # attributes for region.id has extra factor levels, so condense
-attr(Nlist,'region.id') = as.factor(as.character(sealPolys@data$polyid))
+attr(Nlist,'region.id') = as.factor(as.character(sealPolys$polyid))
 # add stockid as an attribute
-attr(Nlist,'stockid') = as.factor(as.character(sealPolys@data$stockid))
+attr(Nlist,'stockid') = as.factor(as.character(sealPolys$stockid))
 
 # get samples sizes for total and observed and missing data
-nTot = length(sealPolys)
+nTot = dim(sealPolys)[1]
 nObs = sum(!is.na(sealPolys$Estimate))
 nMiss = nTot - nObs
 
@@ -165,13 +166,13 @@ xexp = (xright - xleft)*.06
 yexp = (ytop - ybottom)*.35
   
 # make a plot of neighbors
-coords = coordinates(sealPolys)
+coords = st_centroid(sealPolys)[,c('x','y')]
 layout(matrix(c(1,1,2,1,1,1,3,1,1), nrow = 3, byrow = TRUE))
 par(mar = c(0,0,0,0))
-plot(sealPolys)
+plot(st_geometry(sealPolys))
 rect(xleft - xexp, ybottom - yexp, xright + xexp, ytop + yexp, col = 'grey80', 
 border = NA)
-plot(sealPolys, add = TRUE)
+plot(st_geometry(sealPolys), add = TRUE)
 plot(Nlist, coords, add = TRUE, lwd = 2)
 text(920000, 1190000, labels = 'A', cex = 6)
 Nlist2 = apply(Nmat2, 1, function(x) as.integer(which(x > 0)))
@@ -180,7 +181,7 @@ attr(Nlist2,'type') = 'queen'
 attr(Nlist2,'sym') = TRUE
 attr(Nlist2,'polyid') = attr(Nlist,'polyid')
 attr(Nlist2,'stockid') = attr(Nlist,'polyid')
-plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+plot(st_geometry(sealPolys), xlim = c(xleft, xright), ylim = c(ybottom, ytop))
 plot(Nlist2, coords, add = TRUE, lwd = 1)
 mtext('B', adj = -.15, padj = 1.1, cex = 4)
 Nlist4 = apply(Nmat4, 1, function(x) as.integer(which(x > 0)))
@@ -189,7 +190,7 @@ attr(Nlist4,'type') = 'queen'
 attr(Nlist4,'sym') = TRUE
 attr(Nlist4,'polyid') = attr(Nlist,'polyid')
 attr(Nlist4,'stockid') = attr(Nlist,'polyid')
-plot(sealPolys, xlim = c(xleft, xright), ylim = c(ybottom, ytop))
+plot(st_geometry(sealPolys), xlim = c(xleft, xright), ylim = c(ybottom, ytop))
 plot(Nlist4, coords, add = TRUE, lwd = .5)
 mtext('C', adj = 0, padj = -.4, cex = 4)
 
@@ -204,14 +205,15 @@ sealPolys_obs = sealPolys[ind_samp,]
 # use poly2nb to create neighborhood list for each polygon
 Nlist_obs = poly2nb(sealPolys_obs, snap = 2000)
 # some polygons have no neighbors, so remove them as well
-sealPolys_obs = sealPolys_obs[which(unlist(lapply(Nlist_obs,function(x){all(x!=0)}))),]
+sealPolys_obs = sealPolys_obs[which(unlist(
+	lapply(Nlist_obs,function(x){all(x!=0)}))),]
 # again use poly2nb to create neighborhood list for each polygon
 Nlist_obs = poly2nb(sealPolys_obs, snap = 2000)
 attr(Nlist_obs,'polyid') = as.factor(as.character(sealPolys_obs@data$polyid))
 attr(Nlist_obs,'stockid') = as.factor(as.character(sealPolys_obs@data$stockid))
 # plot the neighbors for observed polygons only
-plot(sealPolys_obs)
-coords_obs = coordinates(sealPolys_obs)
+plot(st_geometry(sealPolys_obs))
+coords_obs = st_centroid(sealPolys_obs)[,c('x','y')]
 plot(Nlist_obs, coords_obs, add = TRUE, lwd = 2)
 
 # number of neighbors
@@ -241,10 +243,10 @@ attr(Nlist4_obs,'sym') = TRUE
 attr(Nlist4_obs,'polyid') = attr(Nlist,'polyid')
 attr(Nlist4_obs,'stockid') = attr(Nlist,'polyid')
 # plot the 2nd-order neighborhood map
-plot(sealPolys_obs)
+plot(st_geometry(sealPolys_obs))
 plot(Nlist2_obs, coords_obs, add = TRUE, lwd = 1)
 # plot the 4th-order neighborhood map
-plot(sealPolys_obs)
+plot(st_geometry(sealPolys_obs))
 plot(Nlist4_obs, coords_obs, add = TRUE, lwd = 1)
 
 # now use spdep functions on new dataset

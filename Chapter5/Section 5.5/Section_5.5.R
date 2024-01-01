@@ -65,7 +65,7 @@ file_name = "figures/Eigvec25_bg"
 nbrks = 20
 
 pdf(file = paste0(file_name,'.pdf'), width = 8, height = 8)
-  oldpar = par(mar = c(2,2,3,1))
+  oldpar = par(mar = c(2,3,3,1))
   layout(matrix(1:25, nrow = 5, byrow = TRUE))
   for(i in 1:length(evecset)) {
     z = eig_covmat$vector[,evecset[i]]*sqrt(eig_covmat$values[evecset[i]])
@@ -73,8 +73,13 @@ pdf(file = paste0(file_name,'.pdf'), width = 8, height = 8)
     brks = quantile(z, probs = (0:nbrks)/nbrks)
     cramp = viridis(nbrks)
     image(x, y, z, breaks = brks, col = cramp, 
-      main = paste0("Eigenvector ",evecset[i]),
-      cex.main = 1.2, cex.axis = .8, xlab = '', ylab = '')
+      main = paste0("Eig-vec ",evecset[i]),
+      cex.main = 1.5, cex.axis = .8, xlab = '', ylab = '',
+      xaxt = 'n', yaxt = 'n')
+    axis(1, at = c(0, 0.5, 1),
+			labels = as.character(c(0, 0.5, 1)), cex.axis = 1.5) 
+    axis(2, at = c(0, 0.5, 1),
+			labels = as.character(c(0, 0.5, 1)), cex.axis = 1.5) 
   #	points(xy[,1],xy[,2], pch = 19, cex = 2)
   }
   oldpar = par(mar = c(2,2,3,1))
@@ -260,8 +265,16 @@ pdf(file = paste0(file_name,'.pdf'), width = 10, height = 8)
   old.par = par(mar = c(5,6,1,1), mgp=c(3.7,1,0))
   plot(1:dim(VI_ev)[1],VI_ev$RMSE_OLS.1, pch = 1, ylim = c(0,max(VI_ev[,6:9])),
     ylab = 'RMSE', xlab = expression(italic(i)*th~Simulation~Set~with~Ordered~Eigenvector~bold("q")[italic(i)]^symbol("\052")==bold("x")[2]), cex = 3.5, 
-    lwd = 2, cex.lab = 2, cex.axis = 1.5, xaxt = 'n')
-  axis(1, at = 1:dim(VI_ev)[1], labels = c(evi_range))
+    lwd = 2, cex.lab = 2, cex.axis = 1.7, xaxt = 'n')
+#  axis(1, at = 1:dim(VI_ev)[1], labels = c(evi_range), cex.axis = 1.0)
+		axis(1, at = 1:dim(VI_ev)[1], labels = FALSE)  
+		text(x = 1:dim(VI_ev)[1],
+     y = par("usr")[3] - 0.12,
+     labels = c(evi_range),
+     xpd = NA,
+     ## Rotate the labels by 35 degrees.
+     srt = 35,
+     cex = 1.7)
   points(1:dim(VI_ev)[1],VI_ev$RMSE_GLS.1, pch = 19, cex = 2.5)
   points(1:dim(VI_ev)[1],VI_ev$RMSE_OLS.2, pch = 5, cex = 3)
   points(1:dim(VI_ev)[1],VI_ev$RMSE_GLS.2, pch = 18, cex = 3)
@@ -293,8 +306,16 @@ pdf(file = paste0(file_name,'.pdf'), width = 10, height = 8)
   old.par = par(mar = c(5,6,1,1), mgp=c(3.7,1,0))
   plot(1:dim(VI_ev)[1],VI_ev$CI90_OLS.1, pch = 1, ylim = c(0,1),
     ylab = '90 % Confidence Interval Coverage', xlab = expression(italic(i)*th~Simulation~Set~with~Ordered~Eigenvector~bold("q")[italic(i)]^symbol("\052")==bold("x")[2]), cex = 3, lwd = 2,
-    cex.lab = 2, cex.axis = 1.5, xaxt = 'n')
-  axis(1, at = 1:dim(VI_ev)[1], labels = c(evi_range))
+    cex.lab = 2, cex.axis = 1.7, xaxt = 'n')
+#  axis(1, at = 1:dim(VI_ev)[1], labels = c(evi_range))
+	axis(1, at = 1:dim(VI_ev)[1], labels = FALSE)  
+		text(x = 1:dim(VI_ev)[1],
+     y = par("usr")[3] - 0.045,
+     labels = c(evi_range),
+     xpd = NA,
+     ## Rotate the labels by 35 degrees.
+     srt = 35,
+     cex = 1.7)
   lines(c(1,20), c(.9,.9), lty = 2, lwd = 3)
   points(1:dim(VI_ev)[1],VI_ev$CI90_GLS.1, pch = 19, cex = 2.5)
   points(1:dim(VI_ev)[1],VI_ev$CI90_OLS.2, pch = 5, cex = 3)
@@ -348,7 +369,7 @@ cholG2 = chol(G2)
 # Create intercept
 int1 <- matrix(1, 25, 1)
 
-# Simulations: simulate response and regressors, compute ols and gls estimators of intercept and slopes, and count the number of times (out of 10000) that the nominal 95% t-based confidence intervals for the slopes contains the true value (0.0).  Default setting is for y to be autocorrelated and for some of the regressors to be autocorrelated; relevant lines of codes should be replaced by lines with percent signs for the cases of non-autocorrelated y and non-autocorrelated regressors.
+# Simulations: simulate response and regressors, compute ols and gls estimators of intercept and slopes, and count the number of times (out of 100000) that the nominal 95% t-based confidence intervals for the slopes contains the true value (0.0).  Default setting is for y to be autocorrelated and for some of the regressors to be autocorrelated; relevant lines of codes should be replaced by lines with percent signs for the cases of non-autocorrelated y and non-autocorrelated regressors.
 store_ols_no_no = rep(0, times = 3)
 store_ols_yes_no = rep(0, times = 3)
 store_ols_no_yes = rep(0, times = 3)

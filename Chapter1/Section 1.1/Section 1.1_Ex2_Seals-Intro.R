@@ -90,7 +90,7 @@ pdf(file = paste0(file_name,'.pdf'), width = 11, height = 11)
   brks7[1] = min(sealPolys$Estimate, na.rm = TRUE) - .00001
   brks7[8] = max(sealPolys$Estimate, na.rm = TRUE)
   addBreakColorLegend(1304916, 981392, 1357619, 1198651, brks7, 
-    colors = col.pal7, cex = 1.5, printFormat = "4.3")
+    colors = col.pal7, cex = 2.1, printFormat = "4.3")
 dev.off()
 system(paste0('pdfcrop ','\'',SLEDbook_path,
   sec_path,file_name,'.pdf','\''))
@@ -120,7 +120,7 @@ png(file = paste0(file_name,'.png'), width = 960, height = 960)
   brks7[1] = min(sealPolys$Estimate, na.rm = TRUE) - .00001
   brks7[8] = max(sealPolys$Estimate, na.rm = TRUE)
   addBreakColorLegend(1304916, 981392, 1357619, 1198651, brks7, 
-    colors = col.pal7, cex = 1.5, printFormat = "4.3")
+    colors = col.pal7, cex = 2.1, printFormat = "4.3")
 dev.off()
 
 #-------------------------------------------------------------------------------

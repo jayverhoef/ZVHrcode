@@ -4,6 +4,8 @@ setwd(paste0(SLEDbook_path,sec_path))
 library(gstat)
 library(viridis)
 library(classInt)
+library(DescTools)
+
 source('addBreakColorLegend.R')
 
 ################################################################################
@@ -219,3 +221,61 @@ system(paste0('cp ','\'',SLEDbook_path,
 system(paste0('rm ','\'',SLEDbook_path,
   sec_path,file_name,'-crop.pdf','\''))
 
+#-------------------------------------------------------------------------------
+## Figure Comparing geometric, separable, and zonal
+#-------------------------------------------------------------------------------
+
+file_name = "Aniso3comp"
+
+pdf(paste0(file_name,'.pdf'), width = 15, height = 5)
+
+	layout(matrix(1:3, nrow = 1))
+
+	blim = 3.1
+	madj = -.19
+	#A
+	par(mar = c(5,5,5,2))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
+		xlab = expression(h[u]), ylab = expression(h[v]))
+	DrawEllipse(x = 0, y = 0, radius.x = 3, radius.y = 1, rot = pi/3, lwd = 3)
+	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
+	lines(c(0.82,-0.82), c(-0.61,0.61), lty = 2, lwd = 2)
+	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
+	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+	mtext('A', side = 3, adj = madj, cex = 4)
+
+	#B
+	par(mar = c(5,5,5,2))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
+		xlab = expression(h[u]), ylab = expression(h[v]))
+	lines(c(-0.82, 1.52, 0.82, -1.52, -.82), c(0.61, 2.56, -0.61, -2.56, 0.61), 
+		lwd = 3)
+	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
+	lines(c(0.82, -0.82), c(-0.61,0.61), lty = 2, lwd = 2)
+	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
+	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+	mtext('B', side = 3, adj = madj, cex = 4)
+
+	#C
+	par(mar = c(5,5,5,2))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
+		xlab = expression(h[u]), ylab = expression(h[v]))
+	lines(c(-1.52 - 0.82, 1.52 - 0.82),c(-2.56 + 0.61, 2.56 + 0.61), lwd = 3)
+	lines(c(-1.52 + 0.82, 1.52 + 0.82),c(-2.56 - 0.61, 2.56 - 0.61), lwd = 3)
+	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
+	lines(c(0.82, -0.82), c(-0.61,0.61), lty = 2, lwd = 2)
+	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
+	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+	mtext('C', side = 3, adj = madj, cex = 4)
+	
+	layout(1)
+	
+dev.off()
+
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))

@@ -120,6 +120,19 @@ print(
 BCMall = rbind(cbind(BCM,c(0,0,0.5,0,0.25)),
 	c(0,0,0.5,0,0.25,0))
 
+print(
+    xtable(BCMall, 
+      align = c('c',rep('c', times = length(BCMall[1,]))),
+      digits = c(0,rep(2, times = 6))
+    ),
+    hline.after = NULL,
+    sanitize.text.function = identity,
+    include.rownames = FALSE,
+    sanitize.rownames.function = identity,
+    only.contents = TRUE,
+    include.colnames = FALSE
+)
+
 Sig_CARall = solve(diag(6) - BCMall)
 Sig_CARstar = Sig_CARall[1:5,1:5]
 Sig_CARstar
@@ -136,7 +149,6 @@ print(
     only.contents = TRUE,
     include.colnames = FALSE
 )
-
 
 Sig_SARall = solve(diag(6) - BCMall) %*% t(solve(diag(6) - BCMall))
 Sig_SARstar = Sig_SARall[1:5,1:5]

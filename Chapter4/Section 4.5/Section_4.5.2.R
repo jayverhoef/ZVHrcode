@@ -24,8 +24,8 @@ out = summary(lm(Estimate ~ -1 + I(as.factor(stockid)), data = DF))
 out
 out = out$coefficients[,1:2]
 
-rownames(out) = c('$\\alpha_1$', '$\\alpha_2$', '$\\alpha_3$', 
-  '$\\alpha_4$', '$\\alpha_5$')
+rownames(out) = c('$\\alpha_8$', '$\\alpha_9$', '$\\alpha_10$', 
+  '$\\alpha_11$', '$\\alpha_12$')
 # create table to paste into latex
   print(
     xtable(out, 

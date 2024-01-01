@@ -21,12 +21,13 @@ SO4data$ycoord = st_coordinates(SO4obs)[,2]
 
 # Create a 3-D scatterplot of the wet sulfate deposition data (Figure 3.1)
 file_name = "figures/so4-3dscatterplot"
-pdf(paste0(file_name,'.pdf'))
+pdf(paste0(file_name,'.pdf'), width =  9, height = 9)
 
 	scatterplot3d(SO4data$xcoord/1000, SO4data$ycoord/1000, 
 		SO4data$SO4, pch=16, type="h", angle=120, grid=FALSE, box=FALSE, 
-		xlab="Albers CONUS North (km)", ylab="Albers CONUS West (km)", 
+		xlab="Albers CONUS North (km)", ylab="", # mar = c(9,9,9,9),
 		zlab="SO4 (kg/ha)", cex.lab = 1.5, cex.axis = 1.1)
+	text(x = -5.1, y = 2.0, "Albers CONUS West (km)", srt = 120, cex = 1.4)
 		
 dev.off()
 system(paste0('pdfcrop ','\'',SLEDbook_path,

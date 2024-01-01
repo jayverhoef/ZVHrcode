@@ -283,9 +283,9 @@ vgm_resid_dir <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = res,
  
 pdf(paste0(file_name,'.pdf'), height = 8, width = 11)
 
-  old_par = par(mar = c(5,5,3,1))
-  plot(vgm_resid_dir$dist, vgm_resid_dir$gamma, type = 'n', xlab = 'Distance (km)',
-    ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5)
+  par(mar = c(6,7,1,3))
+  plot(vgm_resid_dir$dist, vgm_resid_dir$gamma, type = 'n', 
+		xlab = '', ylab = '', cex.axis = 2.5, xaxt = 'n')
   points(vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'dist'],
     vgm_resid_dir[vgm_resid_dir$dir.hor == 0,'gamma'], pch = 1, 
     cex = 8*sqrt(vgm_resid_dir$np)/max(sqrt(vgm_resid_dir$np)))
@@ -308,7 +308,13 @@ pdf(paste0(file_name,'.pdf'), height = 8, width = 11)
     vgm_resid_dir[vgm_resid_dir$dir.hor == 135,'gamma'], lwd = 2)
   legend(100, 1.1, legend=(c('N-S','NE-SW','E-W','SE-NW')), 
     pch = c(1,2,5,22), cex = 2)
-  par(old.par)
+  par(mgp=c(3, 1.7, 0))
+  xtcks = c(0, 500, 1000, 1500, 2000, 2500)
+  axis(1, at = xtcks, cex.axis = 2.5) 
+  lines(1:2500, svgm_exp(opt_out$par, 1:2500), lwd = 3)
+  title(xlab = 'Distance (km)', line = 4.5, cex.lab = 3, cex.axis = 2.5)
+  title(ylab = 'Semivariogram', line = 4, cex.lab = 3)
+
   
 dev.off()
 
@@ -359,13 +365,18 @@ exp(opt_out$par[3])
 # plot the sample semivariogram and it fit by Cressie's weighted least squares
 pdf(paste0(file_name,'.pdf'), height = 8, width = 11)
 
-  old.par = par(mar = c(5,5,1,1))
+  par(mar = c(6,7,1,1))
   plot(as.numeric(names(sample_svgr)), sample_svgr, pch = 19, 
-    ylab = 'Semivariogram', xlab = 'Distance (km)', ylim = c(0,0.8),
-    cex.lab = 2, cex.axis = 1.5, cex = 5*sqrt(sample_n)/max(sqrt(sample_n)),
+    ylab = '', xlab = '', ylim = c(0,0.8), xaxt = 'n',
+    cex.axis = 2.5, 
+    cex = 5*sqrt(sample_n)/max(sqrt(sample_n)),
     xlim = c(0,2500))
+  par(mgp=c(3, 1.7, 0))
+  xtcks = c(0, 500, 1000, 1500, 2000, 2500)
+  axis(1, at = xtcks, cex.axis = 2.5) 
   lines(1:2500, svgm_exp(opt_out$par, 1:2500), lwd = 3)
-  par(old.par)
+  title(xlab = 'Distance (km)', line = 4.5, cex.lab = 3, cex.axis = 2.5)
+  title(ylab = 'Semivariogram', line = 4, cex.lab = 3)
   
 dev.off()
 

@@ -46,6 +46,9 @@ ml03_cover = matrix(NA, nrow = nsim, ncol = 2)
 reml03_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 reml03_width = matrix(NA, nrow = nsim, ncol = 2)
 reml03_cover = matrix(NA, nrow = nsim, ncol = 2)
+true03_rmspe = matrix(NA, nrow = nsim, ncol = 2)
+true03_width = matrix(NA, nrow = nsim, ncol = 2)
+true03_cover = matrix(NA, nrow = nsim, ncol = 2)
 for(kk in 1:nsim) {
 	cat("\r", "iteration: ", kk)
 	# simulate errors
@@ -67,9 +70,15 @@ for(kk in 1:nsim) {
 		spcov_type = "exponential", 
 		estmethod = 'reml')
 	reml_pred = predict(reml_out, predDF, se.fit = TRUE)
+	#true
+	true = splm(z ~ 1, data = obsDF, xcoord = 'x', ycoord = 'y',
+		spcov_initial = spcov_initial("exponential", ie = 0.1, de = 0.9, 
+			range = -1/log(0.3), known = c("given")))
+	true_pred = predict(true, predDF, se.fit = TRUE)
 	# rmspe
 	ml03_rmspe[kk,] = (ml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
+	p = 1
 	ml03_width[kk,] = 2*ml_pred$se.fit*qt(.90, n - p)
 	# coverage
 	ml03_cover[kk,] = ml_pred$fit - ml_pred$se.fit*qt(.90,n - p) < zp & 
@@ -81,13 +90,23 @@ for(kk in 1:nsim) {
 	# coverage
 	reml03_cover[kk,] = reml_pred$fit - reml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < reml_pred$fit + reml_pred$se.fit*qt(.90,n - p)
+	# rmspe
+	true03_rmspe[kk,] = (true_pred$fit - zp)^2
+	# width of 90% interval using t-distribution
+	true03_width[kk,] = 2*true_pred$se.fit*qt(.90, n - p)
+	# coverage
+	true03_cover[kk,] = true_pred$fit - true_pred$se.fit*qt(.90,n - p) < zp & 
+		zp < true_pred$fit + true_pred$se.fit*qt(.90,n - p)
 }
 sqrt(apply(ml03_rmspe,2,mean))
 sqrt(apply(reml03_rmspe,2,mean))
+sqrt(apply(true03_rmspe,2,mean))
 apply(ml03_width,2,mean)
 apply(reml03_width,2,mean)
+apply(true03_width,2,mean)
 apply(ml03_cover,2,mean)
 apply(reml03_cover,2,mean)
+apply(true03_cover,2,mean)
 
 
 
@@ -106,6 +125,9 @@ ml07_cover = matrix(NA, nrow = nsim, ncol = 2)
 reml07_rmspe = matrix(NA, nrow = nsim, ncol = 2)
 reml07_width = matrix(NA, nrow = nsim, ncol = 2)
 reml07_cover = matrix(NA, nrow = nsim, ncol = 2)
+true07_rmspe = matrix(NA, nrow = nsim, ncol = 2)
+true07_width = matrix(NA, nrow = nsim, ncol = 2)
+true07_cover = matrix(NA, nrow = nsim, ncol = 2)
 for(kk in 1:nsim) {
 	cat("\r", "iteration: ", kk)
 	# simulate errors
@@ -127,6 +149,11 @@ for(kk in 1:nsim) {
 		spcov_type = "exponential", 
 		estmethod = 'reml')
 	reml_pred = predict(reml_out, predDF, se.fit = TRUE)
+	#true
+	true = splm(z ~ 1, data = obsDF, xcoord = 'x', ycoord = 'y',
+		spcov_initial = spcov_initial("exponential", ie = 0.1, de = 0.9, 
+			range = -1/log(0.7), known = c("given")))
+	true_pred = predict(true, predDF, se.fit = TRUE)
 	# rmspe
 	ml07_rmspe[kk,] = (ml_pred$fit - zp)^2
 	# width of 90% interval using t-distribution
@@ -140,23 +167,36 @@ for(kk in 1:nsim) {
 	# coverage
 	reml07_cover[kk,] = reml_pred$fit - reml_pred$se.fit*qt(.90,n - p) < zp & 
 		zp < reml_pred$fit + reml_pred$se.fit*qt(.90,n - p)
+	# rmspe
+	true07_rmspe[kk,] = (true_pred$fit - zp)^2
+	# width of 90% interval using t-distribution
+	true07_width[kk,] = 2*true_pred$se.fit*qt(.90, n - p)
+	# coverage
+	true07_cover[kk,] = true_pred$fit - true_pred$se.fit*qt(.90,n - p) < zp & 
+		zp < true_pred$fit + true_pred$se.fit*qt(.90,n - p)
 }
 sqrt(apply(ml07_rmspe,2,mean))
 sqrt(apply(reml07_rmspe,2,mean))
+sqrt(apply(true07_rmspe,2,mean))
 apply(ml07_width,2,mean)
 apply(reml07_width,2,mean)
+apply(true07_width,2,mean)
 apply(ml07_cover,2,mean)
 apply(reml07_cover,2,mean)
+apply(true07_cover,2,mean)
 
 
 # create the table
 ml_vs_repl_pred = rbind(
 	c(sqrt(apply(ml03_rmspe,2,mean)), sqrt(apply(ml07_rmspe,2,mean))),
 	c(sqrt(apply(reml03_rmspe,2,mean)), sqrt(apply(reml07_rmspe,2,mean))),
+	c(sqrt(apply(true03_rmspe,2,mean)), sqrt(apply(true07_rmspe,2,mean))),
 	c(apply(ml03_width,2,mean), apply(ml07_width,2,mean)),
   c(apply(reml03_width,2,mean), apply(reml07_width,2,mean)),
+  c(apply(true03_width,2,mean), apply(true07_width,2,mean)),
 	c(apply(ml03_cover,2,mean), apply(ml07_cover,2,mean)),
-	c(apply(reml03_cover,2,mean), apply(reml07_cover,2,mean))
+	c(apply(reml03_cover,2,mean), apply(reml07_cover,2,mean)),
+	c(apply(true03_cover,2,mean), apply(true07_cover,2,mean))
 )
 
 print(

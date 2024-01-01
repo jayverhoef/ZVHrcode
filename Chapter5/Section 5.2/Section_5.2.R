@@ -12,7 +12,7 @@ library(xtable)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-# Compute some results in Section 4.2
+# Compute some results in Section 5.2
 xpts <- matrix(c(1, 1, 2, 2, 5), 5, 1)
 ypts <- matrix(c(4, 3, 3, 2, 4), 5, 1)
 Dmat = as.matrix(dist(cbind(xpts, ypts)))
@@ -38,12 +38,12 @@ print(
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#              Table 5.1 
+#              Tables 5.1 to 5.4
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-# Obtain entries of Table 5.1a
+# Obtain entries of Table 5.1
 X <- matrix(1, 5, 1)
 olswts = as.vector(solve(t(X) %*% X) %*% t(X))
 glswts = as.vector(solve(t(X) %*% solve(Rmat) %*% X) %*% 
@@ -68,24 +68,22 @@ print(
     include.colnames = FALSE
 )
 
-# Obtain entries of Table 5.1b
+# Obtain entries of Table 5.2
 y <- matrix(c(1,0,3,1,5),5,1)
 muhat = olswts%*%y
 mutilde = glswts%*%y
 mutiltil = eglswts%*%y
 mhats = data.frame(
-	muhat = muhat,
-	mutilde = mutilde,
-	mutiltil = mutiltil,
-	sigmahat2 = (1/4)*t(y-X%*%muhat)%*%(y-X%*%muhat),
-	sigmatilde2 = (1/4)*t(y-X%*%mutilde)%*%solve(Rmat)%*%(y-X%*%mutilde),
-	sigmatiltil2 = (1/4)*t(y-X%*%mutiltil)%*%solve(Rhat)%*%(y-X%*%mutiltil)
+	muhat = c(muhat, mutilde, mutiltil),
+	sigmahat2 = c((1/4)*t(y-X%*%muhat)%*%(y-X%*%muhat),
+		(1/4)*t(y-X%*%mutilde)%*%solve(Rmat)%*%(y-X%*%mutilde),
+		(1/4)*t(y-X%*%mutiltil)%*%solve(Rhat)%*%(y-X%*%mutiltil))
 )
 
 print(
     xtable(mhats, 
       align = c('l',rep('l', times = length(mhats[1,]))),
-      digits = c(0, rep(3, times = 6))
+      digits = c(0, rep(3, times = 2))
     ),
     sanitize.text.function = identity,
     include.rownames = FALSE,
@@ -94,18 +92,18 @@ print(
     include.colnames = FALSE
 )
 
-# Obtain entries of Table 5.1c
+# Obtain entries of Table 5.3
 varmhats = data.frame(
-	varolsmuhat = t(olswts) %*% olswts,
-	varolsmutilde = t(glswts) %*% glswts,
-	varglsmuhat = t(olswts) %*% Rmat %*% olswts,
-	varglsmutilde = t(glswts) %*% Rmat %*% glswts
+	varolsmuhat = c(t(olswts) %*% olswts,
+		t(olswts) %*% Rmat %*% olswts), 
+	varglsmuhat = c(t(glswts) %*% glswts,
+		t(glswts) %*% Rmat %*% glswts)
 )
 
 print(
     xtable(varmhats, 
       align = c('l',rep('l', times = length(varmhats[1,]))),
-      digits = c(0, rep(3, times = 4))
+      digits = c(0, rep(3, times = 2))
     ),
     sanitize.text.function = identity,
     include.rownames = FALSE,
@@ -114,7 +112,7 @@ print(
     include.colnames = FALSE
 )
 
-# Obtain entries of Table 5.1d
+# Obtain entries of Table 5.4
 toyreg <- lm(y~X)
 Rhalf <- eigen(Rmat)$vectors %*% diag(sqrt(eigen(Rmat)$values)) %*% 
 	t(eigen(Rmat)$vectors)

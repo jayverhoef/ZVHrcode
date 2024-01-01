@@ -1,5 +1,11 @@
-sec_path = 'Rcode/Chapter11/Section 12.2/'
+sec_path = 'Rcode/Chapter12/Section 12.2/'
 setwd(paste0(SLEDbook_path,sec_path))
+
+library(sf)
+library(viridis)
+library(classInt)
+library(prettymapr)
+source('addBreakColorLegend.R')
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -62,6 +68,47 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 8)
 	mtext('B', adj = adj, cex = 4, padj = padj)
 
 	layout(1)
+
+dev.off()
+		
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+	sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+	sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+		sec_path,file_name,'-crop.pdf','\''))
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#                  Salt River Map
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+setwd(paste0(SLEDbook_path,sec_path,'SaltRiver_BlockKrige/',
+	'TroutDensity_BlockKrige.ssn'))
+strms <- st_read("edges.shp")
+sites <- st_read("sites.shp")
+setwd(paste0(SLEDbook_path,sec_path))
+
+file_name = 'figures/SaltRiver_Map'
+pdf(paste0(file_name,'.pdf'), width = 10, height = 10)
+
+par(mar = c(0,0,0,0))
+plot(st_geometry(strms), lwd = 1.5 + strms$afvArea*5, col = 'lightblue2')
+brks = c(0, 6.000001, 11.000001, 19.000001, 28.000001, 39.000001,
+	64.000001, 132.000001)
+cip = classIntervals(sites$trout_100m, style = 'fixed', fixedBreaks = brks)
+palp = viridis(7)
+cip_colors = findColours(cip, palp)
+plot(st_geometry(sites), add = TRUE, pch = 19, col = cip_colors, cex = 1.5)
+addBreakColorLegend(xleft = 1752000, ybottom = 1424484, xright = 1757000, ytop = 1445000, breaks = brks, colors = palp, cex = 1.5, printFormat = "4.0")
+text(1745000, 1448000, 'Trout per 100m', pos = 4, cex = 2)
+addnortharrow(pos = 'bottomleft', padin = c(1.9, 3.5))
+addscalebar(pos = 'bottomleft', widthhint = 0.125, padin = c(1.7, 3.2),
+	label.cex = 2)
 
 dev.off()
 		

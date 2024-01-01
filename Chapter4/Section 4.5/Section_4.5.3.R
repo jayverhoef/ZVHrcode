@@ -5,6 +5,7 @@ library(ZVHdata)
 library(xtable)
 library(spdep)
 library(car)
+library(emmeans)
 
 # load data for graphics and analysis
 data(caribouDF)
@@ -55,6 +56,28 @@ colnames(outDF) = c('Source', 'df', 'Sum of squares', 'Mean square',
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
+#      Tarp Main Effects
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+tapply(caribouDF$z, caribouDF$tarp, mean)
+
+#pairwise comparisons
+pairwise.t.test(caribouDF$z, caribouDF$tarp, p.adj = "none")
+
+# drop the interaction term as results are unreliable
+lsmout = emmeans(lm(z ~  water + tarp, data = caribouDF), 
+	specs = 'tarp')
+lsmout
+
+pairs(lsmout)
+pairs(lsmout, adjust = 'none')
+pairs(lsmout, adjust = 'bonferroni')
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #           Moran's I and Geary's c on residuals
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -83,23 +106,16 @@ geary.test(zr,
   nb2listw(nei, style = 'W'),
   randomisation=TRUE)
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#      Model with row and column effects
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#      Anova Table with row and column effect, Type III tests
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-# check out the R^2 and coefficient values for sum-to-zero constraints on rows
-# and columns
-# use sum-to-zero constraints on all factors
-options(contrasts = c("contr.sum", "contr.poly"))
-summary(lm(z ~  i + j + tarp + water + water*tarp, data = caribouDF))
-# make an SAS type III ANOVA table 
 summary(lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF))
 model = lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF)
-# Type III tests from car package
 out = Anova(model, type = 'III')
 out = out[2:7,]
 out[,1] = 1000*out[,1]
@@ -107,7 +123,7 @@ out = cbind(out, out[,1]/out[,2])
 out = rbind(out,
   c(1000*var(caribouDF$z)*sum(out[,2]), sum(out[,2]), NA, NA, NA))
 outDF = data.frame(
-  Source = c('Row','Column','Water','Tarp','Water $\\times$ Tarp','Error','Corrected Total'),
+  Source = c('Row','Column','Water','Tarp','Tarp $\\times$ Error','Error','Corrected Total'),
   df = out[,2], SS = out[,1], MS = out[,5], Fval = out[,3], 
   Pval = out[,4])
 colnames(outDF) = c('Source','df','Sum of squares','Mean square','F','$P$-value')
@@ -135,16 +151,35 @@ outDF
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-# clear tarp
-summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] +
-  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[12,1]
-# no tarp
-summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] +
-  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[13,1]
-# shade tarp
-summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[1,1] -
-  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[12,1] -
-  summary(lm(z ~  i + j + water + tarp + water:tarp, data = caribouDF))$coef[13,1]
+
+# drop the interaction term as results are unreliable
+lsmout = emmeans(lm(z ~  i + j + water + tarp, 
+	data = caribouDF), specs = 'tarp')
+lsmout
+
+pairs(lsmout)
+pairs(lsmout, adjust = 'none')
+pairs(lsmout, adjust = 'bonferroni')
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#      Moran's I and Geary's c on residuals
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+# get residuals
+zr = residuals(lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF))
+
+# Randomization test for Moran's I
+moran.test(zr, 
+  nb2listw(nei, style = 'W'),
+  randomisation=TRUE)
+# Randomization test for Geary's C  
+geary.test(zr, 
+  nb2listw(nei, style = 'W'),
+  randomisation=TRUE)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -197,6 +232,11 @@ summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] -
   summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[12,1] -
   summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[13,1]
 
+library(emmeans)
+lsmout = emmeans(lm(z ~  i + j + water + tarp, data = caribouDF), specs = 'tarp')
+lsmout
+pairs(lsmout)
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -204,18 +244,6 @@ summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] -
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-
-# get residuals
-zr = residuals(lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF))
-
-# Randomization test for Moran's I
-moran.test(zr, 
-  nb2listw(nei, style = 'W'),
-  randomisation=TRUE)
-# Randomization test for Geary's C  
-geary.test(zr, 
-  nb2listw(nei, style = 'W'),
-  randomisation=TRUE)
 
 # get residuals without interaction term
 zr = residuals(lm(z ~  i + j + water + tarp, data = caribouDF))

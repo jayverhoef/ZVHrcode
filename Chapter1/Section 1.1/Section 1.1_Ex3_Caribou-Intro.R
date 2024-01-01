@@ -55,7 +55,7 @@ system(paste0('rm ','\'',SLEDbook_path,
 file_name = "figures/caribou_boxplots"
 pdf(file = paste0(file_name,'.pdf'), width = 10, height = 7)
   old.par = par(mar = c(2,6,1,1))
-  boxplot(z ~ tarp + water, data = caribouDF, cex.lab = 2.3, cex.axis = 1.5,
+  boxplot(z ~ tarp + water, data = caribouDF, cex.lab = 2.3, cex.axis = 1.8,
     ylab = 'Percent Nitrogen in Prostrate Willows', pch = 19, cex = 2, lwd = 2)
   par(old.par)
 dev.off()

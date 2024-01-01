@@ -128,7 +128,7 @@ boxplot(levrg)
 # find out which site have highest leverage
 data(USboundary)
 plot(st_geometry(USboundary))
-points(DF[which(levrg >.4),c('easting','northing')], add = TRUE, 
+points(DF[which(levrg >.4),c('easting','northing')],
 	pch = 19, cex = 2, col = 'red')
 
 #-------------------------------------------------------------------------------
@@ -183,6 +183,7 @@ r3 = residuals(fit_3)
 plot(DF$northing, r3)
 plot(DF$easting, r3)
 
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -221,6 +222,45 @@ source('addBreakColorLegend.R')
   addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
     breaks = cip$brks, colors = palp, cex = 1.5)
   par(old.par)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#    Omnidirectional Semivariogram  and Autocovariance for Cubic Residuals
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+vgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
+  x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
+  width = 2500/15)
+
+cvgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
+  x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
+  width = 2500/15, covariogram = TRUE)
+
+file_name = "figures/so4-omnisvgm-cubic-resids"
+pdf(paste0(file_name,'.pdf'), height = 7, width = 15)
+  layout(matrix(1:2, nrow = 1))
+    old_par = par(mar = c(5,5,5,1))
+    plot(cvgm_resid_omni$dist, cvgm_resid_omni$gamma, xlab = 'Distance (km)',
+      ylab = 'Autocovariance', cex.lab = 2, cex.axis = 1.5, pch = 19,
+      cex = 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
+    mtext('A', adj = -.15, padj = -.4, cex = 3)
+    plot(vgm_resid_omni$dist, vgm_resid_omni$gamma, xlab = 'Distance (km)',
+      ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5, pch = 19, 
+      ylim = c(0, max(vgm_resid_omni$gamma)),
+      cex = 5*sqrt(vgm_resid_omni$np)/max(sqrt(vgm_resid_omni$np)))
+    mtext('B', adj = -.15, padj = -.4, cex = 3)
+    par(old.par)
+dev.off()
+system(paste0('pdfcrop ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('cp ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
+  sec_path,file_name,'.pdf','\''))
+system(paste0('rm ','\'',SLEDbook_path,
+  sec_path,file_name,'-crop.pdf','\''))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -358,41 +398,3 @@ MaityTest(as.matrix(dt_res),
   ylims = c(0, 30), 
   block.dims = c(15,10))
 
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#    Omnidirectional Semivariogram  and Autocovariance for Cubic Residuals
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-vgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
-  x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
-  width = 2500/15)
-
-cvgm_resid_omni <- variogram(res ~ 1, loc=~x+y, data=data.frame(res = r3, 
-  x = DF$easting/1000, y = DF$northing/1000), cutoff = 2500, 
-  width = 2500/15, covariogram = TRUE)
-
-file_name = "figures/so4-omnisvgm-cubic-resids"
-pdf(paste0(file_name,'.pdf'), height = 7, width = 15)
-  layout(matrix(1:2, nrow = 1))
-    old_par = par(mar = c(5,5,5,1))
-    plot(cvgm_resid_omni$dist, cvgm_resid_omni$gamma, xlab = 'Distance (km)',
-      ylab = 'Autocovariance', cex.lab = 2, cex.axis = 1.5, pch = 19,
-      cex = 5*sqrt(cvgm_resid_omni$np)/max(sqrt(cvgm_resid_omni$np)))
-    mtext('A', adj = -.15, padj = -.4, cex = 3)
-    plot(vgm_resid_omni$dist, vgm_resid_omni$gamma, xlab = 'Distance (km)',
-      ylab = 'Semivariogram', cex.lab = 2, cex.axis = 1.5, pch = 19, 
-      ylim = c(0, max(vgm_resid_omni$gamma)),
-      cex = 5*sqrt(vgm_resid_omni$np)/max(sqrt(vgm_resid_omni$np)))
-    mtext('B', adj = -.15, padj = -.4, cex = 3)
-    par(old.par)
-dev.off()
-system(paste0('pdfcrop ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('cp ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\' ','\'',SLEDbook_path,
-  sec_path,file_name,'.pdf','\''))
-system(paste0('rm ','\'',SLEDbook_path,
-  sec_path,file_name,'-crop.pdf','\''))

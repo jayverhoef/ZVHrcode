@@ -12,8 +12,9 @@ setwd(paste0(SLEDbook_path,sec_path))
 file_name = "figures/toyolsgls"
 
 # Create plot of sites for the toy example of Section 4.2 (Figure 4.1)
-xpts <- c(1,1,2,2,5)
-ypts <- c(4,3,3,2,4)
+x <- c(1,1,2,2,5)
+y <- c(4,3,3,2,4)
+labs = as.character(1:5)
 
 pdf(paste0(file_name,'.pdf'))
 
