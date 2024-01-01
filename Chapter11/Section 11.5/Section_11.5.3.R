@@ -74,8 +74,8 @@ for(i in 1:6^3) {
 	var_store.5[i] = sum(diag(con %*% ginvvar %*% t(con)))
 }
 
-var.5 = unique(round(var_store.5,4))/(9/4)
-var.5
+#var.5 = unique(round(var_store.5,4))/(9/4)
+#var.5
 var.5 = unique(round(var_store.5,4))/3
 var.5
 
@@ -117,8 +117,8 @@ for(i in 1:6^3) {
 	var_store.8[i] = sum(diag(con %*% ginvvar %*% t(con)))
 }
 
-var.8 = unique(round(var_store.8,4))/(9/4)
-var.8
+# var.8 = unique(round(var_store.8,4))/(9/4)
+# var.8
 var.8 = unique(round(var_store.8,4))/3
 var.8
 

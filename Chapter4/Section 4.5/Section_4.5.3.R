@@ -123,7 +123,7 @@ out = cbind(out, out[,1]/out[,2])
 out = rbind(out,
   c(1000*var(caribouDF$z)*sum(out[,2]), sum(out[,2]), NA, NA, NA))
 outDF = data.frame(
-  Source = c('Row','Column','Water','Tarp','Tarp $\\times$ Error','Error','Corrected Total'),
+  Source = c('Row','Column','Water','Tarp','Water $\\times$ Tarp','Error','Corrected Total'),
   df = out[,2], SS = out[,1], MS = out[,5], Fval = out[,3], 
   Pval = out[,4])
 colnames(outDF) = c('Source','df','Sum of squares','Mean square','F','$P$-value')
