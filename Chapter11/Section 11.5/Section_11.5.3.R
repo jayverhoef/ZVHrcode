@@ -76,18 +76,15 @@ for(i in 1:6^3) {
 
 #var.5 = unique(round(var_store.5,4))/(9/4)
 #var.5
-var.5 = unique(round(var_store.5,4))/3
+var.5 = round(unique(round(var_store.5,4))/3,4)
 var.5
 
 # worst to best design percentage improvement
-(1 - var.5[3]/var.5[1])*100
-100*(var.5[1]/var.5[3] - 1)
+(var.5[1] - var.5[3])/var.5[1]*100
 
 # average of whole population
-
 mean(var_store.5)/3
-(1 - var.5[3]/var.5[1])*100
-100*(mean(var_store.5)/3/var.5[3] - 1)
+(var.5[1] - mean(var_store.5)/3)/(mean(var_store.5)/3)*100
 
 # rho = 0.8 -------------------------
 
@@ -119,13 +116,15 @@ for(i in 1:6^3) {
 
 # var.8 = unique(round(var_store.8,4))/(9/4)
 # var.8
-var.8 = unique(round(var_store.8,4))/3
+var.8 = round(unique(round(var_store.8,4))/3,4)
 var.8
 
 # worst to best design percentage improvement
-(1 - var.8[3]/var.8[1])*100
-100*(var.8[1]/var.8[3] - 1)
-100*(mean(var_store.8)/3/var.8[3] - 1)
+(var.8[1] - var.8[3])/var.8[1]*100
+
+# average of whole population
+mean(var_store.8)/3
+(var.8[1] - mean(var_store.8)/3)/(mean(var_store.8)/3)*100
 
 
 #-------------------------------------------------------------------------------
