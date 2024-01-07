@@ -10,7 +10,7 @@ library(spmodel)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#             Code for Table 8.5
+#             Code for Tables 8.5, 8.6, and 8.7
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ for(k in 1:niter){
 		xcoord = locxy[,1], ycoord = locxy[,2])
 	# ------- ML ESTIMATION
 	# fit model using spmodel, holding nugget effect at 0.000001
-	# in the name, true model if first, fitted model is second
+	# in the name, true model is first, fitted model is second
 	# sph = spherical, exp = exponential, gau = gaussian, unc = uncorrelated
 	               # constant mean
 	sphsph_const = splm(simsph ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,
@@ -190,7 +190,7 @@ for(k in 1:niter){
 
 	# ------- REML ESTIMATION
 	# fit model using spmodel, holding nugget effect at 0.000001
-	# in the name, true model if first, fitted model is second
+	# in the name, true model is first, fitted model is second
 	# sph = spherical, exp = exponential, gau = gaussian, unc = uncorrelated
 	               # constant mean
 	sphsph_const_REML = splm(simsph ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,

@@ -160,7 +160,7 @@ system(paste0('rm ','\'',SLEDbook_path,
 #         Fit Models as Series of Polynomials, Order 0 to 5
 #         Covariance Structure is Independence and Exponential Model
 #         Spatial Fitting Methods are MLE and REMLE
-#         Original data without outliers removed
+#         Original data with outliers
 #-------------------------------------------------------------------------------
 ################################################################################
 

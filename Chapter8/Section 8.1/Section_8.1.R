@@ -24,12 +24,15 @@ spherical <- function(distance.matrix)
 }
 
 # define exponential covariance matrix as function of unscaled distance matrix
+# use 3 multiplier so range will be equal to effective range
 exponential <- function(distance.matrix)
 {
 	exp(-3*distance.matrix) 
 }
 
 # define Gaussian covariance matrix as function of unscaled distance matrix
+# add a tiny bit to diagonal to keep positive definite
+# use 3 multiplier so range will be equal to effective range
 Gaussian <- function(distance.matrix)
 {
 	exp(-sqrt(3)*distance.matrix^2) + diag(rep(1e-11, times = dim(distance.matrix)[1])) 
@@ -55,7 +58,7 @@ G = spherical(distmat/theta.sph)
 set.seed(sph.seed)
 y1 = int1+t(chol(G))%*%rnorm(n)
 # Evaluate the profile log-liklihood function at values of theta from 0.01 to 
-# 8.00 (by 0.01).
+# 8.00 (by 0.01), holding partial sill at 1 and nugget at 0
 hold1 = matrix(0,800,2)
 for(i in 1:800){
   theta <- i/100
@@ -68,13 +71,14 @@ for(i in 1:800){
   hold1[i,2] = L
 }
 
+# equivalent to previous
 hold = matrix(0,800,2)
 for(i in 1:800){
   theta <- i/100
   G = spherical(distmat/theta)
-Ginv <- solve(G)
-Q <- Ginv-Ginv%*%X%*%solve(t(X)%*%Ginv%*%X)%*%t(X)%*%Ginv
-L <- -0.5*log(det(G))-(n/2)*log(t(y1)%*%Q%*%y1)  
+	Ginv <- solve(G)
+	Q <- Ginv-Ginv%*%X%*%solve(t(X)%*%Ginv%*%X)%*%t(X)%*%Ginv
+	L <- -0.5*log(det(G))-(n/2)*log(t(y1)%*%Q%*%y1)  
   hold[i,1] = theta
   hold[i,2] = L
 }

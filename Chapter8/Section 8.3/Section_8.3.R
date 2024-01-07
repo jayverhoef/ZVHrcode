@@ -103,21 +103,30 @@ create_grid = function(type, n){
 }
 
 # profiled negative 2 times the loglikelihood to be minimized
+# use analytical inverses for 1-D, it will be much faster than spmodel
 m2LLprof = function(theta, z, del, n)
 {
+	# analytical inverse is available for 1-D exponential model
 	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Computing of Some Generalized 
 	# Linear Mixed Pseudo-Models with Temporal Autocorrelation. Computational
 	# Statistics 25(1): 39–55. DOI: 10.1007/s00180-009-0160-1, Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/theta)), times = n)))
 	DD[n,n] = 1
 	DD[row(DD) - col(DD) == -1] = -exp(-del/theta)/sqrt(1 - exp(-2*del/theta))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
 	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
 	# Ver Hoef et al. (2009)
 	DDz = DD %*% z
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
 	# analytical determinant, Section 3.2 in Ver Hoef et al. (2009)
 	SigLogDet = (n-1)*log(1 - exp(-2*del/theta))
+	# this is equal to determinant(exp(-distmat/theta), logarithm = TRUE)$modulus
 	# minus 2 times profiled likelihood, equation 8.4
-	n*log(sum(DDz^2)) + SigLogDet
+	n*log(zQz) + SigLogDet + n*log(2*pi)
 }
 
 # theta is constant for all simulations
@@ -151,19 +160,37 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/n
+	
+	#check it with spmodel
+#	DF = data.frame(z = zsim, x = grd, y = rep(1, times = length(grd)))
+#	library(spmodel)
+#	splm(z ~ 1, xcoord = x, ycoord = y, data = DF,
+#		spcov_initial = spcov_initial(spcov_type = 'exponential', 
+#		ie = 0, known = 'ie'),
+#		control = list(reltol = 1e-12), estmethod = 'ml')
+	
 	hold_infill_50[ithsim, 1] = thetahat
 	hold_infill_50[ithsim, 2] = sigmahat
 }
@@ -198,19 +225,26 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
+	# analytical inverse is available for 1-D exponential model
 	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/n
 	hold_infill_250[ithsim, 1] = thetahat
 	hold_infill_250[ithsim, 2] = sigmahat
 }
@@ -245,19 +279,26 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
+	# analytical inverse is available for 1-D exponential model
 	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/n
 	hold_infill_1000[ithsim, 1] = thetahat
 	hold_infill_1000[ithsim, 2] = sigmahat
 }
@@ -292,9 +333,7 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
+	# analytical inverse is available for 1-D exponential model
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
@@ -339,9 +378,6 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
@@ -386,9 +422,6 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
@@ -407,6 +440,10 @@ cat("\n")
 mean((hold_outfill_1000[,1] - .2)^2)
 mean((hold_outfill_1000[,2] - 1)^2)
 mean((hold_outfill_1000[,2]/hold_outfill_1000[,1] - 5)^2)
+
+#-------------------------------------------------------------------------------
+#                    MLE summary using MSE
+#-------------------------------------------------------------------------------
 
 #create output for latex, this is for MLE
 hold_results = cbind(
@@ -455,6 +492,10 @@ print(
     only.contents = TRUE,
     include.colnames = FALSE
 )
+
+#-------------------------------------------------------------------------------
+#                    MLE summary using median rather than MSE
+#-------------------------------------------------------------------------------
 
 #create output for latex, this is for MLE
 # use median rather than mean
@@ -508,7 +549,7 @@ print(
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#             Asymptotics Simulation, REMLE, Table ?? 
+#        Asymptotics Simulation, REMLE, not given as Table in book 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -521,32 +562,39 @@ create_grid = function(type, n){
 }
 
 # profiled negative 2 times the loglikelihood to be minimized
+# use analytical inverses for 1-D, it will be much faster than spmodel
 m2LLprof = function(theta, z, del, n)
 {
+	# analytical inverse is available for 1-D exponential model
 	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Computing of Some Generalized 
 	# Linear Mixed Pseudo-Models with Temporal Autocorrelation. Computational
 	# Statistics 25(1): 39–55. DOI: 10.1007/s00180-009-0160-1, Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/theta)), times = n)))
 	DD[n,n] = 1
 	DD[row(DD) - col(DD) == -1] = -exp(-del/theta)/sqrt(1 - exp(-2*del/theta))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
 	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
 	# Ver Hoef et al. (2009)
 	DDz = DD %*% z
-	# sqrt of inverse of covariance matrix times X matrix, in this case a 
-	# vector of 1's, Section 3.3 in
-	# Ver Hoef et al. (2009)
-	DDX = DD %*% rep(1, times = length(z))
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
 	# analytical determinant, Section 3.2 in Ver Hoef et al. (2009)
 	SigLogDet = (n-1)*log(1 - exp(-2*del/theta))
-	# minus 2 times profiled likelihood, equation 8.4
-	(n - 1)*log(sum(DDz^2)) + SigLogDet + log(sum(DDX^2))
+	# this is equal to determinant(exp(-distmat/theta), logarithm = TRUE)$modulus
+	# minus 2 times profiled likelihood, the equation after 8.5
+	(n-1)*log(zQz) + SigLogDet + log(sum(DD1^2)) + (n-1)*log(2*pi) 
+	# note that determinant(t(X) %*% solve(R) %*% X) is a scalar
 }
+
 
 # theta is constant for all simulations
 theta = 0.2
 
 # set the random number seed so results are reproducible
-set.seed(5002)
+set.seed(5003)
 
 #-------------------------------------------------------------------------------
 #                    Fixed-Domain, Sample Size 50
@@ -573,19 +621,37 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
+	
+	#check it with spmodel
+#	DF = data.frame(z = zsim, x = grd, y = rep(1, times = length(grd)))
+#	library(spmodel)
+#	splm(z ~ 1, xcoord = x, ycoord = y, data = DF,
+#		spcov_initial = spcov_initial(spcov_type = 'exponential', 
+#		ie = 0, known = 'ie'),
+#		control = list(reltol = 1e-12), estmethod = 'reml')
+	
 	hold_infill_50[ithsim, 1] = thetahat
 	hold_infill_50[ithsim, 2] = sigmahat
 }
@@ -620,19 +686,28 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
 	hold_infill_250[ithsim, 1] = thetahat
 	hold_infill_250[ithsim, 2] = sigmahat
 }
@@ -667,19 +742,28 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
 	hold_infill_1000[ithsim, 1] = thetahat
 	hold_infill_1000[ithsim, 2] = sigmahat
 }
@@ -714,19 +798,28 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
 	hold_outfill_50[ithsim, 1] = thetahat
 	hold_outfill_50[ithsim, 2] = sigmahat
 }
@@ -761,19 +854,28 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
 	hold_outfill_250[ithsim, 1] = thetahat
 	hold_outfill_250[ithsim, 2] = sigmahat
 }
@@ -808,19 +910,28 @@ for(ithsim in 1:nsim) {
 	zsim = t(SigChol) %*% rnorm(n)
 	# distance between successive grid points
 	del = grd[2] - grd[1]
-
-	m2LLprof(.2, zsim, del, n)
-
 	# one dimensional optimization for theta
 	thetahat = optimize(m2LLprof, lower = 0.00001, upper = 5, 
 		z = zsim, del = del, n = n)$minimum
-	# sqrt(D)%*%U matrix in Ver Hoef et al. (2009), Section 3.2
+	thetahat
+	# analytical inverse is available for 1-D exponential model
+	# sqrt of inverse is sqrt(D)%*%U matrix 
+	# in Ver Hoef et al. (2009), Section 3.2
 	DD = diag(sqrt(rep(1/(1 - exp(-2*del/thetahat)), times = n)))
 	DD[n,n] = 1
-	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/sqrt(1 - exp(-2*del/thetahat))
+	DD[row(DD) - col(DD) == -1] = -exp(-del/thetahat)/
+		sqrt(1 - exp(-2*del/thetahat))
+	# now t(DD) %*% DD = solve(exp(-distmat/theta))
+	# sqrt of inverse of covariance matrix times data vector, Section 3.3 in
+	# Ver Hoef et al. (2009)
 	DDz = DD %*% zsim
-	# analytical estimate of sigma^2
-	sigmahat = sum(DDz^2)/n
+	# sqrt of inverse of covariance matrix times vector of ones (row sums)
+	DD1 = apply(DD,1,sum)
+	# t(z) %*% Q(theta) %*% z where Q(theta) is scaled from equation (8.2)
+	# because DDz and DD1 are vectors, we can take some computational shortcuts
+	zQz = sum(DDz^2) - (sum(DD1*DDz))^2/sum(DD1^2)
+	# analytical solution for partial sill
+	sigmahat = zQz/(n-1)
 	hold_outfill_1000[ithsim, 1] = thetahat
 	hold_outfill_1000[ithsim, 2] = sigmahat
 }
@@ -829,6 +940,10 @@ cat("\n")
 mean((hold_outfill_1000[,1] - .2)^2)
 mean((hold_outfill_1000[,2] - 1)^2)
 mean((hold_outfill_1000[,2]/hold_outfill_1000[,1] - 5)^2)
+
+#-------------------------------------------------------------------------------
+#           REMLE summary using MSE
+#-------------------------------------------------------------------------------
 
 #create output for latex, this is for REMLE
 hold_results = cbind(
@@ -878,6 +993,9 @@ print(
     include.colnames = FALSE
 )
 
+#-------------------------------------------------------------------------------
+#             REMLE summary using median rather than MSE
+#-------------------------------------------------------------------------------
 
 #create output for latex, this is for REMLE
 # use median rather than mean

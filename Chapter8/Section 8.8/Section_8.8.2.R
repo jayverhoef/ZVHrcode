@@ -563,8 +563,9 @@ system(paste0('rm ','\'',SLEDbook_path,
 
 # model that allows islands
 # let spmodel determine neighbors by those that share any border
-spautor_3parms = spautor(Estimate ~ stockname, data = seals_sf, 
-	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
+spautor_3parms = spautor(Estimate ~ -1 + stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE,
+	control = list(reltol = 1e-8))
 summary(spautor_3parms)
 -2*logLik(spautor_3parms)
 -2*logLik(spautor_3parms) + 2*5 + 2*3
@@ -594,7 +595,7 @@ summary(spautor_Tdorf)
 
 ################################################################################
 #-------------------------------------------------------------------------------
-#          ANOVA on Fixed Effects
+#          Confidence Intervals and ANOVA on Fixed Effects
 #-------------------------------------------------------------------------------
 ################################################################################
 
@@ -602,11 +603,33 @@ smry_spautor_3parms = summary(spautor_3parms)
 smry_spautor_3parms
 smry_spautor_3parms$coefficients$fixed
 
-# asymptotic marginal test
-anova(spautor_3parms)
+# confidence interval for Dixon/Cape Decision
+c(smry_spautor_3parms$coefficients$fixed[2,1] - 
+		1.96*smry_spautor_3parms$coefficients$fixed[2,2],
+	smry_spautor_3parms$coefficients$fixed[2,1] + 
+		1.96*smry_spautor_3parms$coefficients$fixed[2,2])
+		
+# Estimate the difference between the mean of the southern
+# three stocks minus the mean of the northern two stocks
+ 
+ell = c(1/3,1/3,-1/2,-1/2,1/3)
+DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
+DCest
+#standard error
+DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
+DCse
+# confidence interval
+c(DCest - qnorm(.975)*DCse, DCest + qnorm(.975)*DCse)
+
+
+# set-first-treatment-to-zero parameterization (default for R)
+spautor_3parms_set1 = spautor(Estimate ~ stockname, data = seals_sf, 
+	estmethod = 'ml', spcov_type = 'car', row_st = TRUE,
+	control = list(reltol = 1e-8))
+anova(spautor_3parms_set1)
 
 # check it manually
-# intercept
+# intercept is contrasted to all other treatments, so test for only intercept
 L = matrix(c(1,0,0,0,0), nrow = 1)
 L
 Chi2 = t(L %*% coef(spautor_3parms)) %*% 
@@ -614,12 +637,13 @@ Chi2 = t(L %*% coef(spautor_3parms)) %*%
 	(L %*% coef(spautor_3parms))
 Chi2
 1 - pchisq(Chi2,df = 1)
-#stock
+
+#now test for stock, where each level is already contrasted with intercept
 L = cbind(rep(0, times = 4),  diag(4))
 L
-Chi2 = t(L %*% coef(spautor_3parms)) %*% 
-	solve(L %*% vcov(spautor_3parms) %*% t(L)) %*% 
-	(L %*% coef(spautor_3parms))
+Chi2 = t(L %*% coef(spautor_3parms_set1)) %*% 
+	solve(L %*% vcov(spautor_3parms_set1) %*% t(L)) %*% 
+	(L %*% coef(spautor_3parms_set1))
 Chi2
 1 - pchisq(Chi2,df = 4)
 
@@ -634,10 +658,15 @@ summary(spautor_4Ftest)
 #stock
 L = cbind(diag(4), rep(0, times = 4)) - cbind(rep(0, times = 4),  diag(4))
 L
+# see equation (5.6)
 Fval = t(L %*% coef(spautor_4Ftest)) %*% 
 	solve(L %*% vcov(spautor_4Ftest) %*% t(L)) %*% 
 	(L %*% coef(spautor_4Ftest))/
 	(4*max(coef(spautor_4Ftest, type = 'spcov')[c('de','extra')]))
+# note that using max(coef(spautor_4Ftest, type = 'spcov')[c('de','extra')])
+# is equivalent to factoring out an overall variance parameter, and then
+# leaving the ratio, and 1-ration of the two variance parameters 
+# for multiplying R and I.
 1 - pf(Fval, df1 = sum(!is.na(seals_sf$Estimate)) - 5, df2 = 4)
 
 # ------------------------------------------------------------------------------
@@ -658,13 +687,10 @@ chi2
 
 ################################################################################
 #-------------------------------------------------------------------------------
-#                  Estimating Fixed Effects
+#                  Fixed Effects Table
 #-------------------------------------------------------------------------------
 ################################################################################
 
-# fit a model with mean for each stock
-spautor_3parms = spautor(Estimate ~ -1 + stockname, data = seals_sf, 
-	estmethod = 'ml', spcov_type = 'car', row_st = TRUE)
 
 summary(spautor_3parms)
 library(xtable)
@@ -684,31 +710,3 @@ print(
     only.contents = TRUE,
     include.colnames = FALSE
 )
-
-ell = c(1,1,0,0,0)
-# Dixon/Cape Decision estimate
-DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
-DCest
-# Dixon/Cape Decision standard error
-DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
-DCse
-# Dixon/Cape Decision confidence interval
-DCest - qnorm(.975)*DCse
-DCest + qnorm(.975)*DCse
-
-# Estimate the difference between the mean of the southern
-# three stocks minus the mean of the northern two stocks 
-
-ell = c(0,1/3,-1/2,-1/2,1/3)
-# Dixon/Cape Decision estimate
-DCest = t(ell) %*% summary(spautor_3parms)$coefficient$fixed$estimates
-DCest
-# Dixon/Cape Decision standard error
-DCse = sqrt(t(ell) %*% vcov(spautor_3parms) %*% ell)
-DCse
-# Dixon/Cape Decision confidence interval
-DCest - qnorm(.975)*DCse
-DCest + qnorm(.975)*DCse
-
-
-

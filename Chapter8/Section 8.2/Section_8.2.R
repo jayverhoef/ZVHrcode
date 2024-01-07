@@ -33,7 +33,8 @@ for(k in 1:1000){
 	fitout = splm(y ~ 1, data = DF, xcoord = xcoord, ycoord = ycoord,
 		spcov_initial = spcov_initial('exponential', ie = 0, known = c('ie')),
 		estmethod = 'ml')
-	# estimated range parameter
+	# estimated range parameter, reparameterized from spmodel to rho^distance
+	# as given in the book
 	mle1[k,1] = exp(-1/coef(fitout, type = 'spcov')['range'])
 	# estimated variance parameter
 	mle1[k,2] = coef(fitout, type = 'spcov')['de']

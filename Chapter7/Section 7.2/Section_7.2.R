@@ -156,6 +156,8 @@ file_name = "figures/SimAutoreg"
 
 pdf(paste0(file_name,'.pdf'), width = 8, height = 11)   
 
+	cex_all = 3.2
+	
 	layout(matrix(1:12, ncol = 4, byrow = TRUE), widths = c(4,1,4,1))
 
 	#i.i.d. simulation
@@ -163,8 +165,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(dataiid$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(dataiid$x, dataiid$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(dataiid$x, dataiid$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("Independent Normals")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))
@@ -178,8 +181,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(datasar1$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(datasar1$x, datasar1$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(datasar1$x, datasar1$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("SAR with ", rho[SAR], " = 0.2")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))
@@ -193,8 +197,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(datasar2$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(datasar2$x, datasar2$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(datasar2$x, datasar2$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("SAR with ", rho[SAR], " = 0.25")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))
@@ -208,8 +213,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(datacar$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(datacar$x, datacar$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(datacar$x, datacar$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("CAR with ", rho[CAR], " = 0.25")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))
@@ -223,8 +229,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(datawcar$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(datawcar$x, datacar$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(datawcar$x, datacar$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("WCAR with ", rho[CAR], " = 0.95")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))
@@ -238,8 +245,9 @@ pdf(paste0(file_name,'.pdf'), width = 8, height = 11)
 	cip = classIntervals(datasma$z, n = 12, style = 'fisher')
 	palp = viridis(12)
 	cip_colors = findColours(cip, palp)
-	plot(datasma$x, datasma$y, col = cip_colors, bty = 'n', xaxt = 'n', yaxt = 'n', 
-		pch = 15, cex = 3,
+	plot(datasma$x, datasma$y, col = cip_colors, 
+		bty = 'n', xaxt = 'n', yaxt = 'n', 
+		pch = 15, cex = cex_all,
 		main = expression(paste("SMA with ", rho[SMA], " = 0.25")),
 		cex.main = 1.9)
 	par(mar = c(0,0,0,0))

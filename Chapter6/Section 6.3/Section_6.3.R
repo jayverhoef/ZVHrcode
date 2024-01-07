@@ -234,38 +234,50 @@ pdf(paste0(file_name,'.pdf'), width = 15, height = 5)
 	blim = 3.1
 	madj = -.19
 	#A
-	par(mar = c(5,5,5,2))
-	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
-		xlab = expression(h[u]), ylab = expression(h[v]))
+	par(mar = c(7,7,5,2), mgp = c(3,1,0))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 4.0, cex.axis = 2.3,
+		xlab = '', ylab = '', xaxt = 'n')
 	DrawEllipse(x = 0, y = 0, radius.x = 3, radius.y = 1, rot = pi/3, lwd = 3)
 	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
 	lines(c(0.82,-0.82), c(-0.61,0.61), lty = 2, lwd = 2)
 	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
 	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+  par(mgp=c(3, 2.0, 0))
+	axis(1, at = -3:3, cex.axis = 2.3) 
+  title(xlab = expression(h[u]), line = 6, cex.lab = 4)
+  title(ylab = expression(h[v]), line = 3, cex.lab = 4)
 	mtext('A', side = 3, adj = madj, cex = 4)
 
 	#B
-	par(mar = c(5,5,5,2))
-	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
-		xlab = expression(h[u]), ylab = expression(h[v]))
+	par(mar = c(7,7,5,2), mgp = c(3,1,0))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 4.0, cex.axis = 2.3,
+		xlab = '', ylab = '', xaxt = 'n')
 	lines(c(-0.82, 1.52, 0.82, -1.52, -.82), c(0.61, 2.56, -0.61, -2.56, 0.61), 
 		lwd = 3)
 	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
 	lines(c(0.82, -0.82), c(-0.61,0.61), lty = 2, lwd = 2)
 	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
 	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+  par(mgp=c(3, 2.0, 0))
+	axis(1, at = -3:3, cex.axis = 2.3) 
+  title(xlab = expression(h[u]), line = 6, cex.lab = 4)
+  title(ylab = expression(h[v]), line = 3, cex.lab = 4)
 	mtext('B', side = 3, adj = madj, cex = 4)
 
 	#C
-	par(mar = c(5,5,5,2))
-	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 2.5, cex.axis = 2.0,
-		xlab = expression(h[u]), ylab = expression(h[v]))
+	par(mar = c(7,7,5,2), mgp = c(3,1,0))
+	plot(c(-blim,blim),c(-blim,blim), type = 'n', cex.lab = 4.0, cex.axis = 2.3,
+		xlab = '', ylab = '', xaxt = 'n')
 	lines(c(-1.52 - 0.82, 1.52 - 0.82),c(-2.56 + 0.61, 2.56 + 0.61), lwd = 3)
 	lines(c(-1.52 + 0.82, 1.52 + 0.82),c(-2.56 - 0.61, 2.56 - 0.61), lwd = 3)
 	lines(c(-1.52, 1.52),c(-2.56,2.56), lty = 2, lwd = 2)
 	lines(c(0.82, -0.82), c(-0.61,0.61), lty = 2, lwd = 2)
 	lines(c(-3,3),c(0,0), lwd = 1, lty = 3)
 	lines(c(0,0),c(-3,3), lwd = 1, lty = 3)
+  par(mgp=c(3, 2.0, 0))
+	axis(1, at = -3:3, cex.axis = 2.3) 
+  title(xlab = expression(h[u]), line = 6, cex.lab = 4)
+  title(ylab = expression(h[v]), line = 3, cex.lab = 4)
 	mtext('C', side = 3, adj = madj, cex = 4)
 	
 	layout(1)

@@ -27,7 +27,7 @@ W <- W[-2,-2]
 1/max(eigen(W)$values)
 K <- diag(7)
 # SAR covariance and correlation matrices for row-standardized weights
-SigmaSMA <- (diag(7) + 0.39*W)%*%K%*%(diag(7) + 0.39*t(W))
+SigmaSMA <- (diag(7) + 0.30*W)%*%K%*%(diag(7) + 0.30*t(W))
 corrSigmaSMA = diag(sqrt(1/diag(SigmaSMA))) %*% 
 	SigmaSMA%*% diag(sqrt(1/diag(SigmaSMA)))
 # create matrix with variances on diagonal and correlations on off-diagonal

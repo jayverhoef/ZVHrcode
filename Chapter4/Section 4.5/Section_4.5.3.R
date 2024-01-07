@@ -114,7 +114,12 @@ geary.test(zr,
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-summary(lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF))
+# Need to change contrasts to get SAS Type III sums of squares
+# using Anova() from car package
+options(contrasts = c("contr.sum", "contr.poly"))
+
+summary(lm(z ~  i + j + water + tarp + water*tarp, 
+	data = caribouDF))
 model = lm(z ~  i + j + water + tarp + water*tarp, data = caribouDF)
 out = Anova(model, type = 'III')
 out = out[2:7,]
@@ -152,8 +157,7 @@ outDF
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-# drop the interaction term as results are unreliable
-lsmout = emmeans(lm(z ~  i + j + water + tarp, 
+lsmout = emmeans(lm(z ~  i + j + water + tarp + water:tarp, 
 	data = caribouDF), specs = 'tarp')
 lsmout
 
@@ -220,20 +224,9 @@ outDF
     hline.after = c(-1, 0, nrow(outDF) - 1)
   )
 
-# get tarp effects
-# clear tarp
-summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] +
-  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[12,1]
-# no tarp
-summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] +
-  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[13,1]
-# shade tarp
-summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[1,1] -
-  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[12,1] -
-  summary(lm(z ~  i + j + water + tarp, data = caribouDF))$coef[13,1]
-
 library(emmeans)
-lsmout = emmeans(lm(z ~  i + j + water + tarp, data = caribouDF), specs = 'tarp')
+lsmout = emmeans(lm(z ~  i + j + water + tarp, data = caribouDF), 
+	specs = 'tarp')
 lsmout
 pairs(lsmout)
 
