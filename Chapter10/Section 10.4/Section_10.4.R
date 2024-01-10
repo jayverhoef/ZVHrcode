@@ -1,6 +1,8 @@
 sec_path = 'Rcode/Chapter10/Section 10.4/'
 setwd(paste0(SLEDbook_path,sec_path))
 
+library(spatstat)
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -53,7 +55,8 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 4.0)
 	S <- c(.5,.5,.5,1,.5,0,1/3-1/12*sqrt(7),1/4,1/3-1/12*sqrt(7),
 				 3/4,2/3+sqrt(7)/12,1/4,2/3+sqrt(7)/12,3/4)
 	cord.pt <- matrix(S,ncol=2,byrow=T)
-	plot(x=0:1.1,y=0:1.1,xlim=c(-0.1,1.1),ylim=c(-.1,1.1),type="n",axes=F,xlab="",ylab="")
+	plot(x=0:1.1, y=0:1.1, xlim= c(-0.1, 1.1), lim = c(-.1, 1.1), type = "n",
+		axes = F, xlab = "", ylab = "")
 	points(x=cord.pt[,1],y=cord.pt[,2], pch=19, cex = cex_plot)
 	# start point of x
 	sx <- c(0,0,1,1)
@@ -69,7 +72,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 4.0)
 
 	# C
 	# Latin hypercube design (rightmost plot)
-	cord.pt <- matrix(c(0,2,1,5,2,0,3,3,4,6,5,1,6,4),ncol=2,byrow=T)
+	cord.pt <- matrix(c(0,2,1,5,2,0,3,3,4,6,5,1,6,4), ncol = 2, byrow = T)
 	# scale to range from 0 to 1
 	minx = min(cord.pt[,1])
 	maxx = max(cord.pt[,1])
@@ -78,8 +81,9 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 4.0)
 	rang = max(maxx - minx, maxy - miny)
 	cord.pt[,1] = (cord.pt[,1] - minx)/rang
 	cord.pt[,2] = (cord.pt[,2] - miny)/rang
-	plot(x=0:1.1,y=0:1.1,xlim=c(-0.1,1.1),ylim=c(-.1,1.1),type="n",axes=F,xlab="",ylab="")
-	points(x=cord.pt[,1],y=cord.pt[,2], pch=19, cex = cex_plot)
+	plot(x = 0:1.1, y = 0:1.1, xlim = c(-0.1, 1.1), ylim = c(-.1, 1.1),
+		type = "n", axes = F, xlab = "", ylab = "")
+	points(x = cord.pt[,1], y = cord.pt[,2], pch=19, cex = cex_plot)
 	# start point of x
 	sx <- c(0,0,1,1)
 	# start point of y
@@ -145,8 +149,8 @@ pdf(paste0(file_name,'.pdf'), width = 10, height = 5)
 	}
 	xnew <- xsample + xdell[1:15,1]
 	ynew <- ysample + ydell[1:15,1]
-	xall <- cbind(x, xnew)
-	yall <- cbind(y, ynew)
+	xall <- c(x, xnew)
+	yall <- c(y, ynew)
 	plot(xall, yall, xlab = "", ylab = "", xlim = c(0,1), 
 		ylim = c(0,1), pch = 19, cex = cex_plot)
 	segments(c(0, 0, 1, 1), c(0, 1, 1, 0), c(0, 1, 1, 0), c(1, 1, 0, 0))
@@ -172,7 +176,6 @@ pdf(paste0(file_name,'.pdf'), width = 10, height = 5)
 	mtext('B', adj = adj, cex = cex_mtext, padj = padj)
 
 # C
-# library(spatstat)
 	set.seed(2141)
 	xyssipp <- rSSI(1/9, 49)
 	xssisample <- sample(xyssipp$x, 15)

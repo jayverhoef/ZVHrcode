@@ -411,8 +411,10 @@ loocv(splmfit, cv_predict = TRUE, se.fit = TRUE)
 }
 comp_cormodels
 comp_cormodels$BIC = NA
-comp_cormodels[1:10,'BIC'] = comp_cormodels[1:10,'m2ll'] + 3*log(dim(DFgrp)[1])
-comp_cormodels[11:13,'BIC'] = comp_cormodels[11:13,'m2ll'] + 4*log(dim(DFgrp)[1])
+comp_cormodels[1:10,'BIC'] = comp_cormodels[1:10,'m2ll'] + 
+	3*log(dim(DFgrp)[1])
+comp_cormodels[11:13,'BIC'] = comp_cormodels[11:13,'m2ll'] + 
+	4*log(dim(DFgrp)[1])
 comp_cormodels = comp_cormodels[,
 	c('cormod','m2ll','AIC','BIC','loocv','cv3fold','PIC90_Lo','PIC90_Nf')]
 
@@ -483,15 +485,17 @@ pred_sp4 = predict(sp_reml_0, DFpred, se.fit = TRUE)
 
 file_name = "figures/SO4_Prediction_Maps"
 
-pdf(paste0(file_name,'.pdf'), width = 16, height = 24)
-brks_cex = 2.3
+pdf(paste0(file_name,'.pdf'), width = 18, height = 24)
+brks_cex = 3.2
 printF = "1.2"
-mtext.cex = 4.8
-map_mar = c(0,4,7,2)
+mtext.cex = 5.0
+map_mar = c(0,7,7,0)
 mtext.y = 3100000
-mtext.x = -2400000
+mtext.x = -2380000
 leg_right = 0.6
 pch_num = 15
+ybo = 0.0
+yto = 0.75
 
 brks_pred = quantile(c(pred_ind$fit, pred_sp1$fit, 
 	pred_sp2$fit, pred_sp3$fit, pred_sp4$fit), probs = seq(0, 1, .1))
@@ -502,18 +506,18 @@ brks_se = quantile(c(pred_ind$se.fit, pred_sp1$se.fit,
 cip = classIntervals(pred_ind$fit, style = 'fixed', fixedBreaks= brks_pred)
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
-old.par = par(mar = map_mar, bg = 'gray80')
+old.par = par(mar = map_mar) #, bg = 'gray80')
 source('addBreakColorLegend.R')
 layout(matrix(1:20, ncol = 4, byrow = TRUE), 
-	widths = rep(c(3,.4),times = 10))
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+	widths = rep(c(3.5,.55),times = 10))
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 text(mtext.x, mtext.y, 'A', cex = mtext.cex)
 old.par = par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 # make a color map of prediction standard errors
@@ -521,15 +525,16 @@ cip = classIntervals(pred_ind$se.fit, style = 'fixed', fixedBreaks= brks_se)
 palp = viridis(7, option = 'C')
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 points(st_coordinates(SO4clean), pch = 19)
 text(mtext.x, mtext.y, 'B', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 #         Spatial Models
@@ -540,29 +545,31 @@ cip = classIntervals(pred_sp1$fit, style = 'fixed', fixedBreaks= brks_pred)
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 text(mtext.x, mtext.y, 'C', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 cip = classIntervals(pred_sp1$se.fit, style = 'fixed', fixedBreaks= brks_se)
 palp = viridis(7, option = 'C')
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
-points(coordinates(SO4clean), pch = 19)
+points(st_coordinates(SO4clean), pch = 19)
 text(mtext.x, mtext.y, 'D', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 # exponential model, constant mean
@@ -571,29 +578,31 @@ cip = classIntervals(pred_sp4$fit, style = 'fixed', fixedBreaks= brks_pred)
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 text(mtext.x, mtext.y, 'E', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 cip = classIntervals(pred_sp4$se.fit, style = 'fixed', fixedBreaks= brks_se)
 palp = viridis(7, option = 'C')
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
-points(coordinates(SO4clean), pch = 19)
+points(st_coordinates(SO4clean), pch = 19)
 text(mtext.x, mtext.y, 'F', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 # 3rd order polynomial, spherical model
@@ -602,29 +611,31 @@ cip = classIntervals(pred_sp3$fit, style = 'fixed', fixedBreaks= brks_pred)
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 text(mtext.x, mtext.y, 'G', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 cip = classIntervals(pred_sp3$se.fit, style = 'fixed', fixedBreaks= brks_se)
 palp = viridis(7, option = 'C')
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
-points(coordinates(SO4clean), pch = 19)
+points(st_coordinates(SO4clean), pch = 19)
 text(mtext.x, mtext.y, 'H', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
   
 # constant mean, Gaussian model
@@ -633,29 +644,31 @@ cip = classIntervals(pred_sp2$fit, style = 'fixed', fixedBreaks= brks_pred)
 palp = viridis(9)
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
 text(mtext.x, mtext.y, 'I', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 cip = classIntervals(pred_sp2$se.fit, style = 'fixed', fixedBreaks= brks_se)
 palp = viridis(7, option = 'C')
 cip_colors = findColours(cip, palp)
 old.par = par(mar = map_mar)
-plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, cex = 1.5, 
-	bty = 'n', xaxt = 'n', yaxt = 'n')
+plot(st_coordinates(preds_sub), col = cip_colors, pch = pch_num, 
+	cex = 1.5, bty = 'n', xaxt = 'n', yaxt = 'n', 
+	yaxt = 'n', xlab = '', ylab = '')
 plot(USboundary, add = TRUE, border = 'black', col = 'transparent')
-points(coordinates(SO4clean), pch = 19)
+points(st_coordinates(SO4clean), pch = 19)
 text(mtext.x, mtext.y, 'J', cex = mtext.cex)
 par(mar = c(0,0,0,0))
 plot(c(0,leg_right),c(0,1), type = 'n', xaxt = 'n', yaxt = 'n',
   xlab = '', ylab = '', bty = 'n')
-addBreakColorLegend(xleft = 0, ybottom = .2, xright = .2, ytop = .7,
+addBreakColorLegend(xleft = 0, ybottom = ybo, xright = .2, ytop = yto,
   breaks = cip$brks, colors = palp, cex = brks_cex, printFormat = printF)
 
 	par(old.par)

@@ -121,11 +121,11 @@ seals_smooth_m[!ind,'Estimate'] = loocvout_m$cv_predict
 seals_smooth_m[!ind,'Estimate_se'] = loocvout_m$se.fit
 
 file_name = 'figures/seal_predhist'
-pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
+pdf(paste0(file_name,'.pdf'), width = 8, height = 8)
 
-	layout(matrix(1:2, nrow = 1))
+	layout(matrix(1:2, nrow = 2))
 	padj = -.5
-	adj = -.19
+	adj = -.15
 	cex.mtext = 3
 	par(mar = c(5,5,4,1))
 	hist(seals_sf$Estimate,  breaks = seq(-0.6, 1, by = .04),
@@ -133,9 +133,9 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 		main = '', cex.lab = 2, cex.axis = 1.5, xlab = 'log(Trend)')
 	hist(seals_smooth$Estimate,  breaks = seq(-0.6, 1, by = .02),
 		xlim = c(-.5, .5), add = TRUE, col = rgb(.1, .1, .1, .4))
-	legend(x = .05, y = 145, legend =c('Raw Values','LOOCV Predictions'),
+	legend(x = .1, y = 150, legend =c('Raw Values','LOOCV Predictions'),
 		pch = 15, col = c(rgb(.7, .7, .7, .5),rgb(.1, .1, .1, .6)),
-		cex = 1.2)
+		cex = 1.4)
 	mtext('A', adj = adj, cex = cex.mtext, padj = padj)
 
 
@@ -144,7 +144,7 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 	h3out = hist(predict(lmfit_X), breaks = seq(-0.15, 0.25, by = .01), plot = FALSE)
 
 	par(mar = c(5,5,4,1), bg = 'white')
-	lwd_bars = 3
+	lwd_bars = 5
 	offset = .003
 	padj = -.5
 	adj = -.15
@@ -173,9 +173,10 @@ pdf(paste0(file_name,'.pdf'), width = 12, height = 6)
 	lines(d1out$x, d1out$y, col = 'gray50', lwd = 4)
 	d2out = density(predict(spfit_X), bw = .02)
 	lines(d2out$x, d2out$y, col = 'gray80', lwd = 4)
-	legend(x = .05, y = 42, legend =c('Indep. Mean','Autocorr. Mean', 'Autocorr. Stock'),
-		lwd = 3, col = c('black','gray50','gray80'),
-		cex = 1.2)
+	legend(x = .08, y = 44, legend =c('Indep. Mean','Autocorr. Mean', 
+		'Autocorr. Stock'),
+		lwd = 5, col = c('black','gray50','gray80'),
+		cex = 1.4)
 	mtext('B', adj = adj, cex = cex.mtext, padj = padj)
 
 dev.off()

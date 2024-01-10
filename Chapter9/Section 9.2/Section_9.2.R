@@ -125,13 +125,16 @@ print(
 #-------------------------------------------------------------------------------
 
 # function to compute ordinary kriging weights
-okwts = function(X,R,r0){
-	solve(t(X)%*%solve(R)%*%X)%*%t(X)%*%solve(R)+t(r0)%*%solve(R)%*%(diag(dim(X)[1])-X%*%solve(t(X)%*%solve(R)%*%X)%*%t(X)%*%solve(R))
+okwts = function(X, R, r0){
+	solve(t(X) %*% solve(R) %*% X) %*% t(X) %*% solve(R) + t(r0) %*% solve(R) %*%
+	 (diag(dim(X)[1]) - X %*% solve(t(X) %*% solve(R) %*% X) %*% 
+	 t(X) %*% solve(R))
 }
 	
 # function to compute prediction variance for ordinary kriging
-okpev = function(X,R,r0,r00){
-	r00-t(r0)%*%solve(R)%*%r0+(1-t(r0)%*%solve(R)%*%X)%*%solve(t(X)%*%solve(R)%*%X)%*%(1-t(X)%*%solve(R)%*%r0)
+okpev = function(X, R, r0, r00){
+	r00 - t(r0) %*% solve(R) %*% r0 + (1 - t(r0) %*% solve(R) %*% X) %*% 
+		solve(t(X) %*% solve(R) %*% X) %*% (1 - t(X) %*% solve(R) %*% r0)
 }
 
 X <- matrix(1,5,1)
@@ -316,30 +319,32 @@ W = (as.matrix(dist(cbind(xcoords, ycoords))) < 1.1)*1
 diag(W) = 0
 
 K <- diag(7)
-SigmaSAR <- solve(diag(7)-0.3*W)%*%K%*%solve(diag(7)-0.3*t(W))
-SigmaCAR <- solve(diag(7)-0.3*W)%*%K
-corrSAR <- solve(diag(sqrt(diag(SigmaSAR))))%*%SigmaSAR%*%solve(diag(sqrt(diag(SigmaSAR))))
-corrCAR <- solve(diag(sqrt(diag(SigmaCAR))))%*%SigmaCAR%*%solve(diag(sqrt(diag(SigmaCAR))))
-R <- SigmaSAR[-1,-1]
-r0 <- as.vector(SigmaSAR[2:7,1])
-r00 <- SigmaSAR[1,1]
-X <- matrix(1,nrow=6,ncol=1,byrow=T)
+SigmaSAR <- solve(diag(7) - 0.3*W) %*% K %*% solve(diag(7) - 0.3*t(W))
+SigmaCAR <- solve(diag(7) - 0.3*W) %*% K
+corrSAR <- solve(diag(sqrt(diag(SigmaSAR)))) %*% SigmaSAR %*% 
+	solve(diag(sqrt(diag(SigmaSAR))))
+corrCAR <- solve(diag(sqrt(diag(SigmaCAR)))) %*% SigmaCAR %*% 
+	solve(diag(sqrt(diag(SigmaCAR))))
+R <- SigmaSAR[-1, -1]
+r0 <- as.vector(SigmaSAR[2:7, 1])
+r00 <- SigmaSAR[1, 1]
+X <- matrix(1, nrow=6, ncol=1, byrow=T)
 S1 = rep(NA, times = 8)
 S1[2:7] = okwts(X, R, r0)
 S1[8] = okpev(X, R, r0, r00)
 
-R <- SigmaSAR[-3,-3]
-r0 <- SigmaSAR[-3,3]
-r00 <- SigmaSAR[3,3]
-X <- matrix(1,nrow=6,ncol=1,byrow=T)
+R <- SigmaSAR[-3, -3]
+r0 <- SigmaSAR[-3, 3]
+r00 <- SigmaSAR[3, 3]
+X <- matrix(1, nrow = 6, ncol = 1, byrow = T)
 S2 = rep(NA, times = 8)
 S2[c(1,2,4:7)] = okwts(X, R, r0)
 S2[8] = okpev(X, R, r0, r00)
 
-R <- SigmaSAR[-7,-7]
-r0 <- SigmaSAR[-7,7]
-r00 <- SigmaSAR[7,7]
-X <- matrix(1,nrow=6,ncol=1,byrow=T)
+R <- SigmaSAR[-7, -7]
+r0 <- SigmaSAR[-7, 7]
+r00 <- SigmaSAR[7, 7]
+X <- matrix(1, nrow = 6, ncol = 1, byrow = T)
 S3 = rep(NA, times = 8)
 S3[1:6] = okwts(X, R, r0)
 S3[8] = okpev(X, R, r0, r00)
