@@ -60,6 +60,11 @@ summary(sim_expr50)
 #-------------------------------------------------------------------------------
 ################################################################################
 
+######################
+#    Table 11.3
+######################
+
+
 #  Optimal Experimental Design
 
 d1 = data.frame(x = 1:30, y = rep(1, times = 30), 
@@ -133,8 +138,17 @@ print(
     include.colnames = FALSE
 )
 
+# Type I error for testing the null hypothesis that mu + tau_1 is equal to 0
+# if we were to base this test on the spatial linear model and the 
+# trend-confounded design
 1.063/0.496
 
+
+# The spatial confounding associated with the trend-confounded design 
+# essentially transfers spatial pattern from the errors to the mean structure 
+# (see Section 5.5), so that the estimated variance and correlation
+# of those errors decreases; this, in turn, leads to a 
+# much larger Type I error.
 
 sim_exp2_fitted = splm(z ~ trt, data = d2, xcoord = x, ycoord = y,
 	spcov_type = 'exponential')

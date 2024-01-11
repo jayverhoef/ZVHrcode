@@ -99,7 +99,7 @@ for(i in 1:971) {
 		(ell - apply(model.matrix(z ~ trt, data = dtemp),2,mean)))) > 1.96
 }
 
-# Values for Table 11.3
+# Values for Table 11.2
 
 sqrt(mean(ind_mspe_rlzdmean))
 sqrt(mean(exp_mspe_rlzdmean))

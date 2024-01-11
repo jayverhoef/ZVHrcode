@@ -144,6 +144,10 @@ for(i in 1:971) {
 results_table = results_table/971
 results_table[1:3,1:4] = sqrt(results_table[1:3,1:4])
 
+################################################################################
+#             Table 11.4
+################################################################################
+
 print(
     xtable(results_table, 
       align = c('l',rep('l', times = length(results_table[1,]))),
