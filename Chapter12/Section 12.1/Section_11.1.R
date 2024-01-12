@@ -9,6 +9,9 @@ setwd(paste0(SLEDbook_path,sec_path))
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
+# this should open up a web browser, and you can rotate the sphere using 
+# a mouse
+
 library("rgl")
 options(rgl.printRglwidget = TRUE)
 
@@ -85,11 +88,11 @@ for(i in 1:1) {
 	#curve between two points
 	arc3d(from, to, center, col = "red", lwd = lwd_curves)
 	#straight line
-	rgl.lines(x,y,z, col = "black", lwd = lwd_curves)
+#	rgl.lines(x,y,z, col = "black", lwd = lwd_curves)
+	segments3d(x,y,z, col = "black", lwd = lwd_curves)
 }
 #add text
 text3d(rbind(1.05*from, 1.2*to), 
        text = c(expression(s[1]), expression(s[2])),
-       cex = 3, adj = 1)
-
-rgl.postscript('3dplot.pdf', fmt = 'pdf')
+       cex = 5, adj = 1)
+# make a screen shot for the book

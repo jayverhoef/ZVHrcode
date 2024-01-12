@@ -131,13 +131,16 @@ for(i in 1:length(theta1)) {
 }
 
 llgrid_pois = llgrid
+# it takes a while to create the likelihood grid, so store it for future use
 #  save(llgrid_pois, file = 'llgrid_pois.rda')
+# code to re-load it 
 #  load('llgrid_pois.rda', verbose = TRUE)
 #  llgrid = llgrid_pois
 
 #-------------------------------------------------------------------------------
 #   Figure of simulated data, spatial random effect and their prediction,
 #                and the likelihood surface
+#   Figure 12.7
 #-------------------------------------------------------------------------------
 
 file_name = "figures/SGLM_likelihood_estimation"
@@ -337,6 +340,7 @@ cat("\n")
 end_time = Sys.time()
 difftime(end_time, start_time)
 
+# it takes a while for the simulation, so store it for future use
 #  save(store,file = 'store.rda')
 #  restore the stored data if you want to skip the simulation
 #  load('store.rda')
@@ -370,6 +374,10 @@ sglm_fe = data.frame(est_bias =  est_bias/niter,
 MSPE = MSPE/niter
 sglm_simsumm = rbind(sglm_fe,
 	c(pred_bias/niter, sqrt(MSPE), cover_pred_uncor/niter, cover_pred_cor/niter))
+
+#-------------------------------------------------------------------------------
+#   Table 12.7
+#-------------------------------------------------------------------------------
 
 print(
     xtable(sglm_simsumm, 
