@@ -1,7 +1,7 @@
 #github cloud commits
 cd '/mnt/ExtraDrive1/Work/desktop_data/ActiveBooks/GeostatDale/Rcode'
 git add .
-git commit -a -m 'page proofs'
+git commit -a -m 'corrections to script 8.8.2.R'
 git push origin master
 git pull origin master
 

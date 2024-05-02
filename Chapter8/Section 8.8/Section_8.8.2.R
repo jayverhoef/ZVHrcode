@@ -73,8 +73,8 @@ Nlist[[346]] = as.integer(c(Nlist[[346]],439))
 Nlist[[443]] = as.integer(281)
 Nlist[[281]] = as.integer(c(Nlist[[281]],443))
 Nlist[[463]] = as.integer(79)
-attr(Nlist,'polyid') = as.factor(as.character(sealPolys@data$polyid))
-attr(Nlist,'stockid') = as.factor(as.character(sealPolys@data$stockid))
+attr(Nlist,'polyid') = as.factor(as.character(sealPolys$polyid))
+attr(Nlist,'stockid') = as.factor(as.character(sealPolys$stockid))
 num = lapply(Nlist, function(x) length(x))
 num = unlist(num)
 Nmat = Neighmat(Nlist, num, length(num))
@@ -248,6 +248,7 @@ grid_dim = length(seqs)
 de_seq = log(coef(spfit, type = "spcov")['de']) + .2*seqs
 de_seq = exp(de_seq)
 range_seq = 0.99*(seqs + 1)/2
+range_seq[1] = 1e-5
 
 zA = matrix(NA, nrow = grid_dim, ncol = grid_dim)
 for(i in 1:grid_dim) {
@@ -408,7 +409,7 @@ DW = D - theta['range']*Nmat4
 DWi = solve(DW)
 Vi = DW/theta['de']
 V = theta['de']*DWi
-A = -theta['de']*DWi %*% Nmat4 %*% DWi
+A = theta['de']*DWi %*% Nmat4 %*% DWi
 X = model.matrix(~ stockname, data = seals_sf)
 P = Vi - Vi %*% X %*% solve(t(X) %*% Vi %*% X, t(X)) %*% Vi
 		

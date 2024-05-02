@@ -480,19 +480,7 @@ hold_results = cbind(
 	)
 )
 
-print(
-    xtable(hold_results, 
-      align = c('l',rep('l', times = length(hold_results[1,]))),
-      digits = c(0,0,3,4,2,3,4,2),
-    ),
-    size = 'footnotesize',
-    sanitize.text.function = identity,
-    include.rownames = FALSE,
-    sanitize.rownames.function = identity,
-    only.contents = TRUE,
-    include.colnames = FALSE
-)
-
+\boldsymbol{
 #-------------------------------------------------------------------------------
 #                    MLE summary using median rather than MSE
 #-------------------------------------------------------------------------------
